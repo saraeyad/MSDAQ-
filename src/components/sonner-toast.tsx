@@ -1,30 +1,17 @@
-import { CircleAlert, CircleCheck, CircleX } from "lucide-react";
 import { toast } from "sonner";
 
-const baseStyle = {
-  borderRadius: "8px",
-  padding: "10px 15px",
-  fontWeight: "400",
-  fontSize: "0.875rem",
+const toastOptions = {
+  duration: 4000,
 };
 
 export const successToast = (msg: string) => {
-  toast.success(msg, {
-    style: { ...baseStyle, color: "green" },
-    icon: <CircleCheck className="size-4" />,
-  });
+  toast.success(msg, toastOptions);
 };
 
 export const errorToast = (msg: string) => {
-  toast.error(msg, {
-    style: { ...baseStyle, color: "red" },
-    icon: <CircleX className="size-4" />,
-  });
+  toast.error(msg, toastOptions);
 };
 
 export const infoToast = (msg: string) => {
-  toast.info(msg, {
-    style: { ...baseStyle, color: "var(--secondary)" },
-    icon: <CircleAlert className="size-4" />,
-  });
+  toast.info(msg, toastOptions);
 };

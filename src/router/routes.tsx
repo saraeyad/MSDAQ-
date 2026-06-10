@@ -16,7 +16,5 @@ export const ROUTES = {
   ADMIN_JOURNALIST_REQUESTS: "/admin/journalist-requests",
   ADMIN_JOURNALIST_REQUEST_DETAIL: (id: string | number) =>
     `/admin/journalist-requests/${id}`,
-  ADMIN_ARTICLES: "/admin/articles",
-  ADMIN_ARTICLE_DETAIL: (id: string | number) => `/admin/articles/${id}`,
   ADMIN_DISCUSSION: "/admin/discussion",
 };

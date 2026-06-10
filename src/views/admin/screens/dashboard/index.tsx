@@ -1,6 +1,5 @@
 import DashboardStatCard from "@/components/dashboard-stat-card";
 import PageWrapper from "@/components/page-wrapper";
-import SectionTitle from "@/components/section-title";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/router/routes";
@@ -43,7 +42,6 @@ export default function AdminDashboard() {
         <div className="space-y-8">
           <div>
             <p className="text-label-caps text-secondary">{t("admin.dashboard.commandCenter")}</p>
-            <SectionTitle className="mt-2">{t("admin.dashboardTitle")}</SectionTitle>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               {t("admin.dashboard.subtitle")}
             </p>

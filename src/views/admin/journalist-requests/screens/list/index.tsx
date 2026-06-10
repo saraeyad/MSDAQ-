@@ -2,7 +2,6 @@ import { DataTable } from "@/components/data-table";
 import { DataTableAdvancedToolbar } from "@/components/data-table/data-table-advanced-toolbar";
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 import PageWrapper from "@/components/page-wrapper";
-import SectionTitle from "@/components/section-title";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ROUTES } from "@/router/routes";
@@ -51,8 +50,6 @@ export default function JournalistRequestsList() {
       ]}
     >
       <div className="space-y-6">
-        <SectionTitle>{t("admin.journalistRequestsTitle")}</SectionTitle>
-
         <Tabs
           value={activeTab}
           onValueChange={(value) =>

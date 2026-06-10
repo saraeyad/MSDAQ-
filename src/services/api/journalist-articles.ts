@@ -11,16 +11,10 @@ import type {
   UpdateArticlePayload,
 } from "../types/journalist-articles";
 import {
-  buildAddSourcePayload,
   mapApiArticle,
   mapApiSource,
   mapStandardsCheckResult,
 } from "../types/journalist-articles";
-import {
-  adminReviewArticle,
-  getJournalistArticle as getMockJournalistArticle,
-  getPendingArticlesForAdmin,
-} from "@/data/mock-journalist-articles";
 import API from "./api.repository";
 
 function buildArticleFormData(payload: CreateArticlePayload | UpdateArticlePayload) {
@@ -198,45 +192,6 @@ const JournalistArticles_APIs = {
 
     return {
       data: response.data,
-    };
-  },
-
-  // TODO: replace with real admin API
-  adminListPending: async () => {
-    return {
-      data: {
-        error: false,
-        message: "",
-        data: getPendingArticlesForAdmin(),
-      } satisfies ApiResponse<JournalistArticle[]>,
-    };
-  },
-
-  // TODO: replace with real admin API
-  adminReview: async (
-    id: number | string,
-    action: "approve" | "reject",
-    rejectionReason?: string,
-  ) => {
-    const article = adminReviewArticle(Number(id), action, rejectionReason);
-    return {
-      data: {
-        error: !article,
-        message: article ? "" : "Article not found or not pending",
-        data: article,
-      } satisfies ApiResponse<JournalistArticle>,
-    };
-  },
-
-  // TODO: replace with real admin API
-  getByIdForAdmin: async (id: number | string) => {
-    const article = getMockJournalistArticle(Number(id));
-    return {
-      data: {
-        error: !article,
-        message: article ? "" : "Article not found",
-        data: article,
-      } satisfies ApiResponse<JournalistArticle>,
     };
   },
 };

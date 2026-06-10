@@ -47,9 +47,12 @@
   --color-secondary-muted: var(--secondary-muted);
   --color-accent-chart-rose: var(--accent-chart-rose);
   --color-accent-chart-sky: var(--accent-chart-sky);
-  --shadow-glow-secondary: 0 12px 40px color-mix(in srgb, var(--secondary) 18%, transparent);
-  --shadow-glow-editor: 0 12px 40px color-mix(in srgb, var(--accent-editor) 18%, transparent);
-  --shadow-glow-investigation: 0 12px 40px color-mix(in srgb, var(--accent-investigation) 18%, transparent);
+  --shadow-glow-secondary: 0 12px 40px
+    color-mix(in srgb, var(--secondary) 18%, transparent);
+  --shadow-glow-editor: 0 12px 40px
+    color-mix(in srgb, var(--accent-editor) 18%, transparent);
+  --shadow-glow-investigation: 0 12px 40px
+    color-mix(in srgb, var(--accent-investigation) 18%, transparent);
   --font-headline: "Newsreader", Georgia, "Times New Roman", serif;
   --font-body: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
 }
@@ -94,7 +97,11 @@
   --accent-investigation-muted: #fffbeb;
   --accent-investigation-subtle: #fffdf5;
   --accent-investigation-ink: #1e293b;
-  --accent-investigation-glow: color-mix(in srgb, var(--accent-investigation) 15%, transparent);
+  --accent-investigation-glow: color-mix(
+    in srgb,
+    var(--accent-investigation) 15%,
+    transparent
+  );
   --accent-admin: #334155;
   --accent-admin-muted: #f8fafc;
   --accent-admin-surface: #f1f5f9;
@@ -324,7 +331,8 @@
     border-color: color-mix(in srgb, var(--trust-medium) 32%, transparent);
     background: color-mix(in srgb, var(--trust-medium) 11%, white);
     color: color-mix(in srgb, var(--trust-medium) 78%, #0f172a);
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--trust-medium) 8%, transparent);
+    box-shadow: 0 1px 2px
+      color-mix(in srgb, var(--trust-medium) 8%, transparent);
   }
 
   .trust-badge-medium .trust-badge-dot {
@@ -833,9 +841,21 @@
   .misdaq-showcase-surface {
     position: relative;
     background:
-      radial-gradient(ellipse 60% 50% at 15% 40%, rgba(0, 81, 213, 0.08), transparent 70%),
-      radial-gradient(ellipse 50% 45% at 50% 55%, color-mix(in srgb, var(--accent-editor) 8%, transparent), transparent 70%),
-      radial-gradient(ellipse 55% 50% at 85% 45%, color-mix(in srgb, var(--accent-investigation) 8%, transparent), transparent 70%),
+      radial-gradient(
+        ellipse 60% 50% at 15% 40%,
+        rgba(0, 81, 213, 0.08),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 50% 45% at 50% 55%,
+        color-mix(in srgb, var(--accent-editor) 8%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 55% 50% at 85% 45%,
+        color-mix(in srgb, var(--accent-investigation) 8%, transparent),
+        transparent 70%
+      ),
       linear-gradient(180deg, var(--card) 0%, var(--accent-admin-muted) 100%);
   }
 
@@ -856,7 +876,11 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(15, 23, 42, 0.06) 100%);
+    background: radial-gradient(
+      ellipse at center,
+      transparent 55%,
+      rgba(15, 23, 42, 0.06) 100%
+    );
     pointer-events: none;
     z-index: 0;
   }
@@ -896,31 +920,63 @@
     height: 26rem;
     top: 15%;
     right: -6%;
-    background: color-mix(in srgb, var(--accent-investigation) 14%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--accent-investigation) 14%,
+      transparent
+    );
     animation: home-showcase-orb-drift-amber 24s ease-in-out infinite;
   }
 
   @keyframes home-showcase-orb-drift-blue {
-    0%, 100% { transform: translate(0, 0); }
-    33% { transform: translate(40px, 30px); }
-    66% { transform: translate(-20px, 50px); }
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    33% {
+      transform: translate(40px, 30px);
+    }
+    66% {
+      transform: translate(-20px, 50px);
+    }
   }
 
   @keyframes home-showcase-orb-drift-violet {
-    0%, 100% { transform: translate(0, 0); }
-    33% { transform: translate(-35px, 25px); }
-    66% { transform: translate(25px, -30px); }
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    33% {
+      transform: translate(-35px, 25px);
+    }
+    66% {
+      transform: translate(25px, -30px);
+    }
   }
 
   @keyframes home-showcase-orb-drift-amber {
-    0%, 100% { transform: translate(0, 0); }
-    33% { transform: translate(-30px, -20px); }
-    66% { transform: translate(35px, 35px); }
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    33% {
+      transform: translate(-30px, -20px);
+    }
+    66% {
+      transform: translate(35px, 35px);
+    }
   }
 
   @keyframes home-showcase-scroll-bounce {
-    0%, 100% { transform: translateY(0); opacity: 0.4; }
-    50% { transform: translateY(6px); opacity: 0.7; }
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+    50% {
+      transform: translateY(6px);
+      opacity: 0.7;
+    }
   }
 
   .home-showcase-scroll-hint {
@@ -948,7 +1004,9 @@
     white-space: nowrap;
     font-weight: 400;
     opacity: 0.1;
-    transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    transition:
+      opacity 0.45s ease,
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .group:hover .showcase-card-verb {
@@ -1000,7 +1058,8 @@
   }
 
   @keyframes showcase-verb-drift-investigate {
-    0%, 100% {
+    0%,
+    100% {
       transform: rotate(-10deg) translate(0, 0);
     }
     50% {
@@ -1009,7 +1068,8 @@
   }
 
   @keyframes showcase-verb-drift-verify {
-    0%, 100% {
+    0%,
+    100% {
       transform: translateY(-50%) rotate(6deg) scale(1);
     }
     50% {
@@ -1018,7 +1078,8 @@
   }
 
   @keyframes showcase-verb-drift-trace {
-    0%, 100% {
+    0%,
+    100% {
       transform: rotate(-4deg) translate(0, 0);
     }
     50% {
@@ -1027,7 +1088,8 @@
   }
 
   @keyframes showcase-headline-verb-pulse {
-    0%, 100% {
+    0%,
+    100% {
       transform: translateY(0) scale(1);
     }
     50% {
@@ -1071,13 +1133,15 @@
   }
 
   .journalist-dashboard-hero {
-    box-shadow: 0 4px 24px color-mix(in srgb, var(--accent-editor) 8%, transparent);
+    box-shadow: 0 4px 24px
+      color-mix(in srgb, var(--accent-editor) 8%, transparent);
   }
 
   .journalist-dashboard-panel {
     overflow: hidden;
     border-color: color-mix(in srgb, var(--border) 85%, transparent);
-    box-shadow: 0 2px 16px color-mix(in srgb, var(--accent-editor) 4%, transparent);
+    box-shadow: 0 2px 16px
+      color-mix(in srgb, var(--accent-editor) 4%, transparent);
   }
 
   .journalist-dashboard-draft-row:hover {
@@ -1106,7 +1170,9 @@
   }
 
   .dashboard-workflow-step {
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
   }
 
   .dashboard-workflow-step:hover {
@@ -1115,7 +1181,12 @@
   }
 
   .journalist-dashboard-hero {
-    background: linear-gradient(135deg, var(--card) 0%, var(--accent-editor-subtle) 60%, var(--accent-editor-secondary-muted) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--card) 0%,
+      var(--accent-editor-subtle) 60%,
+      var(--accent-editor-secondary-muted) 100%
+    );
   }
 
   .publishing-workflow-strip {
@@ -1123,7 +1194,10 @@
   }
 
   .publishing-workflow-step {
-    transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      transform 0.2s ease;
   }
 
   .publishing-workflow-strip-compact .publishing-workflow-step {
@@ -1133,7 +1207,8 @@
   .journalist-editor-card,
   .journalist-editor-actions,
   .journalist-smart-editor {
-    box-shadow: 0 4px 20px color-mix(in srgb, var(--accent-editor) 6%, transparent);
+    box-shadow: 0 4px 20px
+      color-mix(in srgb, var(--accent-editor) 6%, transparent);
   }
 
   .smart-editor-header {
@@ -1169,7 +1244,8 @@
   .smart-editor-tool--active {
     border-color: color-mix(in srgb, var(--accent-editor) 35%, transparent);
     background-color: color-mix(in srgb, var(--accent-editor) 8%, transparent);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-editor) 20%, transparent);
+    box-shadow: 0 0 0 1px
+      color-mix(in srgb, var(--accent-editor) 20%, transparent);
   }
 
   .smart-editor-tool:disabled {
@@ -1181,12 +1257,15 @@
     border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
     border-radius: 0.625rem;
     background: color-mix(in srgb, var(--muted) 25%, var(--card));
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .smart-editor-input:focus-within {
     border-color: color-mix(in srgb, var(--accent-editor) 40%, transparent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-editor) 12%, transparent);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--accent-editor) 12%, transparent);
   }
 
   .smart-editor-input textarea {
@@ -1211,7 +1290,9 @@
     height: 100%;
     border-radius: 9999px;
     background: var(--accent-editor);
-    transition: width 0.25s ease, background-color 0.25s ease;
+    transition:
+      width 0.25s ease,
+      background-color 0.25s ease;
   }
 
   .smart-editor-char-bar-fill--over {
@@ -1246,21 +1327,29 @@
   .smart-editor-bullet {
     border: 1px solid color-mix(in srgb, var(--accent-editor) 15%, transparent);
     border-radius: 0.5rem;
-    background: color-mix(in srgb, var(--card) 70%, var(--accent-editor-subtle));
+    background: color-mix(
+      in srgb,
+      var(--card) 70%,
+      var(--accent-editor-subtle)
+    );
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
     line-height: 1.5;
   }
 
   .smart-editor-inline {
-    border: 1px solid color-mix(in srgb, var(--accent-editor) 14%, var(--border));
+    border: 1px solid
+      color-mix(in srgb, var(--accent-editor) 14%, var(--border));
     background: color-mix(in srgb, var(--accent-editor) 3%, var(--card));
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .smart-editor-inline--open {
     border-color: color-mix(in srgb, var(--accent-editor) 24%, var(--border));
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-editor) 6%, transparent);
+    box-shadow: 0 0 0 1px
+      color-mix(in srgb, var(--accent-editor) 6%, transparent);
   }
 
   .smart-editor-inline-bar {
@@ -1307,7 +1396,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    border: 1px solid color-mix(in srgb, var(--accent-editor) 20%, var(--border));
+    border: 1px solid
+      color-mix(in srgb, var(--accent-editor) 20%, var(--border));
     border-radius: 0.375rem;
     background: color-mix(in srgb, var(--accent-editor) 6%, var(--card));
     padding: 0.375rem 0.625rem;
@@ -1349,7 +1439,11 @@
     gap: 0.75rem;
     border: 1px solid color-mix(in srgb, var(--accent-editor) 15%, transparent);
     border-radius: 0.625rem;
-    background: color-mix(in srgb, var(--accent-editor-subtle) 60%, var(--card));
+    background: color-mix(
+      in srgb,
+      var(--accent-editor-subtle) 60%,
+      var(--card)
+    );
     padding: 0.75rem 1rem;
   }
 
@@ -1420,7 +1514,8 @@
 
   .article-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 32px color-mix(in srgb, var(--secondary) 12%, transparent);
+    box-shadow: 0 12px 32px
+      color-mix(in srgb, var(--secondary) 12%, transparent);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1462,7 +1557,8 @@
 
   .discussion-post-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 28px color-mix(in srgb, var(--secondary) 10%, transparent);
+    box-shadow: 0 10px 28px
+      color-mix(in srgb, var(--secondary) 10%, transparent);
   }
 
   .discussion-post-card-featured {
@@ -1484,7 +1580,8 @@
 
   .home-pillar-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 28px color-mix(in srgb, var(--secondary) 10%, transparent);
+    box-shadow: 0 10px 28px
+      color-mix(in srgb, var(--secondary) 10%, transparent);
   }
 
   .credibility-page,
@@ -1494,9 +1591,16 @@
   }
 
   @keyframes image-verification-ghost-drift {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    33% { transform: translate(12px, -8px) rotate(2deg); }
-    66% { transform: translate(-8px, 6px) rotate(-1deg); }
+    0%,
+    100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    33% {
+      transform: translate(12px, -8px) rotate(2deg);
+    }
+    66% {
+      transform: translate(-8px, 6px) rotate(-1deg);
+    }
   }
 
   .image-verification-ghost {
@@ -1530,6 +1634,78 @@
     color: var(--trust-low);
     background: color-mix(in srgb, var(--trust-low) 8%, white);
   }
+}
+
+/* MISDAQ toast notifications (Sonner) */
+.misdaq-toaster [data-sonner-toaster] {
+  font-family: var(--font-body);
+  --width: 22rem;
+}
+
+[data-sonner-toast].misdaq-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: var(--width);
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--brand-navy) 6%, transparent);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+[data-sonner-toast].misdaq-toast .misdaq-toast__title,
+[data-sonner-toast].misdaq-toast [data-title] {
+  font-family: var(--font-body);
+  font-weight: 500;
+  line-height: 1.5;
+  color: inherit;
+}
+
+[data-sonner-toast].misdaq-toast .misdaq-toast__icon,
+[data-sonner-toast].misdaq-toast [data-icon] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-inline-start: var(--toast-icon-margin-start, 0);
+  margin-inline-end: var(--toast-icon-margin-end, 0);
+}
+
+[data-sonner-toast].misdaq-toast--success {
+  border-color: color-mix(in srgb, var(--trust-high) 32%, transparent);
+  background: color-mix(in srgb, var(--trust-high) 9%, white);
+  color: color-mix(in srgb, var(--trust-high) 82%, #0f172a);
+  border-inline-start: 3px solid var(--trust-high);
+}
+
+[data-sonner-toast].misdaq-toast--success [data-icon] {
+  color: var(--trust-high);
+}
+
+[data-sonner-toast].misdaq-toast--error {
+  border-color: color-mix(in srgb, var(--destructive) 32%, transparent);
+  background: color-mix(in srgb, var(--destructive) 8%, white);
+  color: color-mix(in srgb, var(--destructive) 88%, #0f172a);
+  border-inline-start: 3px solid var(--destructive);
+}
+
+[data-sonner-toast].misdaq-toast--error [data-icon] {
+  color: var(--destructive);
+}
+
+[data-sonner-toast].misdaq-toast--info {
+  border-color: color-mix(in srgb, var(--secondary) 28%, transparent);
+  background: color-mix(in srgb, var(--secondary-muted) 88%, white);
+  color: color-mix(in srgb, var(--secondary) 88%, #0f172a);
+  border-inline-start: 3px solid var(--secondary);
+}
+
+[data-sonner-toast].misdaq-toast--info [data-icon] {
+  color: var(--secondary);
 }
 
 .hide-scrollbar {

@@ -4,8 +4,6 @@ import ProtectedRoute from "@/router/ProtectedRoute";
 import RoleRoute from "@/router/RoleRoute";
 import { ROUTES } from "@/router/routes";
 import {
-  AdminArticleDetail,
-  AdminArticlesList,
   AdminDashboard,
   AdminDiscussionModeration,
   JournalistRequestDetail,
@@ -27,7 +25,7 @@ import { JournalistApply } from "@/views/journalist-requests";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import i18n from "../i18n";
 
 function I18nGate({ children }: { children: React.ReactNode }) {
@@ -104,8 +102,6 @@ function AppRoutes() {
             path="journalist-requests/:id"
             element={<JournalistRequestDetail />}
           />
-          <Route path="articles" element={<AdminArticlesList />} />
-          <Route path="articles/:id" element={<AdminArticleDetail />} />
           <Route path="discussion" element={<AdminDiscussionModeration />} />
         </Route>
 
