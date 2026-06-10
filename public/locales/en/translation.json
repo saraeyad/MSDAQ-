@@ -1,0 +1,981 @@
+﻿{
+  "MENU": {
+    "HOME": "Home",
+    "ARTICLES": "Articles",
+    "DISCUSSION": "Discussion Board",
+    "CREDIBILITY": "Credibility Checker",
+    "ADMIN_DASHBOARD": "Admin Dashboard",
+    "JOURNALIST_REQUESTS": "Journalist Requests",
+    "ARTICLE_REVIEW": "Article Review",
+    "DISCUSSION_MODERATION": "Discussion Moderation",
+    "JOURNALIST_DASHBOARD": "Journalist Dashboard",
+    "SMART_EDITOR": "Smart Editor",
+    "IMAGE_VERIFICATION": "Image Trace",
+    "SERVICES": "Services",
+    "ARCHIVE": "Archive",
+    "MY_ARTICLES": "My Articles",
+    "APPLY_JOURNALIST": "Apply as Journalist",
+    "REQUEST_JOURNALIST": "Request as Journalist"
+  },
+  "GENERAL": {
+    "SYSTEM_NAME": "MISDAQ",
+    "WELCOME": "Welcome to",
+    "GUEST": "Guest",
+    "LOADING": "Loading...",
+    "SELECT": "Select {{field}}",
+    "SEARCH": "Search...",
+    "NO_OPTIONS": "No options found",
+    "DISABLED": "Not available",
+    "ENTER": "Enter {{field}}"
+  },
+  "COLUMNS": {
+    "APPLICANT_NAME": "Applicant Name",
+    "EMAIL": "Email",
+    "STATUS": "Status",
+    "SUBMITTED_AT": "Submitted At",
+    "TITLE": "Title",
+    "ACTIONS": "Actions"
+  },
+  "BTN": {
+    "SAVE": "Save",
+    "SEARCH": "Search",
+    "REVIEW": "Review",
+    "VIEW": "View",
+    "APPROVE": "Approve",
+    "REJECT": "Reject",
+    "CANCEL": "Cancel",
+    "VIEW_FILE": "View File",
+    "BACK": "Back"
+  },
+  "auth": {
+    "signInDescription": "Sign in to your account to continue",
+    "registerDescription": "Create a new account",
+    "signingIn": "Signing in...",
+    "signingUp": "Creating account...",
+    "login": "Sign in",
+    "register": "Register",
+    "createAccount": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "passwordConfirmation": "Confirm password",
+    "name": "Full name",
+    "phone": "Phone",
+    "orContinueWith": "Or continue with",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "loginSuccess": "Signed in successfully",
+    "authenticationError": "Authentication failed. Please try again.",
+    "googleSignInFailed": "Google sign-in was cancelled or failed",
+    "notAuthenticated": "Your session has expired. Please sign in again.",
+    "newSessionDetected": "A new session was detected. Please sign in again.",
+    "logout": "Sign out",
+    "accountMenu": "Account menu",
+    "goToDashboard": "Dashboard",
+    "journalistLoginRequired": "Sign in required to request joining as a journalist",
+    "journalistLoginHint": "Use your existing account below. After signing in, you will be taken to the application form.",
+    "journalistRegisterHint": "Create an account to request joining as a journalist",
+    "roles": {
+      "normalUser": "Normal User",
+      "journalist": "Journalist"
+    },
+    "registerSuccess": "Account created successfully",
+    "registerError": "Could not create account",
+    "emailAlreadyTaken": "This email is already registered. Sign in instead, or use Google if that's how you created the account.",
+    "invalidCredentials": "Email or password is incorrect. If you signed up with Google, use the Google button below. Otherwise double-check your password.",
+    "useGoogleInstead": "This account uses Google Sign-In. Please use the Google button below."
+  },
+  "brand": {
+    "name": "مصداق",
+    "tagline": "Investigate. Verify. Publish with trust.",
+    "mission": "MISDAQ is an Arabic journalism platform built like an investigation — every claim examined, every source traced, every article scored for trust and credibility.",
+    "motto": "We don't just publish news. We investigate it.",
+    "explore": "Explore",
+    "identity": {
+      "label": "Our approach",
+      "investigate": {
+        "title": "Investigate",
+        "description": "Examine claims before they reach readers"
+      },
+      "verify": {
+        "title": "Verify",
+        "description": "Cross-check sources and score credibility"
+      },
+      "publish": {
+        "title": "Publish",
+        "description": "Release only what meets journalism standards"
+      }
+    }
+  },
+  "home": {
+    "tagline": "Verification tools for Arabic journalism",
+    "heroTitle": "Verify Arabic content before you publish",
+    "heroDescription": "Check any article's credibility in seconds. Write to journalism standards with the Smart Editor. MISDAQ puts professional verification tools in your hands.",
+    "missionQuote": "مصداق — credibility earned through investigation, not assertion.",
+    "getStarted": "Get started",
+    "applyJournalist": "Apply as Journalist",
+    "tryCredibility": "Try Credibility Checker",
+    "seeSmartEditor": "See Smart Editor",
+    "latestArticles": "Verified output",
+    "articlesSubtitle": "Articles that passed MISDAQ journalism standards — reviewed, scored, and published with transparent trust ratings.",
+    "viewAll": "View all",
+    "viewDiscussion": "Go to Discussion Board",
+    "trustPanel": {
+      "label": "Investigation dossier",
+      "caseId": "REF · MISDAQ-001",
+      "score": "Overall credibility score",
+      "sources": "Source verification",
+      "neutrality": "Neutrality",
+      "verification": "Fact-checking",
+      "caption": "Sample breakdown from a published investigative report on MISDAQ."
+    },
+    "identity": {
+      "label": "Who we are",
+      "title": "A platform that investigates before it publishes",
+      "description": "Our logo tells our story — a journalist with a magnifying glass, the Arabic م of مصداق, and a commitment to looking closer than the headline.",
+      "motto": "\"Truth deserves scrutiny.\"",
+      "steps": {
+        "investigate": {
+          "title": "Investigate",
+          "description": "Every submission is examined claim by claim"
+        },
+        "verify": {
+          "title": "Verify",
+          "description": "Sources are traced and cross-checked"
+        },
+        "publish": {
+          "title": "Publish",
+          "description": "Only standards-compliant work goes live"
+        }
+      },
+      "stats": {
+        "articles": {
+          "value": "120+",
+          "label": "Articles reviewed"
+        },
+        "journalists": {
+          "value": "45+",
+          "label": "Verified journalists"
+        },
+        "claims": {
+          "value": "2.4k",
+          "label": "Claims fact-checked"
+        }
+      }
+    },
+    "pillars": {
+      "label": "Our principles",
+      "title": "Journalism built on standards, not assumptions",
+      "subtitle": "The same rigor behind our logo — scrutiny, verification, transparency — runs through every part of the platform.",
+      "standards": {
+        "title": "Editorial standards",
+        "description": "Every article is reviewed against clear journalism criteria before it reaches readers."
+      },
+      "trust": {
+        "title": "Trust & credibility scores",
+        "description": "Transparent scoring helps readers understand how each article was evaluated."
+      },
+      "transparency": {
+        "title": "Open verification",
+        "description": "Sources, timelines, and credibility breakdowns are visible — not hidden behind the headline."
+      }
+    },
+    "features": {
+      "label": "Explore the platform",
+      "title": "Read, discuss, and verify",
+      "subtitle": "Three tools, one mission — bring investigative standards to Arabic digital journalism.",
+      "explore": "Explore",
+      "articles": {
+        "title": "Articles",
+        "description": "Investigative reports and analysis with trust and credibility scores."
+      },
+      "discussion": {
+        "title": "Discussion board",
+        "description": "Join public conversations on journalism, media, and current topics."
+      },
+      "credibility": {
+        "title": "Credibility checker",
+        "description": "Analyze claims and content against verification standards."
+      }
+    },
+    "showcase": {
+      "tagline": "Verification tools for Arabic journalism",
+      "subtitle": "Three steps from suspicion to certainty — investigate claims, verify standards, trace images.",
+      "verbs": {
+        "investigate": "Investigate",
+        "verify": "Verify",
+        "trace": "Trace"
+      },
+      "steps": {
+        "credibility": "Credibility",
+        "standards": "Standards",
+        "image": "Image"
+      }
+    },
+    "tools": {
+      "label": "Three core tools",
+      "title": "Verify text. Trace images. Write with standards.",
+      "subtitle": "Public tools for readers and researchers. Plus a smart editor for verified journalists.",
+      "credibility": {
+        "title": "Credibility Checker",
+        "description": "Paste Arabic text and get an AI fact-check — each claim verified, disputed, or flagged. No login required.",
+        "cta": "Try it now — it's free",
+        "badge": "Public · No login required"
+      },
+      "editor": {
+        "title": "Smart Editor",
+        "description": "Write in Fusha, add sources, and run a standards check before submission. The same criteria readers expect from verified journalism.",
+        "cta": "See how it works",
+        "ctaJournalist": "Open Smart Editor",
+        "badge": "For verified journalists",
+        "feature1": "Fusha language check",
+        "feature2": "Standards score (0–100)",
+        "feature3": "Source consent workflow",
+        "feature4": "One-click publish when ready"
+      },
+      "imageTrace": {
+        "title": "Image Trace",
+        "description": "Paste an image URL and discover every page where it appears — reverse image search for investigative work.",
+        "cta": "Trace an image",
+        "badge": "Public · No login required"
+      },
+      "explore": "Also explore",
+      "articles": "Published articles",
+      "discussion": "Community discussion"
+    },
+    "cta": {
+      "label": "For journalists",
+      "title": "Join the investigators. Publish with proof.",
+      "description": "Become a verified MISDAQ journalist. Our smart editor checks your work against journalism standards before submission — the same scrutiny readers expect.",
+      "motto": "Your byline. Our standards. Reader trust.",
+      "button": "Apply as journalist"
+    },
+    "article1Title": "Report: Arabic media and publishing standards",
+    "article1Excerpt": "A look at how journalism standards are applied on digital platforms.",
+    "article2Title": "Analysis: Verifying sources",
+    "article2Excerpt": "Why source verification matters before publishing breaking news.",
+    "article3Title": "Study: Trust vs credibility",
+    "article3Excerpt": "The difference between trust score and credibility score."
+  },
+  "scores": {
+    "trust": "Trust Score",
+    "credibility": "Credibility Score"
+  },
+  "journalistRequest": {
+    "title": "Journalist Application",
+    "description": "Submit your journalist application below. You must have a registered account. Your role will change to journalist once an admin approves your request.",
+    "portalBadge": "Verification Portal",
+    "sidebarTitle": "Join the Verification Network",
+    "sidebarDescription": "Apply to publish verified investigative work on MISDAQ. Applications are reviewed against editorial standards before approval.",
+    "footerDescription": "An Arabic-first platform for verified journalism, credibility checking, and editorial accountability.",
+    "stepLabel": "Step {{current}} of {{total}}",
+    "steps": {
+      "personal": "Personal & Basic Information",
+      "professional": "Professional Affiliation",
+      "documents": "Verification Documents"
+    },
+    "features": {
+      "standards": {
+        "title": "Strict Standards",
+        "description": "Every application is reviewed against source verification and editorial quality requirements."
+      },
+      "ethics": {
+        "title": "Code of Ethics",
+        "description": "Approved journalists commit to accuracy, neutrality, and transparent sourcing."
+      }
+    },
+    "visual": {
+      "label": "Editorial Verification",
+      "title": "From draft to trusted publication",
+      "caption": "Your application opens access to the smart editor, standards checks, and the editorial review workflow."
+    },
+    "fullName": "Full Name",
+    "fullNamePassport": "Full Name (as on passport)",
+    "fullNamePlaceholder": "Enter your full name",
+    "professionalEmail": "Professional Email",
+    "phone": "International Phone Number",
+    "phoneMissing": "Not provided on account",
+    "residenceCountry": "Current Country of Residence",
+    "selectCountry": "Select a country",
+    "selectAffiliation": "Select affiliation type",
+    "addressCity": "City",
+    "cityPlaceholder": "Enter your city",
+    "addressCountry": "Country",
+    "affiliationType": "Affiliation Type",
+    "independent": "Independent",
+    "affiliated": "Affiliated with an outlet",
+    "independentHint": "Independent journalists work without an affiliated media organization.",
+    "outletName": "Media Outlet Name",
+    "outletPlaceholder": "Enter outlet name",
+    "idPhoto": "ID Photo",
+    "journalismProof": "Proof of Journalism Practice (optional)",
+    "documentsHint": "Upload a clear ID document (image or PDF, max 5MB). Journalism proof is optional (image or PDF, max 5MB).",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Submit Application",
+    "submitSuccess": "Your application was submitted and is pending review",
+    "submitError": "Could not submit application. Please try again.",
+    "underReview": "Your journalist application is under review. We'll notify you once it's processed.",
+    "pendingReviewTitle": "Application under review",
+    "pendingReviewDescription": "You already submitted a journalist application. Our editorial team is reviewing it and will update your account once a decision is made.",
+    "backToHome": "Back to home",
+    "alreadySubmitted": "You already have a journalist request on file. Only one application is allowed per account.",
+    "notEligible": "Only regular users can submit a journalist application.",
+    "footer": {
+      "policies": "Policies",
+      "editorialGuidelines": "Editorial Guidelines",
+      "codeOfEthics": "Code of Ethics",
+      "company": "Company",
+      "transparency": "Transparency Report",
+      "privacy": "Privacy Policy",
+      "contact": "Contact",
+      "contactUs": "Contact Us"
+    },
+    "countries": {
+      "AE": "United Arab Emirates",
+      "SA": "Saudi Arabia",
+      "EG": "Egypt",
+      "JO": "Jordan",
+      "LB": "Lebanon",
+      "IQ": "Iraq",
+      "SY": "Syria",
+      "PS": "Palestine",
+      "MA": "Morocco",
+      "TN": "Tunisia",
+      "DZ": "Algeria",
+      "LY": "Libya",
+      "SD": "Sudan",
+      "YE": "Yemen",
+      "OM": "Oman",
+      "KW": "Kuwait",
+      "QA": "Qatar",
+      "BH": "Bahrain",
+      "OTHER": "Other"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "commandCenter": "Command center",
+      "subtitle": "Review journalist applications and moderate community discussion.",
+      "moderationCount": "Removed posts",
+      "recentRequests": "Recent pending requests"
+    },
+    "dashboardTitle": "Admin Dashboard",
+    "journalistRequestsTitle": "Journalist Requests",
+    "pendingRequests": "Pending Requests",
+    "pendingRequestsHint": "Review journalist applications and approve or reject them.",
+    "reviewRequests": "Review Requests",
+    "pendingArticles": "Pending Articles",
+    "pendingArticlesHint": "Articles awaiting admin approval.",
+    "reviewArticles": "Review Articles",
+    "articleReview": {
+      "title": "Article Review",
+      "description": "Review articles submitted by journalists and approve or reject.",
+      "pending": "Pending Review",
+      "approveSuccess": "Article approved successfully",
+      "approveError": "Could not approve article",
+      "rejectSuccess": "Article rejected successfully",
+      "rejectError": "Could not reject article",
+      "rejectTitle": "Reject Article",
+      "rejectDescription": "Optionally add a rejection reason.",
+      "rejectPlaceholder": "Rejection reason"
+    },
+    "discussion": {
+      "title": "Discussion Moderation",
+      "description": "Review removed posts and restore them if needed.",
+      "dismiss": "Dismiss Report",
+      "remove": "Remove Post",
+      "restore": "Restore Post",
+      "removed": "Removed",
+      "empty": "No removed posts.",
+      "removeSuccess": "Post removed successfully",
+      "removeError": "Could not remove post",
+      "restoreSuccess": "Post restored successfully",
+      "restoreError": "Could not restore post"
+    },
+    "reviewedBy": "Reviewed by",
+    "reviewedAt": "Reviewed at",
+    "analytics": "Analytics",
+    "analyticsHint": "Platform analytics will be available later.",
+    "approveSuccess": "Request approved successfully",
+    "approveError": "Could not approve request",
+    "rejectSuccess": "Request rejected successfully",
+    "rejectError": "Could not reject request",
+    "rejectTitle": "Reject Request",
+    "rejectDescription": "You can optionally add a rejection reason.",
+    "rejectReasonPlaceholder": "Rejection reason",
+    "rejectReason": "Rejection Reason",
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+  },
+  "smartEditorDemo": {
+    "heroLabel": "Journalist tool",
+    "title": "Smart Editor — see how it works",
+    "description": "The Smart Editor enforces Fusha language, requires sourced claims, and scores every article against journalism standards before it can be published. Here's a live example.",
+    "howItWorks": "How it works",
+    "liveExample": "Live example — sample article",
+    "demoLabel": "Demo",
+    "gatedTitle": "Unlock the full Smart Editor",
+    "gatedDescription": "Apply to become a verified MISDAQ journalist and get full access to draft, check standards, add sources, and publish.",
+    "applyNow": "Apply as journalist",
+    "loginHint": "Already a journalist?",
+    "journalistReady": "You have full access — open the real editor.",
+    "source1": "Syrian National Commission for the Missing",
+    "source2": "Ministry of Interior official statement",
+    "source3": "Hassan Al-Abbasi (family member)",
+    "steps": {
+      "write": {
+        "title": "Write in Fusha",
+        "description": "The editor enforces formal Arabic throughout. Dialect detected? It blocks submission."
+      },
+      "check": {
+        "title": "Run standards check",
+        "description": "One click scores the article across 7 journalism criteria — headlines, sources, bias, and more."
+      },
+      "publish": {
+        "title": "Publish when ready",
+        "description": "Score ≥ 65, sources confirmed, and Fusha passed? The publish button unlocks."
+      }
+    }
+  },
+  "journalist": {
+    "dashboard": {
+      "welcome": "Editorial desk",
+      "subtitle": "Write in Fusha, verify standards, add sources, and publish with trust.",
+      "workflow": "Publishing workflow",
+      "steps": {
+        "write": "Write draft",
+        "source": "Add sources",
+        "check": "Standards check",
+        "publish": "Publish"
+      },
+      "stepHints": {
+        "write": "Write your article in Fusha",
+        "source": "Attach verified sources",
+        "check": "Run AI standards scoring",
+        "publish": "Publish when all gates pass"
+      },
+      "recentDrafts": "Recent drafts",
+      "notifications": "Latest notification",
+      "pendingConsent": "Pending consent",
+      "pendingConsentHint": "Articles waiting on human source approval",
+      "emptyArchive": "No articles yet. Start your first draft."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "No notifications yet."
+    },
+    "smartEditor": {
+      "title": "Smart Editor",
+      "subtitle": "AI suggestions — review before applying",
+      "toolsAvailable": "4 AI writing tools",
+      "inlineHint": "Pick a tool to refine text as you write",
+      "suggested": "Suggested",
+      "loading": "AI is working…",
+      "loadingSteps": [
+        "Analyzing text…",
+        "Applying journalism standards…",
+        "Generating suggestion…"
+      ],
+      "textLabel": "Text to improve",
+      "textPlaceholder": "Paste or type the text you want to improve...",
+      "charLimit": "{{count}}/10,000 characters",
+      "useArticleContent": "Use article content",
+      "runTool": "Select a tool above",
+      "tools": {
+        "rewrite-fusha": "Rewrite to Fusha",
+        "neutralize-bias": "Neutralize Bias",
+        "remove-discrimination": "Remove Discrimination",
+        "bullet-points": "Convert to Bullet Points"
+      },
+      "toolDescriptions": {
+        "rewrite-fusha": "Convert dialect or informal Arabic to formal Fusha",
+        "neutralize-bias": "Remove loaded or partisan language",
+        "remove-discrimination": "Remove discriminatory or stereotypical phrasing",
+        "bullet-points": "Turn prose into a clean bullet list"
+      },
+      "original": "Original",
+      "result": "Result",
+      "points": "Points",
+      "apply": "Apply to article",
+      "dismiss": "Dismiss",
+      "errorRetry": "Smart editor failed, please try again.",
+      "fixWithAI": "Fix with AI"
+    },
+    "dashboardTitle": "Journalist Dashboard",
+    "articlesOverview": "Articles Overview",
+    "articlesOverviewHint": "Your articles and stats will appear here.",
+    "pendingItems": "Pending Items",
+    "pendingItemsHint": "Articles and requests awaiting review.",
+    "stats": "Statistics",
+    "statsHint": "Publishing and trust stats will be available later.",
+    "editor": {
+      "title_page": "Smart Editor",
+      "description": "Write in Fusha, add sources, and run standards check before submitting.",
+      "title": "Article Title",
+      "titlePlaceholder": "Enter your article headline in Fusha",
+      "articleDetails": "Article details",
+      "publishingSteps": "Publishing steps",
+      "coverUploadHint": "Click to upload a cover image",
+      "tags": "Tags",
+      "tagsPlaceholder": "politics, news, investigation",
+      "coverImage": "Cover image",
+      "content": "Article Content",
+      "contentPlaceholder": "Write in Fusha... dialect is not allowed.",
+      "sourcesTitle": "Sources",
+      "addSource": "Add Source",
+      "source": "Source",
+      "sourceLabel": "Source Name",
+      "sourceType": "Source Type",
+      "sourceUrl": "Source URL",
+      "saveDraft": "Save Draft",
+      "runCheck": "Run Standards Check",
+      "submitForReview": "Submit for Review",
+      "publish": "Publish Article",
+      "saveSuccess": "Draft saved",
+      "saveError": "Could not save",
+      "checkError": "Could not run standards check",
+      "submitSuccess": "Article submitted for review",
+      "submitError": "Could not submit",
+      "publishSuccess": "Article published successfully",
+      "publishError": "Could not publish article",
+      "submitBlocked": "Cannot submit — trust score below 65 or standards check failed",
+      "publishBlocked": "Cannot publish — run standards check, add sources, and ensure consent is approved",
+      "saveFirst": "Save draft first",
+      "checking": "Running standards check...",
+      "checkHint": "Save draft first, then run standards check",
+      "standardsTitle": "Standards Check Result",
+      "fushaOk": "Fusha ✓",
+      "fushaRequired": "Fusha required",
+      "dialectBlocked": "Dialect detected — blocked",
+      "canSubmit": "Ready to submit",
+      "cannotSubmit": "Not ready to submit",
+      "canPublish": "Ready to publish",
+      "cannotPublish": "Not ready to publish",
+      "passed": "Passed",
+      "failed": "Failed",
+      "allPassed": "Passed all standards checks",
+      "standardsPassedMoreRequired": "Standards check passed, but publishing also requires at least one source and approved human consent (if any person sources were added). See the checklist below the Publish button.",
+      "sourcesRequireDraft": "Save the draft first before adding sources.",
+      "sourcesReloadHint": "Sources could not be loaded from the server. Re-add them if needed.",
+      "noSources": "No sources added yet. At least one source is required to publish.",
+      "sourceName": "Source name",
+      "sourceEmail": "Source email",
+      "sourcePhone": "Source phone",
+      "sourcePhoneHint": "Required for WhatsApp consent approval",
+      "sourceQuote": "Quote",
+      "trustScoreMinimum": "Minimum {{threshold}} required to publish (0–140 scale)",
+      "criteria": {
+        "fusha_language": "Fusha language",
+        "headline_neutral": "Headline neutrality",
+        "claims_sourced": "Claims sourced",
+        "no_bias": "No bias",
+        "five_ws": "Five Ws",
+        "opinion_separated": "Opinion separated",
+        "multiple_sides": "Multiple sides"
+      },
+      "gates": {
+        "fusha": "Fusha check passed",
+        "fushaFailed": "Run standards check — Fusha requirement not met",
+        "trustScore": "Trust score ≥ 65",
+        "trustScoreFailed": "Trust score {{score}}/{{threshold}} required — run standards check",
+        "hasSource": "At least one source added",
+        "hasSourceFailed": "Add at least one source before publishing",
+        "humanConsent": "Human source consent approved",
+        "humanConsentPending": "{{count}} source(s) pending approval",
+        "humanConsentRejected": "{{count}} source(s) rejected consent",
+        "humanConsentFailed": "All human sources must approve consent",
+        "humanConsentNotYet": "Applies when you add human sources"
+      },
+      "publishConfirm": {
+        "title": "Publish article?",
+        "description": "Publishing is irreversible. Your article will be live and can no longer be edited.",
+        "confirm": "Publish now"
+      },
+      "publishedBanner": {
+        "title": "This article is published",
+        "subtitle": "Simplified and dialect versions are being generated.",
+        "publishedAt": "Published on {{date}}",
+        "viewArchive": "View in archive"
+      },
+      "saveSource": "Add source",
+      "sourceAddError": "Could not add source",
+      "sourceUrlRequired": "Source URL is required",
+      "sourceHumanRequired": "Name, email, phone, and quote are required for human sources",
+      "sourceLabelRequired": "Source name is required",
+      "sourceRemoveError": "Could not remove source",
+      "sourceRemoved": "Source removed",
+      "sourceVerified": "Verified",
+      "consent": {
+        "pending": "Consent pending",
+        "approved": "Consent approved",
+        "rejected": "Consent rejected"
+      },
+      "issues": {
+        "dialect": "Dialect detected — use Fusha",
+        "fusha": "Content does not meet Fusha requirements",
+        "length": "Content is too short"
+      }
+    },
+    "archive": {
+      "title": "Article Archive",
+      "description": "Your drafts, pending, published, and rejected articles.",
+      "newArticle": "New Article",
+      "edit": "Edit",
+      "view": "View",
+      "updated": "Updated: {{date}}",
+      "status": {
+        "all": "All",
+        "draft": "Draft",
+        "pending": "Pending",
+        "published": "Published",
+        "rejected": "Rejected"
+      }
+    }
+  },
+  "discussion": {
+    "title": "Discussion Board",
+    "pageTitle": "Journalism Impact: A Space for Dialogue",
+    "pageSubtitle": "Share your story about how investigative journalism changed your reality or your community. This is a community discussion space — not article comments.",
+    "description": "A community discussion space — not article comments.",
+    "composeTitle": "Share a New Story",
+    "postTitle": "Story Title",
+    "postBody": "Post Content",
+    "postPlaceholder": "Share your story or question...",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "How should we show your name?",
+    "anonymousToggle": "Post anonymously",
+    "anonymous": "Anonymous",
+    "anonymousUser": "Anonymous User",
+    "publishPost": "Publish Post",
+    "empty": "No discussion posts yet. Be the first to share.",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {{current}} of {{total}}",
+    "viewComments": "View comments",
+    "hideComments": "Hide comments",
+    "commentsTitle": "Comments",
+    "commentBody": "Your comment",
+    "commentPlaceholder": "Write a comment...",
+    "publishComment": "Post comment",
+    "publishReply": "Post reply",
+    "reply": "Reply",
+    "cancelReply": "Cancel",
+    "noComments": "No comments yet.",
+    "commentsError": "Could not load comments.",
+    "commentSuccess": "Comment posted successfully",
+    "replySuccess": "Reply posted successfully",
+    "commentError": "Could not post comment",
+    "investigatingBadge": "Journalist is investigating",
+    "flagPost": "Mark as investigating",
+    "unflagPost": "Remove investigation flag",
+    "flagSuccess": "Post flagged for investigation",
+    "unflagSuccess": "Investigation flag removed",
+    "flagError": "Could not flag post",
+    "unflagError": "Could not remove flag",
+    "recentPosts": "Recent Posts",
+    "popularCategories": "Popular Categories",
+    "tagsLabel": "Tags",
+    "share": "Share",
+    "comments": "{{count}} comments",
+    "postCount": "{{count}} posts",
+    "replies": "{{count}} replies",
+    "postSuccess": "Post published successfully",
+    "postError": "Could not publish post",
+    "filters": {
+      "latest": "Latest",
+      "mostInteractive": "Most Interactive"
+    },
+    "tags": {
+      "personal_story": "Personal Story",
+      "accountability": "Accountability",
+      "ethics": "Ethics"
+    },
+    "tagsEn": {
+      "personal_story": "Personal Story",
+      "accountability": "Accountability",
+      "ethics": "Ethics"
+    },
+    "tagsBilingual": {
+      "personal_story": "Personal Story",
+      "accountability": "Accountability",
+      "ethics": "Ethics"
+    }
+  },
+  "imageVerification": {
+    "heroLabel": "Public tool",
+    "title": "Image Verification",
+    "description": "Trace where an image appears online or check whether it was AI-generated. Free, no login.",
+    "tabs": {
+      "reverse": "Reverse trace",
+      "ai": "AI detection"
+    },
+    "reverseDescription": "Paste an image URL and trace where it appears across the web — articles, blogs, and news sites.",
+    "aiDescription": "Upload an image to check whether it was likely created by AI.",
+    "inputLabel": "Image URL to trace",
+    "placeholder": "Paste a direct image link to begin the trace…",
+    "checkButton": "Start trace",
+    "checking": "Tracing image…",
+    "checkError": "Could not verify image",
+    "resultsTitle": "Investigation board",
+    "appearancesCount": "appearances found",
+    "domainsCount": "domains",
+    "leadMatch": "Lead match",
+    "openSource": "Open original",
+    "viewSource": "View source",
+    "moreAppearances": "More appearances",
+    "legend": {
+      "title": "What we trace",
+      "appearances": {
+        "label": "Appearances",
+        "description": "Where this image surfaced online"
+      },
+      "domains": {
+        "label": "Domains",
+        "description": "Which sites published it"
+      },
+      "context": {
+        "label": "Context",
+        "description": "Headlines tied to the image"
+      },
+      "timeline": {
+        "label": "Timeline",
+        "description": "When it was spotted"
+      }
+    },
+    "preview": {
+      "empty": "Your image will appear here",
+      "error": "Could not load image preview",
+      "captionPlaceholder": "Source domain"
+    },
+    "loading": {
+      "title": "Tracing your image",
+      "hint": "This may take a moment — we're scanning the web for visual matches.",
+      "steps": {
+        "scanning": "Scanning the web for visual matches…",
+        "tracing": "Tracing appearances across news sites and blogs…",
+        "mapping": "Mapping domains and publication dates…",
+        "assembling": "Assembling your investigation board…"
+      }
+    },
+    "empty": {
+      "title": "No trail found",
+      "description": "Try a direct image URL (jpg, png, webp). Some sites block external previews."
+    },
+    "ai": {
+      "inputLabel": "Image to analyze",
+      "uploadButton": "Choose image",
+      "uploadHint": "JPG or PNG, max 5 MB",
+      "checkButton": "Detect AI",
+      "checking": "Analyzing image…",
+      "checkError": "Could not analyze image",
+      "resultsTitle": "AI detection result",
+      "confidence": "Confidence",
+      "likelyAiGenerated": "Model flagged AI generation",
+      "likelyReal": "Model flagged authentic image",
+      "status": "Status",
+      "legend": {
+        "title": "Verdict guide",
+        "ai_generated": {
+          "label": "AI generated",
+          "description": "Very likely synthetic or AI-created"
+        },
+        "likely_real": {
+          "label": "Likely real",
+          "description": "Very likely an authentic photograph or scan"
+        },
+        "uncertain": {
+          "label": "Uncertain",
+          "description": "Inconclusive — treat with caution"
+        }
+      },
+      "verdict": {
+        "ai_generated": "Likely AI-generated",
+        "likely_real": "Likely authentic",
+        "uncertain": "Uncertain"
+      },
+      "verdictDescription": {
+        "ai_generated": "The model is confident this image was AI-generated or heavily synthetic.",
+        "likely_real": "The model is confident this is an authentic, non-synthetic image.",
+        "uncertain": "The result is inconclusive. Use additional verification before publishing."
+      },
+      "loading": {
+        "title": "Analyzing your image",
+        "hint": "Our detector is checking for signs of AI generation.",
+        "steps": {
+          "uploading": "Preparing image for analysis…",
+          "scanning": "Scanning visual patterns and artifacts…",
+          "scoring": "Scoring confidence against the detection model…",
+          "finalizing": "Preparing your verdict…"
+        }
+      }
+    }
+  },
+  "aiAnalysis": {
+    "hint": "This usually takes a little while — our AI is carefully reviewing your text.",
+    "credibility": {
+      "title": "Analyzing credibility",
+      "steps": {
+        "reading": "Reading your Arabic text...",
+        "extracting": "Extracting claims from the content...",
+        "verifying": "Cross-checking each claim against sources...",
+        "report": "Building your verification report..."
+      }
+    },
+    "standards": {
+      "title": "Running standards check",
+      "steps": {
+        "reading": "Reading your Arabic text...",
+        "fusha": "Checking Fusha language compliance...",
+        "scoring": "Scoring across 7 journalism criteria...",
+        "report": "Preparing your standards report..."
+      }
+    }
+  },
+  "smartEditor": {
+    "heroLabel": "Public tool",
+    "title": "Smart Editor — Standards Check",
+    "description": "Paste Arabic text and get an AI standards score across 7 journalism criteria — Fusha, sourcing, bias, and more. Free, no login.",
+    "inputLabel": "Arabic text to check",
+    "inputHint": "Minimum 50 characters",
+    "placeholder": "Paste your article or paragraph here...",
+    "checkButton": "Run standards check",
+    "checking": "Analyzing standards...",
+    "checkError": "Could not run standards check",
+    "resultsTitle": "Standards report",
+    "resultsSubtitle": "Trust score: {{score}}/100",
+    "checkedAtPrefix": "Checked at",
+    "breakdownTitle": "Criteria breakdown",
+    "gatedTitle": "Unlock the full Smart Editor",
+    "gatedDescription": "Apply to become a verified MISDAQ journalist and get full access to draft, check standards, add sources, and publish.",
+    "applyNow": "Apply as journalist",
+    "loginHint": "Already a journalist?",
+    "journalistReady": "You have full access — open the real editor.",
+    "legend": {
+      "title": "Scoring criteria",
+      "fusha_language": "Must be written in formal Arabic (Fusha)",
+      "headline_neutral": "Headline should be neutral and factual",
+      "claims_sourced": "Claims must be attributed to sources",
+      "no_bias": "Language should avoid partisan bias",
+      "five_ws": "Answers who, what, when, where, and why",
+      "opinion_separated": "Opinion clearly separated from facts",
+      "multiple_sides": "Multiple perspectives represented"
+    },
+    "criteria": {
+      "fusha_language": "Fusha language",
+      "headline_neutral": "Headline neutrality",
+      "claims_sourced": "Claims sourced",
+      "no_bias": "No bias",
+      "five_ws": "Five Ws",
+      "opinion_separated": "Opinion separated",
+      "multiple_sides": "Multiple sides"
+    }
+  },
+  "credibility": {
+    "heroLabel": "Public tool",
+    "title": "Credibility Checker",
+    "description": "Paste Arabic text and get an AI fact-check — each claim verified, disputed, or flagged. Free, no login.",
+    "inputLabel": "Arabic text to check",
+    "inputHint": "Minimum 50 characters",
+    "placeholder": "Paste your article or paragraph here...",
+    "checkButton": "Check credibility",
+    "checking": "Analyzing claims...",
+    "checkError": "Could not run credibility check",
+    "resultsTitle": "Verification report",
+    "overallScore": "Credibility score",
+    "checkedAtPrefix": "Checked at",
+    "checkedAt": "Checked at {{date}}",
+    "claimsTitle": "Extracted claims",
+    "claimsSubtitle": "{{count}} claims analyzed",
+    "claimNumber": "Claim {{number}}",
+    "empty": {
+      "label": "Ready to verify",
+      "description": "Paste Arabic text to see your credibility score and claim-by-claim verdicts."
+    },
+    "summary": {
+      "label": "Your score"
+    },
+    "legend": {
+      "title": "Verdict labels",
+      "verified": "Confirmed accurate by independent sources",
+      "unverified": "Could not be confirmed or denied",
+      "disputed": "Conflicting sources exist",
+      "false": "Confirmed inaccurate"
+    },
+    "labels": {
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "false": "False",
+      "disputed": "Disputed"
+    }
+  },
+  "articles": {
+    "listTitle": "Articles",
+    "listDescription": "Browse the latest published articles with trust and credibility scores.",
+    "searchPlaceholder": "Search articles by title, content, or tags",
+    "search": "Search",
+    "empty": "No published articles found.",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {{current}} of {{total}}",
+    "featuredStory": "Featured story",
+    "backToList": "All articles",
+    "readMore": "Read article",
+    "imageFallback": "Article cover image unavailable",
+    "affiliatedOutletMessage": "This article was published by an affiliated journalist. Read the full report on the original outlet.",
+    "readAtOutlet": "Read on original outlet",
+    "detailTitle": "Article",
+    "notFound": "Article not found",
+    "byAuthor": "By {{author}}",
+    "scoresTitle": "Article Scores",
+    "trustPassed": "Meets publish threshold (≥ 65)",
+    "trustBlocked": "Below publish threshold (< 65)",
+    "credibilityInfo": "Informational only — does not block publish",
+    "sourcesTitle": "Sources",
+    "timelineTitle": "Timeline",
+    "scoreHistoryTitle": "Score History",
+    "note": "Note",
+    "readingTime": "Reading time: {{minutes}} min",
+    "print": "Print",
+    "bookmark": "Bookmark",
+    "share": "Share",
+    "credibilityAnalysis": "Credibility Analysis",
+    "sourceAccuracy": "Source Accuracy",
+    "reportNeutrality": "Report Neutrality",
+    "dataVerification": "Data Verification",
+    "quickVerification": "Quick Verification",
+    "relatedInvestigations": "Related Investigations",
+    "scoreEvolution": "Trust Score Evolution",
+    "sourcesTableTitle": "Sources & Verification",
+    "sourceColumn": "Source",
+    "typeColumn": "Type",
+    "verificationColumn": "Verification Status",
+    "reliabilityColumn": "Reliability",
+    "language": {
+      "fusha": "Official Fusha",
+      "simple": "Simplified Arabic",
+      "dialect": "Local Dialect"
+    },
+    "sourceType": {
+      "url": "URL",
+      "document": "Document",
+      "person": "Person",
+      "anonymous": "Anonymous",
+      "organization": "Organization",
+      "public_figure": "Public figure"
+    },
+    "verificationStatus": {
+      "verified": "Verified",
+      "under_review": "Under Review",
+      "unverified": "Unverified"
+    },
+    "credibilityLevel": {
+      "high": "High credibility",
+      "medium": "Medium credibility",
+      "low": "Low credibility"
+    }
+  }
+}

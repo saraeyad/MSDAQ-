@@ -1,0 +1,22 @@
+export const ROUTES = {
+  HOME: "/",
+  LOGIN: "/login",
+  REGISTER: "/register",
+  ARTICLES: "/articles",
+  DISCUSSION: "/discussion",
+  CREDIBILITY: "/credibility",
+  SMART_EDITOR_DEMO: "/tools/smart-editor",
+  IMAGE_VERIFICATION: "/tools/image-verification",
+  ARTICLE: (id: string | number) => `/articles/${id}`,
+  JOURNALIST_APPLY: "/journalist/apply",
+  JOURNALIST_DASHBOARD: "/journalist",
+  JOURNALIST_EDITOR: "/journalist/editor",
+  JOURNALIST_ARCHIVE: "/journalist/archive",
+  ADMIN_DASHBOARD: "/admin",
+  ADMIN_JOURNALIST_REQUESTS: "/admin/journalist-requests",
+  ADMIN_JOURNALIST_REQUEST_DETAIL: (id: string | number) =>
+    `/admin/journalist-requests/${id}`,
+  ADMIN_ARTICLES: "/admin/articles",
+  ADMIN_ARTICLE_DETAIL: (id: string | number) => `/admin/articles/${id}`,
+  ADMIN_DISCUSSION: "/admin/discussion",
+};
