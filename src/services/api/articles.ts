@@ -1,18 +1,40 @@
+import {
+  getApiData,
+  parsePublicArticlesListResponse,
+} from "@/lib/api-data";
 import type {
-  ArticleDetailResponse,
-  ArticlesListParams,
-  ArticlesListResponse,
-} from "../types/articles";
+  PaginatedResponse,
+  PublicArticle,
+  PublicArticlesListResult,
+} from "@/types";
+import type { ApiResponse } from "@/types";
 import API from "./api.repository";
 
-const Articles_APIs = {
-  getAll: async (params: ArticlesListParams = {}) => {
-    return API.get<ArticlesListResponse>("/api/articles", { params });
-  },
+export interface ArticlesQuery {
+  latest?: boolean;
+  search?: string;
+  media_type?: string;
+  category?: number;
+  page?: number;
+}
 
-  getById: async (id: number | string) => {
-    return API.get<ArticleDetailResponse>(`/api/articles/${id}`);
+async function fetchListFromApi(
+  params?: ArticlesQuery,
+): Promise<PublicArticlesListResult> {
+  const response = await API.get<
+    ApiResponse<PublicArticle[] | PaginatedResponse<PublicArticle>>
+  >("/api/public/articles", { params });
+  return parsePublicArticlesListResponse(response.data);
+}
+
+export const Articles_APIs = {
+  list: (params?: ArticlesQuery): Promise<PublicArticlesListResult> =>
+    fetchListFromApi(params),
+
+  get: async (id: number | string): Promise<PublicArticle> => {
+    const response = await API.get<ApiResponse<PublicArticle>>(
+      `/api/public/articles/${id}`,
+    );
+    return getApiData(response);
   },
 };
-
-export default Articles_APIs;

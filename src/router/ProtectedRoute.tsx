@@ -22,9 +22,11 @@ export default function ProtectedRoute({
 
   if (!token) {
     const redirect = encodeURIComponent(
-      `${location.pathname}${location.search}${location.hash}`
+      `${location.pathname}${location.search}${location.hash}`,
     );
-    return <Navigate to={`${ROUTES.LOGIN}?redirect=${redirect}`} replace />;
+    return (
+      <Navigate to={`${ROUTES.LOGIN}?redirect=${redirect}`} replace />
+    );
   }
 
   return children;

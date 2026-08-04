@@ -1,59 +1,39 @@
 import type { AuthUser } from "@/context/types";
-import type { ApiResponse } from "../types/api";
-import type {
-  AuthData,
-  GoogleLoginPayload,
-  LoginPayload,
-  RegisterPayload,
-} from "../types/auth";
+import type { ApiResponse } from "@/types";
 import API from "./api.repository";
 
-function toFormData(data: Record<string, string>): FormData {
-  const formData = new FormData();
-  for (const [key, value] of Object.entries(data)) {
-    formData.append(key, value);
-  }
-  return formData;
+export interface LoginPayload {
+  email: string;
+  password: string;
 }
 
-export const clearAuthSession = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-};
+export interface AuthData {
+  token: string;
+  user: AuthUser;
+}
+
+/**
+ * GET /api/me response shape (01 · Auth collection):
+ * `{ user: { id, name, email, ... }, roles?: string[], permissions?: string[] }`.
+ * Top-level roles/permissions are merged onto the flat AuthUser by normalizeMeUser.
+ */
+export interface MeData {
+  user: AuthUser;
+  roles?: string[];
+  permissions?: string[];
+}
 
 export const Auth_APIs = {
-  login: async (data: LoginPayload) => {
-    return API.post<ApiResponse<AuthData>>(
-      "/api/auth/login",
-      toFormData(data),
-    );
-  },
+  login: (data: LoginPayload) =>
+    API.post<ApiResponse<AuthData>>("/api/auth/login", data),
 
-  register: async (data: RegisterPayload) => {
-    return API.post<ApiResponse<AuthData>>(
-      "/api/auth/register",
-      toFormData(data),
-    );
-  },
-
-  googleLogin: async (data: GoogleLoginPayload) => {
-    return API.post<ApiResponse<AuthData>>(
-      "/api/auth/google",
-      toFormData({ token: data.token }),
-    );
-  },
-
-  me: async () => {
-    return API.get<ApiResponse<AuthUser>>("/api/me");
-  },
+  me: () => API.get<ApiResponse<MeData>>("/api/me"),
 
   logout: async () => {
     try {
       await API.post<ApiResponse<null>>("/api/logout", {});
     } catch {
-      // Session may already be invalid; still clear client state.
-    } finally {
-      clearAuthSession();
+      // Session may already be invalid.
     }
   },
 };

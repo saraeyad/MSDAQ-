@@ -2,15 +2,16 @@ import axios from "axios";
 import { setupRequestInterceptor } from "./interceptors/request.interceptor";
 import { setupResponseInterceptor } from "./interceptors/response.interceptor";
 
-const DEFAULT_API_URL = "https://misdaq-production.up.railway.app";
+const DEFAULT_API_URL = "https://misdaq-production-1ff3.up.railway.app";
 
-const baseURL = import.meta.env.VITE_HOST_API || DEFAULT_API_URL;
+/** In dev, use the Vite proxy (same origin) unless VITE_HOST_API overrides. */
+const baseURL =
+  import.meta.env.VITE_HOST_API ||
+  (import.meta.env.DEV ? "" : DEFAULT_API_URL);
 
 if (!import.meta.env.VITE_HOST_API && import.meta.env.DEV) {
-  console.warn(
-    "VITE_HOST_API is not set. Falling back to",
-    DEFAULT_API_URL,
-    "— restart the dev server after editing .env.",
+  console.info(
+    "API requests use the Vite proxy (/api, /storage). Set VITE_HOST_API to call a remote host directly.",
   );
 }
 

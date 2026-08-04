@@ -1,20 +1,18 @@
-import { errorToast } from "@/components/sonner-toast";
 import { ROUTES } from "@/router/routes";
-import { clearAuthSession } from "@/services/api/auth";
+import type { ApiResponse } from "@/types";
 import type { AxiosError, AxiosInstance, AxiosResponse } from "axios";
-import { t } from "i18next";
 
 const SUCCESS_STATUSES = new Set([200, 201, 202, 204]);
 const UNAUTHORIZED_STATUS = 401;
 const FORBIDDEN_STATUS = 403;
-const AUTH_ATTEMPT_PATHS = ["/api/auth/login", "/api/auth/register", "/api/auth/google"];
+const AUTH_ATTEMPT_PATHS = ["/api/auth/login"];
 
-const endSession = (msg: string) => {
-  errorToast(msg);
-  clearAuthSession();
+const endSession = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
   setTimeout(() => {
     window.location.href = ROUTES.LOGIN;
-  }, 1000);
+  }, 500);
 };
 
 export const setupResponseInterceptor = (axiosInstance: AxiosInstance) => {
@@ -25,23 +23,21 @@ export const setupResponseInterceptor = (axiosInstance: AxiosInstance) => {
       }
       return response;
     },
-    (error: AxiosError<{ message?: string }>) => {
+    (error: AxiosError<ApiResponse<unknown>>) => {
       const requestPath = error.config?.url ?? "";
       const isAuthAttempt = AUTH_ATTEMPT_PATHS.some((path) =>
         requestPath.includes(path),
       );
 
       if (error.response?.status === UNAUTHORIZED_STATUS && !isAuthAttempt) {
-        endSession(t("auth.notAuthenticated"));
+        endSession();
       }
 
-      const isJournalistRequest = requestPath.includes("/api/journalist-requests");
-
-      if (error.response?.status === FORBIDDEN_STATUS && !isJournalistRequest) {
-        endSession(t("auth.newSessionDetected"));
+      if (error.response?.status === FORBIDDEN_STATUS) {
+        return Promise.reject(error);
       }
 
       return Promise.reject(error);
-    }
+    },
   );
 };

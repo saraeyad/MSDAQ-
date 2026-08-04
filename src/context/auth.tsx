@@ -1,10 +1,12 @@
-import { clearJournalistRequestPending } from "@/lib/journalist-request-status";
 import { Auth_APIs } from "@/services/api/auth";
-import { normalizeAuthUser } from "@/services/types/auth";
+import { getApiData } from "@/lib/api-data";
+import { normalizeAuthUser, normalizeMeUser } from "@/context/types";
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -14,14 +16,21 @@ interface AuthContextType {
   token: string | null;
   user: AuthUser | null;
   isInitialized: boolean;
+  permissions: string[];
   saveAuth: (token: string, user?: AuthUser) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function readStoredAuth(): { token: string | null; user: AuthUser | null } {
+  if (typeof window === "undefined") {
+    return { token: null, user: null };
+  }
+
   const storedToken = localStorage.getItem("token");
   const storedUser = localStorage.getItem("user");
 
@@ -41,22 +50,39 @@ function readStoredAuth(): { token: string | null; user: AuthUser | null } {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [auth, setAuth] = useState(readStoredAuth);
+  // Defer localStorage reads until after mount so SSR/hydration first paint matches.
+  const [auth, setAuth] = useState<{ token: string | null; user: AuthUser | null }>({
+    token: null,
+    user: null,
+  });
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const permissions = useMemo(
+    () => auth.user?.permissions ?? [],
+    [auth.user?.permissions],
+  );
+
+  const hasPermission = useCallback(
+    (permission: string) => permissions.includes(permission),
+    [permissions],
+  );
+
+  const hasAnyPermission = useCallback(
+    (perms: string[]) => perms.some((p) => permissions.includes(p)),
+    [permissions],
+  );
 
   const saveAuth = (newToken: string, newUser?: AuthUser) => {
     const normalizedUser = newUser ? normalizeAuthUser(newUser) : null;
-
     localStorage.setItem("token", newToken);
     if (normalizedUser) {
       localStorage.setItem("user", JSON.stringify(normalizedUser));
     }
-
     setAuth({ token: newToken, user: normalizedUser });
   };
 
   const logout = () => {
-    clearJournalistRequestPending();
+    void Auth_APIs.logout();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setAuth({ token: null, user: null });
@@ -64,14 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     if (!auth.token) return;
-
     try {
       const response = await Auth_APIs.me();
-      if (!response.data.error && response.data.data) {
-        const user = normalizeAuthUser(response.data.data);
-        localStorage.setItem("user", JSON.stringify(user));
-        setAuth((prev) => ({ ...prev, user }));
-      }
+      const user = normalizeMeUser(getApiData(response));
+      localStorage.setItem("user", JSON.stringify(user));
+      setAuth((prev) => ({ ...prev, user }));
     } catch {
       logout();
     }
@@ -79,27 +102,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const init = async () => {
-      if (!auth.token) {
+      const stored = readStoredAuth();
+
+      if (!stored.token) {
+        setAuth(stored);
         setIsInitialized(true);
         return;
       }
 
+      setAuth(stored);
+
       try {
         const response = await Auth_APIs.me();
-        if (!response.data.error && response.data.data) {
-          const user = normalizeAuthUser(response.data.data);
-          localStorage.setItem("user", JSON.stringify(user));
-          setAuth({ token: auth.token, user });
-        }
+        const user = normalizeMeUser(getApiData(response));
+        localStorage.setItem("user", JSON.stringify(user));
+        setAuth({ token: stored.token, user });
       } catch {
-        logout();
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setAuth({ token: null, user: null });
       } finally {
         setIsInitialized(true);
       }
     };
-
     void init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -108,9 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token: auth.token,
         user: auth.user,
         isInitialized,
+        permissions,
         saveAuth,
         logout,
         refreshUser,
+        hasPermission,
+        hasAnyPermission,
       }}
     >
       {children}

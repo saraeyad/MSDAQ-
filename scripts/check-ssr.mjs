@@ -1,0 +1,15 @@
+const url = process.argv[2] || "http://localhost:1573/articles/1";
+const res = await fetch(url);
+const html = await res.text();
+console.log("status", res.status);
+console.log("length", html.length);
+console.log("has json-ld", html.includes("application/ld+json"));
+console.log("has canonical", html.includes('rel="canonical"'));
+console.log("has article h1", html.includes("font-headline"));
+console.log("has root content", html.includes("container-page"));
+const titles = [...html.matchAll(/<title>(.*?)<\/title>/g)].map((m) => m[1]);
+console.log("titles", titles);
+const ogTitle = html.match(/property="og:title" content="([^"]+)"/);
+console.log("og:title", ogTitle?.[1]);
+const canonical = html.match(/rel="canonical" href="([^"]+)"/);
+console.log("canonical", canonical?.[1]);

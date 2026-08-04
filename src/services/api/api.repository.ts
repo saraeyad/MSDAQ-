@@ -23,24 +23,12 @@ export default class API {
   }
 
   static postFormData<T>(url: string, formData: FormData, config?: AxiosRequestConfig) {
-    return Axios.post<T>(url, formData, {
-      ...config,
-      headers: {
-        ...config?.headers,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    return Axios.post<T>(url, formData, config);
   }
 
   static putFormData<T>(url: string, formData: FormData, config?: AxiosRequestConfig) {
     // PHP/Laravel does not parse multipart bodies on PUT; spoof via POST + _method.
     formData.append("_method", "PUT");
-    return Axios.post<T>(url, formData, {
-      ...config,
-      headers: {
-        ...config?.headers,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    return Axios.post<T>(url, formData, config);
   }
 }

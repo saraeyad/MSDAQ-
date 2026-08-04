@@ -4,14 +4,8 @@
       "@/*": [
         "./src/*"
       ],
-      "@layout/*": [
-        "./src/layout/*"
-      ],
       "@types/*": [
         "./src/types/*"
-      ],
-      "@views/*": [
-        "./src/views/*"
       ],
       "@components/*": [
         "./src/components/*"
