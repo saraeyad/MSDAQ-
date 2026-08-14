@@ -1,4 +1,6 @@
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -6,28 +8,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
+import { AdminFilterBar } from "@/features/admin/components/AdminFilterBar";
+import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
+import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
+import { AdminPanel } from "@/features/admin/components/AdminPanel";
+import { StatusBadge } from "@/features/admin/components/StatusBadge";
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
 import {
-  articleStatusLabel,
-  mediaTypeLabel,
-} from "@/lib/media-labels";
+  flattenCategoriesForSelect,
+  formatCategorySelectLabel,
+} from "@/lib/category-tree";
+import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl } from "@/lib/media-url";
-import { inferArticleStep, formatStepProgress } from "@/lib/publish-gate";
-import { PERMISSIONS } from "@/router/routes";
+import { formatStepProgress, inferArticleStep } from "@/lib/publish-gate";
+import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { PublicCategories_APIs } from "@/services/api/public-categories";
-import { PageLoading } from "@/components/loading-spinner";
 import type { ArticleStatus, StaffArticle } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  Loader2,
+  FileText,
   PenLine,
+  Plus,
   Trash2,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -43,27 +53,21 @@ function StaffArticleRow({
   canEdit,
   canDelete,
   onDelete,
-  isDeleting,
 }: {
   article: StaffArticle;
   canEdit: boolean;
   canDelete: boolean;
-  onDelete: (id: number) => void;
-  isDeleting: boolean;
+  onDelete: (article: StaffArticle) => void;
 }) {
   const coverUrl = resolveMediaUrl(article.cover_image);
   const editStep = inferArticleStep(article);
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center">
+    <div className="newsroom-article-row">
       {coverUrl ? (
-        <img
-          src={coverUrl}
-          alt=""
-          className="size-16 shrink-0 rounded-lg object-cover"
-        />
+        <img src={coverUrl} alt="" className="newsroom-article-row__cover" />
       ) : (
-        <div className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">
+        <div className="newsroom-article-row__cover-fallback">
           {mediaTypeLabel(article.media_type)}
         </div>
       )}
@@ -71,59 +75,52 @@ function StaffArticleRow({
       <div className="min-w-0 flex-1">
         <Link
           to={`/newsroom/articles/${article.id}`}
-          className="font-medium hover:text-primary"
+          className="newsroom-article-row__title"
         >
           {article.title}
         </Link>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span className="rounded-md bg-accent px-2 py-0.5">
-            {articleStatusLabel(article.status)}
-          </span>
+        <div className="newsroom-article-row__meta">
+          <StatusBadge status={article.status} />
           <span>{mediaTypeLabel(article.media_type)}</span>
-          <span>{article.category?.name_ar}</span>
+          {article.category?.name_ar ? (
+            <span>{article.category.name_ar}</span>
+          ) : null}
           <span>{article.author.name}</span>
-          {article.status === "draft" && (
-            <span>{formatStepProgress(inferArticleStep(article), article.media_type)}</span>
-          )}
-          <span>
-            {new Date(article.updated_at).toLocaleDateString("ar")}
-          </span>
+          {article.status === "draft" ? (
+            <span>
+              {formatStepProgress(inferArticleStep(article), article.media_type)}
+            </span>
+          ) : null}
+          <span>{new Date(article.updated_at).toLocaleDateString("ar")}</span>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="newsroom-article-row__actions">
         <Button asChild variant="outline" size="sm">
           <Link to={`/newsroom/articles/${article.id}`}>
-            <Eye className="size-4" />
+            <Eye className="size-3.5" />
             عرض
           </Link>
         </Button>
-        {canEdit && (
+        {canEdit ? (
           <Button asChild variant="outline" size="sm">
-            <Link
-              to={`/newsroom/articles/${article.id}/edit?step=${editStep}`}
-            >
-              <PenLine className="size-4" />
+            <Link to={`/newsroom/articles/${article.id}/edit?step=${editStep}`}>
+              <PenLine className="size-3.5" />
               تحرير
             </Link>
           </Button>
-        )}
-        {canDelete && (
+        ) : null}
+        {canDelete ? (
           <Button
-            variant="outline"
-            size="sm"
-            disabled={isDeleting}
-            onClick={() => onDelete(article.id)}
-            className="text-destructive hover:text-destructive"
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label={`حذف ${article.title}`}
+            onClick={() => onDelete(article)}
           >
-            {isDeleting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Trash2 className="size-4" />
-            )}
-            حذف
+            <Trash2 className="size-4 text-destructive" />
           </Button>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -134,16 +131,22 @@ export default function NewsroomArticlesPage() {
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
   const [params, setParams] = useSearchParams();
+  const [deleteTarget, setDeleteTarget] = useState<StaffArticle | null>(null);
 
   const status = params.get("status") ?? "";
   const category = params.get("category") ?? "";
-  const mine = params.get("mine") !== "0";
+  const mine = params.get("mine") === "1";
   const page = Math.max(1, Number(params.get("page") ?? "1"));
 
   const { data: categories } = useQuery({
     queryKey: ["public-categories"],
     queryFn: () => PublicCategories_APIs.list(),
   });
+
+  const categoryOptions = useMemo(
+    () => flattenCategoriesForSelect(categories ?? []),
+    [categories],
+  );
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["staff-articles", status, category, mine, page],
@@ -160,15 +163,11 @@ export default function NewsroomArticlesPage() {
     mutationFn: (id: number) => ArticlesStaff_APIs.deleteArticle(id),
     onSuccess: () => {
       toast.success("تم حذف المقال");
+      setDeleteTarget(null);
       void queryClient.invalidateQueries({ queryKey: ["staff-articles"] });
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
-
-  const handleDelete = (id: number) => {
-    if (!window.confirm("هل أنت متأكد من حذف هذا المقال؟")) return;
-    deleteMutation.mutate(id);
-  };
 
   const articles = data?.items ?? [];
   const pagination = data?.pagination;
@@ -188,14 +187,20 @@ export default function NewsroomArticlesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="section-title">مقالاتي</h2>
-        <p className="section-description">
-          إدارة المسودات والمقالات المجدولة والمنشورة
-        </p>
-      </div>
+      <AdminPageHeader
+        title="مقالاتي"
+        description="إدارة المسودات والمقالات المجدولة والمنشورة"
+        actions={
+          <Button asChild>
+            <Link to={ROUTES.NEWSROOM_ARTICLE_NEW}>
+              <Plus className="size-4" />
+              مقال جديد
+            </Link>
+          </Button>
+        }
+      />
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:flex-row md:flex-wrap md:items-center">
+      <AdminFilterBar>
         <Select
           value={status || "all"}
           onValueChange={(v) =>
@@ -225,87 +230,104 @@ export default function NewsroomArticlesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">كل التصنيفات</SelectItem>
-            {categories?.map((cat) => (
-              <SelectItem key={cat.id} value={String(cat.id)}>
-                {cat.name_ar}
+            {categoryOptions.map((option) => (
+              <SelectItem key={option.id} value={String(option.id)}>
+                {formatCategorySelectLabel(option)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <label className="flex cursor-pointer items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={mine}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               updateParams({
-                mine: e.target.checked ? null : "0",
+                mine: checked === true ? "1" : null,
                 page: null,
               })
             }
-            className="size-4 rounded border-border"
           />
           مقالاتي فقط
         </label>
-
-        {pagination && (
-          <span className="text-sm text-muted-foreground md:ms-auto">
-            {pagination.total} مقال
-          </span>
-        )}
-      </div>
+      </AdminFilterBar>
 
       {isLoading ? (
-        <PageLoading />
+        <AdminLoadingState variant="table" />
       ) : isError ? (
-        <p className="text-destructive">{getApiErrorMessage(error)}</p>
+        <AdminEmptyState
+          icon={FileText}
+          title="تعذّر تحميل المقالات"
+          description={getApiErrorMessage(error)}
+        />
       ) : articles.length === 0 ? (
-        <p className="text-muted-foreground">لا توجد مقالات مطابقة.</p>
+        <AdminEmptyState
+          icon={FileText}
+          title="لا توجد مقالات مطابقة"
+          description="جرّب تغيير الفلاتر أو ابدأ مقالاً جديداً."
+          action={
+            <Button asChild>
+              <Link to={ROUTES.NEWSROOM_ARTICLE_NEW}>
+                <Plus className="size-4" />
+                مقال جديد
+              </Link>
+            </Button>
+          }
+        />
       ) : (
-        <>
-          <div className="space-y-3">
-            {articles.map((article) => (
-              <StaffArticleRow
-                key={article.id}
-                article={article}
-                canEdit={canEdit}
-                canDelete={canDelete}
-                onDelete={handleDelete}
-                isDeleting={
-                  deleteMutation.isPending &&
-                  deleteMutation.variables === article.id
-                }
-              />
-            ))}
-          </div>
-
-          {pagination && pagination.last_page > 1 && (
-            <div className="flex items-center justify-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-              >
-                <ChevronRight className="size-4" />
-                السابق
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                صفحة {pagination.current_page} من {pagination.last_page}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= pagination.last_page}
-                onClick={() => setPage(page + 1)}
-              >
-                التالي
-                <ChevronLeft className="size-4" />
-              </Button>
-            </div>
-          )}
-        </>
+        <AdminPanel
+          title="المقالات"
+          badge={pagination?.total ?? articles.length}
+          flush
+          footer={
+            pagination && pagination.last_page > 1 ? (
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  <ChevronRight className="size-4" />
+                  السابق
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  صفحة {pagination.current_page} من {pagination.last_page}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= pagination.last_page}
+                  onClick={() => setPage(page + 1)}
+                >
+                  التالي
+                  <ChevronLeft className="size-4" />
+                </Button>
+              </div>
+            ) : undefined
+          }
+        >
+          {articles.map((article) => (
+            <StaffArticleRow
+              key={article.id}
+              article={article}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              onDelete={setDeleteTarget}
+            />
+          ))}
+        </AdminPanel>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        description={`هل تريد حذف «${deleteTarget?.title}»؟ لا يمكن التراجع عن هذا الإجراء.`}
+        isPending={deleteMutation.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() =>
+          deleteTarget && deleteMutation.mutate(deleteTarget.id)
+        }
+      />
     </div>
   );
 }

@@ -133,10 +133,9 @@ export async function handleSsrRequest(
   if (categoryMatch) {
     const slug = decodeURIComponent(categoryMatch[1]!);
     const categoryData = await fetchPublicCategory(slug, page);
-    const seo = categoryData.category.seo;
-    const jsonLdScript = seo
-      ? renderJsonLdScript(buildCategoryJsonLd(seo))
-      : "";
+    const jsonLdScript = renderJsonLdScript(
+      buildCategoryJsonLd(categoryData.category, origin),
+    );
     const categoryUrl = page > 1 ? `${pathname}?page=${page}` : pathname;
     const queryClient = createSsrQueryClient({
       categoryData,

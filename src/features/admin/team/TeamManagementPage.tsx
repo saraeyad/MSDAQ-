@@ -49,6 +49,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CreateUserPanel } from "./CreateUserPanel";
+import { DeleteUserDialog } from "./DeleteUserDialog";
 
 export default function TeamManagementPage() {
   const queryClient = useQueryClient();
@@ -114,6 +116,15 @@ export default function TeamManagementPage() {
     setDirectPermsToRemove([]);
   };
 
+  const resetCreateForm = () => {
+    setShowCreate(false);
+    setCreateName("");
+    setCreateEmail("");
+    setCreatePassword("");
+    setCreatePasswordConfirm("");
+    setCreateRole(undefined);
+  };
+
   const createMutation = useMutation({
     mutationFn: () =>
       AdminUsers_APIs.create({
@@ -126,12 +137,7 @@ export default function TeamManagementPage() {
     onSuccess: () => {
       toast.success("تمت إضافة العضو");
       invalidateUsers();
-      setShowCreate(false);
-      setCreateName("");
-      setCreateEmail("");
-      setCreatePassword("");
-      setCreatePasswordConfirm("");
-      setCreateRole(undefined);
+      resetCreateForm();
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
   });
@@ -258,9 +264,9 @@ export default function TeamManagementPage() {
         title="إدارة الفريق"
         description="إضافة وتعديل أعضاء الفريق وأدوارهم"
         actions={
-          <Button onClick={() => setShowCreate(!showCreate)} className="gap-2">
-            <UserPlus className="size-4" />
-            إضافة عضو
+          <Button onClick={() => setShowCreate(!showCreate)}>
+            {!showCreate ? <UserPlus className="size-4" /> : null}
+            {showCreate ? "إخفاء النموذج" : "إضافة عضو"}
           </Button>
         }
       />
@@ -293,80 +299,22 @@ export default function TeamManagementPage() {
       </AdminFilterBar>
 
       {showCreate ? (
-        <AdminPanel
-          title="عضو جديد"
-          icon={UserPlus}
-          footer={
-            <Button
-              onClick={() => createMutation.mutate()}
-              disabled={
-                createMutation.isPending ||
-                !createName ||
-                !createEmail ||
-                !createPassword ||
-                createPassword !== createPasswordConfirm ||
-                !createRole
-              }
-            >
-              {createMutation.isPending && (
-                <Loader2 className="size-4 animate-spin" />
-              )}
-              حفظ
-            </Button>
-          }
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>الاسم</Label>
-              <Input
-                value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>البريد الإلكتروني</Label>
-              <Input
-                type="email"
-                value={createEmail}
-                onChange={(e) => setCreateEmail(e.target.value)}
-                dir="ltr"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>كلمة المرور</Label>
-              <Input
-                type="password"
-                value={createPassword}
-                onChange={(e) => setCreatePassword(e.target.value)}
-                dir="ltr"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>تأكيد كلمة المرور</Label>
-              <Input
-                type="password"
-                value={createPasswordConfirm}
-                onChange={(e) => setCreatePasswordConfirm(e.target.value)}
-                dir="ltr"
-              />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label>الدور</Label>
-              <Select value={createRole} onValueChange={setCreateRole}>
-                <SelectTrigger className="w-full sm:w-64">
-                  <SelectValue placeholder="اختر الدور" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.name}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </AdminPanel>
+        <CreateUserPanel
+          roles={roles}
+          name={createName}
+          email={createEmail}
+          password={createPassword}
+          passwordConfirm={createPasswordConfirm}
+          role={createRole}
+          isPending={createMutation.isPending}
+          onNameChange={setCreateName}
+          onEmailChange={setCreateEmail}
+          onPasswordChange={setCreatePassword}
+          onPasswordConfirmChange={setCreatePasswordConfirm}
+          onRoleChange={setCreateRole}
+          onSubmit={() => createMutation.mutate()}
+          onCancel={resetCreateForm}
+        />
       ) : null}
 
       {listQuery.isLoading ? (
@@ -386,7 +334,9 @@ export default function TeamManagementPage() {
       ) : (
         <AdminPanel
           title="أعضاء الفريق"
+          description="الأسماء والأدوار والصلاحيات الحالية"
           badge={pagination?.total ?? users.length}
+          flush
           footer={
             pagination && pagination.last_page > 1 ? (
               <div className="flex items-center justify-center gap-2">
@@ -413,60 +363,84 @@ export default function TeamManagementPage() {
             ) : undefined
           }
         >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>الاسم</TableHead>
-                <TableHead>البريد</TableHead>
-                <TableHead>الأدوار</TableHead>
-                <TableHead>الصلاحيات</TableHead>
-                <TableHead>تاريخ الإنشاء</TableHead>
-                <TableHead>إجراء</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell dir="ltr">{user.email}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {(user.roles ?? []).map((role) => (
-                        <Badge key={role} variant="secondary">
-                          {role}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {(user.permissions ?? []).length}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(user.created_at).toLocaleDateString("ar")}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEdit(user)}
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={isSelf(user)}
-                        onClick={() => setDeleteTarget(user)}
-                      >
-                        <Trash2 className="size-3.5 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="admin-team-table">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>الاسم</TableHead>
+                  <TableHead>البريد</TableHead>
+                  <TableHead>الأدوار</TableHead>
+                  <TableHead>الصلاحيات</TableHead>
+                  <TableHead>تاريخ الإنشاء</TableHead>
+                  <TableHead>إجراء</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="admin-team-table__person">
+                        <span className="admin-team-table__avatar">
+                          {user.name.trim().charAt(0) || "؟"}
+                        </span>
+                        <div>
+                          <p className="admin-team-table__name">{user.name}</p>
+                          {isSelf(user) ? (
+                            <p className="admin-team-table__you">حسابك</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="admin-table-ltr">
+                      <span className="admin-team-table__email" dir="ltr">
+                        {user.email}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {(user.roles ?? []).map((role) => (
+                          <Badge key={role} variant="secondary">
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="admin-team-table__count">
+                        {(user.permissions ?? []).length}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(user.created_at).toLocaleDateString("ar")}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          aria-label={`تعديل ${user.name}`}
+                          onClick={() => openEdit(user)}
+                        >
+                          <Pencil className="size-3.5" />
+                          تعديل
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled={isSelf(user)}
+                          aria-label={`حذف ${user.name}`}
+                          onClick={() => setDeleteTarget(user)}
+                        >
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </AdminPanel>
       )}
 
@@ -478,7 +452,14 @@ export default function TeamManagementPage() {
           {selectedUser ? (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedUser.name}</DialogTitle>
+                <DialogTitle>
+                  <span className="admin-team-dialog__header">
+                    <span className="admin-team-table__avatar">
+                      {selectedUser.name.trim().charAt(0) || "؟"}
+                    </span>
+                    {selectedUser.name}
+                  </span>
+                </DialogTitle>
               </DialogHeader>
 
               <Tabs defaultValue="profile" className="w-full">
@@ -643,36 +624,12 @@ export default function TeamManagementPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>تأكيد الحذف</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            هل تريد حذف {deleteTarget?.name}؟ لا يمكن التراجع عن هذا الإجراء.
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              إلغاء
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={deleteMutation.isPending}
-              onClick={() =>
-                deleteTarget && deleteMutation.mutate(deleteTarget.id)
-              }
-            >
-              {deleteMutation.isPending && (
-                <Loader2 className="size-4 animate-spin" />
-              )}
-              حذف
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteUserDialog
+        user={deleteTarget}
+        isPending={deleteMutation.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={(id) => deleteMutation.mutate(id)}
+      />
     </div>
   );
 }

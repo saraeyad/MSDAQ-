@@ -1,4 +1,12 @@
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,11 +24,10 @@ import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { getApiErrorMessage } from "@/lib/api-data";
+import { LibraryItemCard } from "@/features/newsroom/library/LibraryItemCard";
+import { DeleteLibraryItemDialog } from "@/features/newsroom/library/DeleteLibraryItemDialog";
 import { downloadLibraryItem } from "@/lib/library-download";
-import {
-  LIBRARY_FILE_TYPE_OPTIONS,
-  libraryFileTypeLabel,
-} from "@/lib/library-labels";
+import { LIBRARY_FILE_TYPE_OPTIONS } from "@/lib/library-labels";
 import { Library_APIs } from "@/services/api/library";
 import { PERMISSIONS } from "@/router/routes";
 import type { LibraryFileType, LibraryItem } from "@/types";
@@ -28,99 +35,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft,
   ChevronRight,
-  Download,
   FileUp,
   FolderOpen,
   Loader2,
-  Pencil,
-  Trash2,
-  X,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const CATEGORY_PRESETS = ["reports", "guides", "images", "policies", "templates"];
-
-function LibraryItemCard({
-  item,
-  canEdit,
-  canDelete,
-  onEdit,
-  onDelete,
-  onDownload,
-  isDeleting,
-  isDownloading,
-}: {
-  item: LibraryItem;
-  canEdit: boolean;
-  canDelete: boolean;
-  onEdit: (item: LibraryItem) => void;
-  onDelete: (item: LibraryItem) => void;
-  onDownload: (item: LibraryItem) => void;
-  isDeleting: boolean;
-  isDownloading: boolean;
-}) {
-  return (
-    <div className="content-card flex flex-col gap-3 p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="font-medium">{item.title}</p>
-          {item.description && (
-            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-              {item.description}
-            </p>
-          )}
-        </div>
-        <span className="shrink-0 rounded-md bg-accent px-2 py-0.5 text-[10px]">
-          {libraryFileTypeLabel(item.file_type)}
-        </span>
-      </div>
-
-      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-        {item.category && <span>{item.category}</span>}
-        {item.uploaded_by && <span>· {item.uploaded_by.name}</span>}
-        <span>
-          · {new Date(item.created_at).toLocaleDateString("ar")}
-        </span>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isDownloading}
-          onClick={() => onDownload(item)}
-        >
-          {isDownloading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Download className="size-4" />
-          )}
-          تحميل
-        </Button>
-        {canEdit && (
-          <Button variant="outline" size="sm" onClick={() => onEdit(item)}>
-            <Pencil className="size-4" />
-            تعديل
-          </Button>
-        )}
-        {canDelete && (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isDeleting}
-            className="text-destructive hover:text-destructive"
-            onClick={() => onDelete(item)}
-          >
-            <Trash2 className="size-4" />
-            حذف
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function LibraryPage() {
   const canUpload = usePermission(PERMISSIONS.UPLOAD_LIBRARY);
@@ -143,6 +66,7 @@ export default function LibraryPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<LibraryItem | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] = useState("");
@@ -216,6 +140,7 @@ export default function LibraryPage() {
     mutationFn: (id: number) => Library_APIs.delete(id),
     onSuccess: () => {
       toast.success("تم الحذف");
+      setItemToDelete(null);
       invalidate();
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
@@ -240,8 +165,7 @@ export default function LibraryPage() {
   };
 
   const handleDelete = (item: LibraryItem) => {
-    if (!window.confirm(`حذف "${item.title}"؟`)) return;
-    deleteMutation.mutate(item.id);
+    setItemToDelete(item);
   };
 
   const applySearch = () => {
@@ -305,7 +229,9 @@ export default function LibraryPage() {
       {showUpload && canUpload ? (
         <AdminPanel
           title="رفع ملف جديد"
+          description="حتى 50 ميغابايت — سيظهر الملف للفريق حسب الصلاحيات"
           icon={FileUp}
+          accent="primary"
           footer={
             <div className="flex gap-2">
               <Button
@@ -325,12 +251,13 @@ export default function LibraryPage() {
             </div>
           }
         >
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="library-form">
             <div className="space-y-2">
               <Label>العنوان</Label>
               <Input
                 value={uploadTitle}
                 onChange={(e) => setUploadTitle(e.target.value)}
+                placeholder="اسم واضح للملف"
               />
             </div>
             <div className="space-y-2">
@@ -347,21 +274,24 @@ export default function LibraryPage() {
                 ))}
               </datalist>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label>الوصف (اختياري)</Label>
-            <Textarea
-              value={uploadDescription}
-              onChange={(e) => setUploadDescription(e.target.value)}
-              rows={2}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>الملف (حتى 50 ميغابايت)</Label>
-            <Input
-              type="file"
-              onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
-            />
+            <div className="library-form__wide space-y-2">
+              <Label>الوصف (اختياري)</Label>
+              <Textarea
+                value={uploadDescription}
+                onChange={(e) => setUploadDescription(e.target.value)}
+                placeholder="ماذا يحتوي هذا الملف؟"
+                rows={2}
+              />
+            </div>
+            <div className="library-form__wide space-y-2">
+              <Label>الملف (حتى 50 ميغابايت)</Label>
+              <FileInput
+                value={uploadFile}
+                onChange={setUploadFile}
+                chooseLabel="اختر ملفاً"
+                emptyLabel="لم يُختَر ملف بعد"
+              />
+            </div>
           </div>
         </AdminPanel>
       ) : null}
@@ -422,7 +352,9 @@ export default function LibraryPage() {
                 onEdit={openEdit}
                 onDelete={handleDelete}
                 onDownload={handleDownload}
-                isDeleting={deleteMutation.isPending}
+                isDeleting={
+                  deleteMutation.isPending && itemToDelete?.id === item.id
+                }
                 isDownloading={downloadingId === item.id}
               />
             ))}
@@ -430,33 +362,23 @@ export default function LibraryPage() {
         </AdminPanel>
       )}
 
-      {editingItem && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setEditingItem(null)}
-        >
-          <div
-            className="w-full max-w-md space-y-4 rounded-2xl border border-border bg-card p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">تعديل الملف</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setEditingItem(null)}
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-            <div className="space-y-2">
+      <Dialog
+        open={!!editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعديل الملف</DialogTitle>
+          </DialogHeader>
+          <div className="library-form">
+            <div className="library-form__wide space-y-2">
               <Label>العنوان</Label>
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
+            <div className="library-form__wide space-y-2">
               <Label>الوصف</Label>
               <Textarea
                 value={editDescription}
@@ -464,30 +386,39 @@ export default function LibraryPage() {
                 rows={3}
               />
             </div>
-            <div className="space-y-2">
+            <div className="library-form__wide space-y-2">
               <Label>التصنيف</Label>
               <Input
                 value={editCategory}
                 onChange={(e) => setEditCategory(e.target.value)}
               />
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => updateMutation.mutate()}
-                disabled={!editTitle.trim() || updateMutation.isPending}
-              >
-                {updateMutation.isPending && (
-                  <Loader2 className="size-4 animate-spin" />
-                )}
-                حفظ
-              </Button>
-              <Button variant="outline" onClick={() => setEditingItem(null)}>
-                إلغاء
-              </Button>
-            </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingItem(null)}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => updateMutation.mutate()}
+              disabled={!editTitle.trim() || updateMutation.isPending}
+            >
+              {updateMutation.isPending && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              حفظ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <DeleteLibraryItemDialog
+        item={itemToDelete}
+        isPending={deleteMutation.isPending}
+        onClose={() => {
+          if (!deleteMutation.isPending) setItemToDelete(null);
+        }}
+        onConfirm={(id) => deleteMutation.mutate(id)}
+      />
     </div>
   );
 }

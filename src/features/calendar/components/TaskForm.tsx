@@ -10,12 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  CalendarScheduleRow,
+  normalizeScheduleDatetime,
+} from "@/features/calendar/components/CalendarScheduleRow";
 import { ColorPicker } from "@/features/calendar/components/ColorPicker";
 import { UserMultiSelect } from "@/features/calendar/components/UserMultiSelect";
 import {
   datetimeLocalToIso,
   isoToDatetimeLocal,
 } from "@/lib/calendar-datetime";
+import { CALENDAR_TYPE_COLORS } from "@/lib/calendar-feed";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { CalendarTasks_APIs } from "@/services/api/calendar-tasks";
 import type {
@@ -29,7 +34,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const DEFAULT_COLOR = "#10b981";
+const DEFAULT_COLOR: string = CALENDAR_TYPE_COLORS.task;
 
 const RECURRENCE_OPTIONS: { value: CalendarRecurrence; label: string }[] = [
   { value: "none", label: "بدون تكرار" },
@@ -47,6 +52,8 @@ const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
 interface TaskFormProps {
   editingTask?: CalendarTask | null;
   initialDueAt?: string;
+  dateLocked?: boolean;
+  embedded?: boolean;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -54,6 +61,8 @@ interface TaskFormProps {
 export function TaskForm({
   editingTask,
   initialDueAt = "",
+  dateLocked = false,
+  embedded = false,
   onSuccess,
   onCancel,
 }: TaskFormProps) {
@@ -68,12 +77,12 @@ export function TaskForm({
 
   useEffect(() => {
     if (!editingTask) {
-      setDueAt(initialDueAt);
+      setDueAt(initialDueAt ? normalizeScheduleDatetime(initialDueAt) : "");
       return;
     }
     setTitle(editingTask.title);
     setDescription(editingTask.description ?? "");
-    setDueAt(isoToDatetimeLocal(editingTask.due_at));
+    setDueAt(normalizeScheduleDatetime(isoToDatetimeLocal(editingTask.due_at)));
     setPriority(editingTask.priority);
     setColor(editingTask.color ?? DEFAULT_COLOR);
     setRecurrence(editingTask.recurrence ?? "none");
@@ -140,45 +149,47 @@ export function TaskForm({
     },
   });
 
-  return (
-    <div className="calendar-form-panel">
-      <div className="calendar-form-panel__header">
-        <h3 className="calendar-form-panel__title">
-          {editingTask ? "تعديل المهمة" : "مهمة جديدة"}
-        </h3>
-        <p className="calendar-form-panel__desc">
-          {editingTask
-            ? "حدّث تفاصيل المهمة والمُسنَد إليهم"
-            : "أضف مهمة جديدة وحدّد موعد الاستحقاق والمسؤولين"}
-        </p>
-      </div>
-
-      <div className="calendar-form-panel__body space-y-4">
-      <div className="space-y-2">
-        <Label>العنوان</Label>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-      </div>
-
-      <div className="space-y-2">
-        <Label>الوصف</Label>
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>وقت الاستحقاق</Label>
-          <DateTimePicker value={dueAt} onChange={setDueAt} />
+  const formBody = (
+    <>
+      <div className="calendar-form-fields">
+        <div className="calendar-form-field calendar-form-field--title">
+          <Label className="calendar-form-field__label">العنوان</Label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="calendar-form-title-input"
+            placeholder="أدخل عنوان المهمة"
+          />
         </div>
-        <div className="space-y-2">
-          <Label>الأولوية</Label>
+
+        <div className="calendar-form-field">
+          <Label className="calendar-form-field__label">الوصف</Label>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="calendar-form-textarea min-h-24 resize-y"
+            placeholder="أضف وصفاً (اختياري)"
+          />
+        </div>
+
+        <div className="calendar-form-field calendar-form-field--meta">
+          <Label className="calendar-form-field__label">وقت الاستحقاق</Label>
+          <div className="calendar-form-meta">
+            <CalendarScheduleRow
+              value={dueAt}
+              onChange={setDueAt}
+              dateLocked={dateLocked}
+            />
+          </div>
+        </div>
+
+        <div className="calendar-form-field">
+          <Label className="calendar-form-field__label">الأولوية</Label>
           <Select
             value={priority}
             onValueChange={(value) => setPriority(value as TaskPriority)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="calendar-form-select w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -190,52 +201,57 @@ export function TaskForm({
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ColorPicker value={color} onChange={setColor} />
-        <div className="space-y-2">
-          <Label>التكرار</Label>
-          <Select
-            value={recurrence}
-            onValueChange={(value) =>
-              setRecurrence(value as CalendarRecurrence)
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RECURRENCE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="calendar-form-row">
+          <ColorPicker compact value={color} onChange={setColor} />
+          <div className="calendar-form-field">
+            <Label className="calendar-form-field__label">التكرار</Label>
+            <Select
+              value={recurrence}
+              onValueChange={(value) =>
+                setRecurrence(value as CalendarRecurrence)
+              }
+            >
+              <SelectTrigger className="calendar-form-select w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RECURRENCE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {recurrence !== "none" && (
+          <div className="calendar-form-field">
+            <Label className="calendar-form-field__label">نهاية التكرار</Label>
+            <DateTimePicker
+              value={recurrenceEndAt}
+              onChange={setRecurrenceEndAt}
+              placeholder="اختر نهاية التكرار"
+            />
+          </div>
+        )}
+
+        <UserMultiSelect
+          label="المُسنَد إليهم"
+          selectedIds={assigneeIds}
+          onChange={setAssigneeIds}
+          seedUsers={editingTask?.assignees}
+        />
       </div>
 
-      {recurrence !== "none" && (
-        <div className="space-y-2">
-          <Label>نهاية التكرار</Label>
-          <DateTimePicker
-            value={recurrenceEndAt}
-            onChange={setRecurrenceEndAt}
-            placeholder="اختر نهاية التكرار"
-          />
-        </div>
-      )}
-
-      <UserMultiSelect
-        label="المُسنَد إليهم"
-        selectedIds={assigneeIds}
-        onChange={setAssigneeIds}
-        seedUsers={editingTask?.assignees}
-      />
-      </div>
-
-      <div className="calendar-form-panel__actions">
+      <div
+        className={
+          embedded
+            ? "calendar-create-dialog__footer"
+            : "calendar-form-panel__actions"
+        }
+      >
         <Button
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
@@ -249,6 +265,26 @@ export function TaskForm({
           إلغاء
         </Button>
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="calendar-create-dialog__form">{formBody}</div>;
+  }
+
+  return (
+    <div className="calendar-form-panel">
+      <div className="calendar-form-panel__header">
+        <h3 className="calendar-form-panel__title">
+          {editingTask ? "تعديل المهمة" : "مهمة جديدة"}
+        </h3>
+        <p className="calendar-form-panel__desc">
+          {editingTask
+            ? "حدّث تفاصيل المهمة والمُسنَد إليهم"
+            : "أضف مهمة جديدة وحدّد موعد الاستحقاق والمسؤولين"}
+        </p>
+      </div>
+      {formBody}
     </div>
   );
 }

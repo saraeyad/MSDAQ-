@@ -11,6 +11,7 @@ import { Step7Publish } from "@/features/publishing-flow/steps/Step7Publish";
 import {
   clampArticleStep,
   getNextStep,
+  getPreviousStep,
   inferArticleStep,
   isStepVisible,
   maxAllowedStep,
@@ -76,6 +77,10 @@ export default function PublishingFlow() {
     void setStep(next);
   };
 
+  const goBackStep = () => {
+    void setStep(getPreviousStep(currentStep, mediaType));
+  };
+
   const handleCreated = (articleId: number) => {
     navigate(`/newsroom/articles/${articleId}/edit?step=2`, { replace: true });
   };
@@ -119,7 +124,11 @@ export default function PublishingFlow() {
         )}
 
         {!isNew && article && currentStep === 2 && (
-          <Step2Cover article={article} onComplete={advanceStep} />
+          <Step2Cover
+            article={article}
+            onComplete={advanceStep}
+            onBack={goBackStep}
+          />
         )}
 
         {!isNew && article && currentStep === 3 && mediaType === "text" && (
@@ -128,11 +137,18 @@ export default function PublishingFlow() {
             initialBody={article.content?.formal}
             images={article.images ?? []}
             onComplete={advanceStep}
+            onBack={goBackStep}
           />
         )}
 
         {!isNew && article && currentStep === 4 && mediaType === "text" && (
-          <Step4Standards articleId={article.id} onComplete={advanceStep} />
+          <Step4Standards
+            articleId={article.id}
+            title={article.title}
+            contentFormal={article.content?.formal}
+            onComplete={advanceStep}
+            onBack={goBackStep}
+          />
         )}
 
         {!isNew && article && currentStep === 5 && mediaType === "text" && (
@@ -140,6 +156,7 @@ export default function PublishingFlow() {
             articleId={article.id}
             sources={article.sources ?? []}
             onComplete={advanceStep}
+            onBack={goBackStep}
           />
         )}
 
@@ -152,11 +169,12 @@ export default function PublishingFlow() {
             generatedAudio={article.generated_audio}
             onComplete={advanceStep}
             onSkip={() => goToStep(7)}
+            onBack={goBackStep}
           />
         )}
 
         {!isNew && article && currentStep === 7 && (
-          <Step7Publish articleId={article.id} />
+          <Step7Publish articleId={article.id} onBack={goBackStep} />
         )}
       </div>
     </div>

@@ -1,13 +1,23 @@
 import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { categoryPath } from "@/router/routes";
 import type { PublicArticle, PublicPagination } from "@/types";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+
+export interface CategorySubcategoryLink {
+  slug: string;
+  label: string;
+}
 
 interface CategoryFeedViewProps {
   badge: string;
   title: string;
   headerLoading?: boolean;
   description?: string | null;
+  subcategoryLinks?: CategorySubcategoryLink[];
+  activeSubcategorySlug?: string;
   articles: PublicArticle[];
   pagination?: PublicPagination;
   isLoading: boolean;
@@ -22,6 +32,8 @@ export function CategoryFeedView({
   title,
   headerLoading = false,
   description,
+  subcategoryLinks = [],
+  activeSubcategorySlug,
   articles,
   pagination,
   isLoading,
@@ -53,6 +65,27 @@ export function CategoryFeedView({
             <p className="mt-3 max-w-2xl text-muted-foreground md:text-lg">
               {description}
             </p>
+          ) : null}
+          {!headerLoading && subcategoryLinks.length > 0 ? (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {subcategoryLinks.map((link) => {
+                const active = activeSubcategorySlug === link.slug;
+                return (
+                  <Link
+                    key={link.slug}
+                    to={categoryPath(link.slug)}
+                    className={cn(
+                      "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-accent",
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
           ) : null}
         </div>
       </section>

@@ -88,7 +88,11 @@ export function ToolProcessingDialog({
           </p>
 
           <p className="text-center text-xs text-muted-foreground">
-            {elapsed > 0 ? `الوقت المنقضي: ${elapsed} ث` : "بدء المعالجة..."}
+            {elapsed >= 30
+              ? "لا تزال العملية جارية — يُرجى الانتظار..."
+              : elapsed > 0
+                ? `الوقت المنقضي: ${elapsed} ث`
+                : "بدء المعالجة..."}
           </p>
         </div>
       </DialogContent>

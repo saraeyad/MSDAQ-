@@ -4,6 +4,8 @@ export interface SeoHeadPayload {
   canonical: string;
   ogType: string;
   ogImage?: string | null;
+  prev?: string;
+  next?: string;
 }
 
 export interface JsonLdGraph {

@@ -6,13 +6,13 @@ import type {
   StaffMediaType,
 } from "@/types";
 
-export const PUBLISHING_STEPS = [
+const PUBLISHING_STEPS = [
   { num: 1, label: "التفاصيل والمصادر" },
   { num: 2, label: "صورة الغلاف" },
   { num: 3, label: "المحتوى" },
   { num: 4, label: "فحص المعايير" },
   { num: 5, label: "فحص المصداقية" },
-  { num: 6, label: "متعدد لهجات" },
+  { num: 6, label: "التبسيط واللهجة" },
   { num: 7, label: "النشر" },
 ] as const;
 
@@ -55,16 +55,6 @@ export function formatStepProgress(
   return `${label} (${display}/${total})`;
 }
 
-export function publishingFlowSubtitle(mediaType: StaffMediaType): string {
-  const count = stepCountForMediaType(mediaType);
-  const typeLabels: Record<StaffMediaType, string> = {
-    text: "نص",
-    audio: "صوت",
-    video: "فيديو",
-  };
-  return `مسار نشر ${typeLabels[mediaType]} — ${count} خطوات`;
-}
-
 export function isStepVisible(
   step: number,
   mediaType: StaffMediaType,
@@ -82,6 +72,18 @@ export function getNextStep(
     return steps[idx + 1]!;
   }
   return Math.min(currentStep + 1, 7);
+}
+
+export function getPreviousStep(
+  currentStep: number,
+  mediaType: StaffMediaType,
+): number {
+  const steps = stepsForMediaType(mediaType).map((s) => s.num);
+  const idx = steps.findIndex((s) => s === currentStep);
+  if (idx > 0) {
+    return steps[idx - 1]!;
+  }
+  return steps[0] ?? 1;
 }
 
 function hasDescription(article: Pick<StaffArticle, "description">): boolean {

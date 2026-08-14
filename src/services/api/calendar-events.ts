@@ -1,16 +1,21 @@
 import { getApiData, unwrapList } from "@/lib/api-data";
 import type {
   ApiResponse,
+  CalendarEventListQuery,
   CalendarEventRecord,
+  CalendarMovePayload,
   CreateCalendarEventRecordPayload,
   UpdateCalendarEventRecordPayload,
 } from "@/types";
 import API from "./api.repository";
 
 export const CalendarEvents_APIs = {
-  list: async (): Promise<CalendarEventRecord[]> => {
+  list: async (
+    params?: CalendarEventListQuery,
+  ): Promise<CalendarEventRecord[]> => {
     const response = await API.get<ApiResponse<CalendarEventRecord[]>>(
       "/api/events",
+      { params },
     );
     return unwrapList(getApiData(response));
   },
@@ -45,6 +50,17 @@ export const CalendarEvents_APIs = {
 
   delete: async (id: number | string): Promise<null> => {
     const response = await API.delete<ApiResponse<null>>(`/api/events/${id}`);
+    return getApiData(response);
+  },
+
+  move: async (
+    id: number | string,
+    data: CalendarMovePayload,
+  ): Promise<CalendarEventRecord> => {
+    const response = await API.post<ApiResponse<CalendarEventRecord>>(
+      `/api/events/${id}/move`,
+      data,
+    );
     return getApiData(response);
   },
 };

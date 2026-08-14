@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +44,7 @@ export function SpeechToTextToolPage() {
   const [transcribing, setTranscribing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   const isSessionOwner =
     draft != null &&
@@ -164,7 +167,6 @@ export function SpeechToTextToolPage() {
 
   const discardDraft = async () => {
     if (!draft || !canDiscard) return;
-    if (!window.confirm("حذف هذه المسودة؟")) return;
     setDiscarding(true);
     try {
       await Transcripts_APIs.delete(draft.id);
@@ -172,6 +174,7 @@ export function SpeechToTextToolPage() {
       setOwnedDraftId(null);
       setTranscript("");
       setName("");
+      setConfirmDiscard(false);
       toast.success("تم حذف المسودة");
     } catch (err) {
       toast.error(getApiErrorMessage(err));
@@ -197,11 +200,13 @@ export function SpeechToTextToolPage() {
         <CardContent className="space-y-4 p-6">
           <div className="space-y-2">
             <Label>ملف صوتي (MP3, WAV, M4A — حتى 25 ميغابايت)</Label>
-            <Input
-              type="file"
+            <FileInput
               accept={STT_ACCEPT_ATTR}
-              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+              value={file}
+              onChange={handleFile}
               disabled={isProcessing}
+              chooseLabel="اختر ملفاً"
+              emptyLabel="لم يُختَر ملف صوتي بعد"
             />
           </div>
 
@@ -243,7 +248,7 @@ export function SpeechToTextToolPage() {
                   {canDiscard && (
                     <Button
                       variant="outline"
-                      onClick={discardDraft}
+                      onClick={() => setConfirmDiscard(true)}
                       disabled={discarding}
                       className="text-destructive hover:text-destructive"
                     >
@@ -274,6 +279,13 @@ export function SpeechToTextToolPage() {
           </CardContent>
         </Card>
       )}
+      <ConfirmDialog
+        open={confirmDiscard}
+        description="هل تريد حذف هذه المسودة؟ لا يمكن التراجع عن هذا الإجراء."
+        isPending={discarding}
+        onClose={() => setConfirmDiscard(false)}
+        onConfirm={() => void discardDraft()}
+      />
     </ToolPageShell>
   );
 }

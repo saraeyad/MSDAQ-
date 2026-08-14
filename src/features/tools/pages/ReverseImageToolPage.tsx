@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -7,8 +8,11 @@ import {
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
 import { ReverseSearchResults } from "@/features/tools/components/ReverseSearchResults";
-import { absoluteMediaUrlForApi } from "@/lib/media-url";
 import { getApiErrorMessage } from "@/lib/api-data";
+import {
+  REVERSE_IMAGE_PROCESSING_STEPS,
+  resolveToolImageUrl,
+} from "@/lib/tool-processing-steps";
 import { ImageVerification_APIs } from "@/services/api/tools";
 import type { ReverseSearchMatch } from "@/types";
 import { Search } from "lucide-react";
@@ -16,44 +20,49 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ToolPageShell } from "./ToolPageShell";
 
-const REVERSE_IMAGE_STEPS = [
-  "جاري تحميل الصورة...",
-  "جاري البحث في المصادر...",
-  "جاري تجميع النتائج...",
-] as const;
-
-/** Public URL for reverse search — full http(s) or a storage path. */
-function resolveSearchImageUrl(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-
-  if (
-    trimmed.startsWith("/") ||
-    trimmed.startsWith("storage/") ||
-    trimmed.startsWith("storage\\")
-  ) {
-    return absoluteMediaUrlForApi(trimmed);
-  }
-
-  return null;
-}
-
 export function ReverseImageToolPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [publicImageUrl, setPublicImageUrl] = useState<string | null>(null);
+  const [tempLibraryId, setTempLibraryId] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [results, setResults] = useState<ReverseSearchMatch[] | null>(null);
 
-  const run = async () => {
-    const resolvedUrl = resolveSearchImageUrl(imageUrl);
+  const handleFile = async (next: File | null) => {
+    if (tempLibraryId) {
+      void ImageVerification_APIs.discardTempImage(tempLibraryId);
+      setTempLibraryId(null);
+    }
+    setFile(next);
+    setPublicImageUrl(null);
+    setResults(null);
+    if (!next) return;
 
-    if (!file && !resolvedUrl) {
+    setUploading(true);
+    try {
+      const uploaded = await ImageVerification_APIs.uploadPublicImage(next);
+      setPublicImageUrl(uploaded.url);
+      setTempLibraryId(uploaded.libraryId);
+    } catch (err) {
+      setFile(null);
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const run = async () => {
+    const targetUrl =
+      publicImageUrl ?? resolveToolImageUrl(imageUrl);
+
+    if (!targetUrl) {
       toast.error(
-        file || imageUrl.trim()
-          ? "أدخل رابطاً يبدأ بـ https:// أو ارفع ملف صورة"
-          : "اختر صورة أو أدخل رابطاً عاماً",
+        file || uploading
+          ? "انتظر حتى يكتمل رفع الصورة — البحث العكسي يستخدم رابط الصورة على السيرفر"
+          : imageUrl.trim()
+            ? "أدخل رابطاً يبدأ بـ https:// أو ارفع ملف صورة"
+            : "ارفع صورة وانتظر «تم رفع الصورة»، أو أدخل رابطاً عاماً",
       );
       return;
     }
@@ -61,10 +70,7 @@ export function ReverseImageToolPage() {
     setResults(null);
     try {
       await runWithToolProcessing(setProcessing, async () => {
-        const data = await ImageVerification_APIs.reverseSearch({
-          file: file ?? undefined,
-          imageUrl: !file ? (resolvedUrl ?? undefined) : undefined,
-        });
+        const data = await ImageVerification_APIs.reverseSearch(targetUrl);
         setResults(data);
         if (data.length === 0) {
           toast.message("لا توجد نتائج مطابقة");
@@ -72,27 +78,45 @@ export function ReverseImageToolPage() {
       });
     } catch (err) {
       toast.error(getApiErrorMessage(err));
+    } finally {
+      if (tempLibraryId) {
+        await ImageVerification_APIs.discardTempImage(tempLibraryId);
+        setTempLibraryId(null);
+      }
     }
   };
+
+  const busy = processing || uploading;
+  const canSearch = Boolean(publicImageUrl || resolveToolImageUrl(imageUrl));
 
   return (
     <ToolPageShell title="بحث عكسي عن الصور">
       <ToolProcessingDialog
-        open={processing}
-        title="جاري البحث العكسي"
-        steps={REVERSE_IMAGE_STEPS}
+        open={processing || uploading}
+        title={uploading ? "جاري رفع الصورة" : "جاري البحث العكسي"}
+        steps={
+          uploading
+            ? ["جاري رفع الصورة...", "جاري تجهيز الرابط العام..."]
+            : REVERSE_IMAGE_PROCESSING_STEPS
+        }
       />
 
       <Card>
         <CardContent className="space-y-4 p-6">
           <div className="space-y-2">
             <Label htmlFor="reverse-image-file">رفع صورة</Label>
-            <Input
+            <FileInput
               id="reverse-image-file"
-              type="file"
               accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              value={file}
+              onChange={(next) => void handleFile(next)}
+              disabled={busy}
+              chooseLabel="اختر صورة"
+              emptyLabel="اسحب أو انقر للرفع"
             />
+            {publicImageUrl ? (
+              <p className="text-xs text-success">تم رفع الصورة — جاهزة للبحث</p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="reverse-image-url">أو رابط صورة عامة</Label>
@@ -100,15 +124,18 @@ export function ReverseImageToolPage() {
               id="reverse-image-url"
               placeholder="https://example.com/image.jpg"
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              onChange={(e) => {
+                setImageUrl(e.target.value);
+                if (!file) setResults(null);
+              }}
               dir="ltr"
+              disabled={busy || Boolean(file)}
             />
-            <p className="text-xs text-muted-foreground">
-              يجب أن يكون الرابط عاماً ويمكن الوصول إليه مباشرة (مثل رابط صورة
-              منشور أو من التخزين).
-            </p>
           </div>
-          <Button onClick={() => void run()} disabled={processing}>
+          <Button
+            onClick={() => void run()}
+            disabled={busy || !canSearch}
+          >
             <Search className="size-4" />
             بحث
           </Button>

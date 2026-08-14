@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ToolProcessingDialog } from "@/features/tools/components/ToolProcessingDialog";
+import { EditorialReviewPanel } from "@/features/tools/smart-editor/EditorialReviewPanel";
 import {
   getSmartEditorByToolbarId,
+  isReviewTool,
   SMART_EDITOR_TOOLS,
+  type SmartEditorReviewTool,
   type SmartEditorToolbarId,
 } from "@/features/tools/smart-editor/config";
 import { useMutation } from "@tanstack/react-query";
@@ -26,15 +29,20 @@ export function SmartEditorToolbar({
   const [selection, setSelection] = useState(value);
   const [result, setResult] = useState("");
   const [bullets, setBullets] = useState<string[]>([]);
+  const [activeReviewTool, setActiveReviewTool] =
+    useState<SmartEditorReviewTool | null>(null);
+  const [reviewDetectKey, setReviewDetectKey] = useState(0);
 
   useEffect(() => {
     if (embedded) return;
     setSelection(value);
   }, [embedded, value]);
 
+  const sourceText = embedded ? value : selection || value;
+
   const mutation = useMutation({
     mutationFn: async (toolbarId: SmartEditorToolbarId) => {
-      const text = embedded ? value : selection || value;
+      const text = sourceText;
       if (!text.trim()) {
         throw new Error(
           embedded
@@ -43,15 +51,28 @@ export function SmartEditorToolbar({
         );
       }
       const tool = getSmartEditorByToolbarId(toolbarId);
+      if (isReviewTool(tool)) {
+        return { toolbarId, review: true as const };
+      }
       const data = await tool.run(text);
-      return { toolbarId, data };
+      return { toolbarId, review: false as const, data };
     },
-    onSuccess: ({ toolbarId, data }) => {
-      if (toolbarId === "bullets" && data.bullets) {
-        setBullets(data.bullets);
+    onSuccess: (payload) => {
+      if (payload.review) {
+        const tool = getSmartEditorByToolbarId(payload.toolbarId);
+        if (isReviewTool(tool)) {
+          setActiveReviewTool(tool);
+          setResult("");
+          setBullets([]);
+        }
+        return;
+      }
+      setActiveReviewTool(null);
+      if (payload.toolbarId === "bullets" && payload.data.bullets) {
+        setBullets(payload.data.bullets);
         setResult("");
-      } else if (data.suggestion) {
-        setResult(data.suggestion);
+      } else if (payload.data.suggestion) {
+        setResult(payload.data.suggestion);
         setBullets([]);
       }
       toast.success("تم إنشاء الاقتراح");
@@ -66,6 +87,27 @@ export function SmartEditorToolbar({
     onApply(text);
     setResult("");
     setBullets([]);
+    setActiveReviewTool(null);
+  };
+
+  const handleToolClick = (toolbarId: SmartEditorToolbarId) => {
+    const tool = getSmartEditorByToolbarId(toolbarId);
+    if (isReviewTool(tool)) {
+      if (!sourceText.trim()) {
+        toast.error(
+          embedded
+            ? "اكتب نص المقال أولاً في الحقل أعلاه"
+            : "أدخل نصاً أولاً",
+        );
+        return;
+      }
+      setActiveReviewTool(tool);
+      setResult("");
+      setBullets([]);
+      setReviewDetectKey((key) => key + 1);
+      return;
+    }
+    mutation.mutate(toolbarId);
   };
 
   return (
@@ -87,13 +129,15 @@ export function SmartEditorToolbar({
       <div className="flex flex-wrap gap-2">
         {SMART_EDITOR_TOOLS.map((tool) => {
           const isRunning = activeToolId === tool.toolbarId;
+          const isActiveReview =
+            isReviewTool(tool) && activeReviewTool?.toolbarId === tool.toolbarId;
           return (
             <Button
               key={tool.toolbarId}
-              variant="outline"
+              variant={isActiveReview ? "default" : "outline"}
               size="sm"
               disabled={mutation.isPending || (embedded && !value.trim())}
-              onClick={() => mutation.mutate(tool.toolbarId)}
+              onClick={() => handleToolClick(tool.toolbarId)}
               className="gap-2"
             >
               {isRunning ? (
@@ -115,6 +159,17 @@ export function SmartEditorToolbar({
           rows={3}
         />
       )}
+
+      {activeReviewTool ? (
+        <EditorialReviewPanel
+          key={reviewDetectKey}
+          tool={activeReviewTool}
+          text={sourceText}
+          embedded={embedded}
+          onApply={acceptSuggestion}
+          onDismiss={() => setActiveReviewTool(null)}
+        />
+      ) : null}
 
       {result && (
         <div className="space-y-2 rounded-lg border border-primary/20 bg-accent/40 p-3">

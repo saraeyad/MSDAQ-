@@ -88,5 +88,3 @@ export function PublishingStepper({
     </nav>
   );
 }
-
-export { stepsForMediaType as STEPS };

@@ -4,6 +4,8 @@ import type {
   PaginatedResponse,
   PublicArticle,
   PublicArticlesListResult,
+  PublicCategory,
+  PublicCategoryDetail,
   PublicPagination,
   StaffArticle,
   StaffArticlesListResult,
@@ -56,6 +58,42 @@ function normalizePagination(meta: {
     last_page: meta.last_page,
     per_page: meta.per_page,
     total: meta.total,
+  };
+}
+
+type PublicCategoryDetailPayload = {
+  category: PublicCategory;
+  articles: PublicArticle[];
+  pagination?: PublicPagination;
+};
+
+/** Parse GET /api/public/categories/:slug (meta sibling or nested pagination). */
+export function parsePublicCategoryDetailResponse(
+  body: ApiResponse<PublicCategoryDetailPayload>,
+): PublicCategoryDetail {
+  if (!isApiSuccessful(body)) {
+    throw new Error(body.message || "Request failed");
+  }
+
+  const data = body.data;
+  const articles = data.articles ?? [];
+  const pagination = body.meta
+    ? normalizePagination(body.meta)
+    : data.pagination
+      ? normalizePagination(data.pagination)
+      : undefined;
+
+  return {
+    category: data.category,
+    articles,
+    pagination:
+      pagination ??
+      ({
+        current_page: 1,
+        last_page: 1,
+        per_page: articles.length || 15,
+        total: articles.length,
+      } satisfies PublicPagination),
   };
 }
 

@@ -7,25 +7,21 @@ import {
   runWithToolProcessing,
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { StandardsHighlightedText } from "@/features/tools/components/StandardsHighlightedText";
+import { StandardsResultCard } from "@/features/tools/components/StandardsResultCard";
+import { getStandardsCheckErrorMessage } from "@/lib/standards-errors";
+import { STANDARDS_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
 import { ToolsEditorial_APIs } from "@/services/api/tools";
-import type { StandaloneStandardsResult } from "@/types";
-import { CheckCircle2, XCircle } from "lucide-react";
+import type { StandardsCheckResult } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ToolPageShell } from "./ToolPageShell";
-
-const STANDARDS_STEPS = [
-  "جاري قراءة المحتوى...",
-  "جاري فحص المعايير التحريرية...",
-  "جاري تقييم الفصحى...",
-] as const;
 
 export function StandardsCheckToolPage() {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState<StandaloneStandardsResult | null>(null);
+  const [result, setResult] = useState<StandardsCheckResult | null>(null);
 
   const run = async () => {
     if (content.trim().length < 50) {
@@ -42,18 +38,16 @@ export function StandardsCheckToolPage() {
         setResult(data);
       });
     } catch (err) {
-      toast.error(getApiErrorMessage(err));
+      toast.error(getStandardsCheckErrorMessage(err));
     }
   };
-
-  const breakdown = result?.breakdown ?? [];
 
   return (
     <ToolPageShell title="فحص المعايير">
       <ToolProcessingDialog
         open={processing}
         title="جاري فحص المعايير"
-        steps={STANDARDS_STEPS}
+        steps={STANDARDS_PROCESSING_STEPS}
       />
 
       <Card>
@@ -79,51 +73,18 @@ export function StandardsCheckToolPage() {
       </Card>
 
       {result ? (
-        <Card>
-          <CardContent className="space-y-4 p-6">
-            <div className="flex flex-wrap items-center gap-4">
-              <p className="text-lg font-semibold">
-                الدرجة: {result.total_score}
-              </p>
-              <span
-                className={
-                  result.fusha_passed ? "text-success" : "text-destructive"
-                }
-              >
-                {result.fusha_passed ? "اجتاز الفصحى" : "لم يجتز الفصحى"}
-              </span>
-            </div>
-            {breakdown.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                لا تفاصيل معايير في الاستجابة.
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {breakdown.map((item, i) => (
-                  <li
-                    key={item.key ?? i}
-                    className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm"
-                  >
-                    {item.passed ? (
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
-                    ) : (
-                      <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
-                    )}
-                    <div>
-                      <p className="font-medium">
-                        {item.label ?? item.key}
-                        {item.score != null ? ` (${item.score})` : ""}
-                      </p>
-                      {item.feedback ? (
-                        <p className="text-muted-foreground">{item.feedback}</p>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        <>
+          <StandardsResultCard
+            result={result}
+            title={title}
+            content={content}
+          />
+          <StandardsHighlightedText
+            title={title}
+            content={content}
+            criteria={result.criteria}
+          />
+        </>
       ) : null}
     </ToolPageShell>
   );

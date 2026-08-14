@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { PublicPagination } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -44,6 +45,7 @@ export function VoiceAssetLibraryPage<T extends { id: number }>({
   renderItem,
 }: VoiceAssetLibraryPageProps<T>) {
   const [page, setPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
   const queryClient = useQueryClient();
 
   const listQuery = useQuery({
@@ -55,6 +57,7 @@ export function VoiceAssetLibraryPage<T extends { id: number }>({
     mutationFn: deleteItem,
     onSuccess: () => {
       toast.success("تم الحذف");
+      setDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
@@ -64,9 +67,7 @@ export function VoiceAssetLibraryPage<T extends { id: number }>({
   const pagination = listQuery.data?.pagination;
 
   const confirmDelete = (item: T) => {
-    if (window.confirm(`حذف "${getDeleteLabel(item)}"؟`)) {
-      deleteMutation.mutate(item.id);
-    }
+    setDeleteTarget(item);
   };
 
   const handleRenamed = () => {
@@ -123,6 +124,13 @@ export function VoiceAssetLibraryPage<T extends { id: number }>({
           )}
         </div>
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        description={`هل تريد حذف «${deleteTarget ? getDeleteLabel(deleteTarget) : ""}»؟`}
+        isPending={deleteMutation.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+      />
     </ToolPageShell>
   );
 }

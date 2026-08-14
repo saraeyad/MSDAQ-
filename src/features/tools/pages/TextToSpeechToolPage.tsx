@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,6 +26,7 @@ import {
   canSaveVoiceAsset,
   formatVoiceAssetSavedMeta,
 } from "@/lib/voice-asset-access";
+import { TTS_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
 import { ROUTES } from "@/router/routes";
 import { ToolsVoice_APIs, Tts_APIs } from "@/services/api/tools";
 import type { GeneratedAudio, TtsVoice } from "@/types";
@@ -34,12 +36,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ToolPageShell } from "./ToolPageShell";
-
-const TTS_STEPS = [
-  "جاري تحضير النص...",
-  "جاري توليد الصوت...",
-  "جاري إعداد الملف الصوتي...",
-] as const;
 
 export function TextToSpeechToolPage() {
   const { user } = useAuth();
@@ -53,6 +49,7 @@ export function TextToSpeechToolPage() {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   const voicesQuery = useQuery({
     queryKey: ["tts-voices"],
@@ -122,13 +119,13 @@ export function TextToSpeechToolPage() {
 
   const discardDraft = async () => {
     if (!draft || !canDiscard) return;
-    if (!window.confirm("حذف هذه المسودة؟")) return;
     setDiscarding(true);
     try {
       await ToolsVoice_APIs.deleteGeneratedAudio(draft.id);
       setDraft(null);
       setOwnedDraftId(null);
       setName("");
+      setConfirmDiscard(false);
       toast.success("تم حذف المسودة");
     } catch (err) {
       toast.error(getApiErrorMessage(err));
@@ -147,7 +144,7 @@ export function TextToSpeechToolPage() {
       <ToolProcessingDialog
         open={generating}
         title="جاري تحويل النص إلى صوت"
-        steps={TTS_STEPS}
+        steps={TTS_PROCESSING_STEPS}
         description="قد يستغرق التوليد بعض الوقت — لا تغلق الصفحة."
       />
 
@@ -225,7 +222,7 @@ export function TextToSpeechToolPage() {
                   {canDiscard && (
                     <Button
                       variant="outline"
-                      onClick={discardDraft}
+                      onClick={() => setConfirmDiscard(true)}
                       disabled={discarding}
                       className="text-destructive hover:text-destructive"
                     >
@@ -258,6 +255,13 @@ export function TextToSpeechToolPage() {
           </CardContent>
         </Card>
       )}
+      <ConfirmDialog
+        open={confirmDiscard}
+        description="هل تريد حذف هذه المسودة؟ لا يمكن التراجع عن هذا الإجراء."
+        isPending={discarding}
+        onClose={() => setConfirmDiscard(false)}
+        onConfirm={() => void discardDraft()}
+      />
     </ToolPageShell>
   );
 }

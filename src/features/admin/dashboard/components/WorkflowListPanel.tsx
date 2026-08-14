@@ -2,7 +2,7 @@ import { ROUTES } from "@/router/routes";
 import type { ArticleStatus } from "@/types";
 import { Link } from "react-router-dom";
 import { DashboardChartCard } from "./DashboardChartCard";
-import { StatusBadge } from "./StatusBadge";
+import { StatusBadge } from "@/features/admin/components/StatusBadge";
 
 type WorkflowVariant = "pending_consents" | "reverted" | "scheduled_queue";
 

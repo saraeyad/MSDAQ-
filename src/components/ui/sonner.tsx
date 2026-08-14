@@ -1,7 +1,6 @@
 import {
   CircleAlert,
   CircleCheck,
-  CircleX,
   TriangleAlert,
 } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
@@ -15,6 +14,9 @@ export function Toaster(props: ToasterProps) {
       dir="rtl"
       className="misdaq-toaster"
       closeButton
+      offset={16}
+      gap={10}
+      duration={3500}
       toastOptions={{
         unstyled: true,
         classNames: {
@@ -31,7 +33,7 @@ export function Toaster(props: ToasterProps) {
       }}
       icons={{
         success: <CircleCheck className="size-5 shrink-0" aria-hidden />,
-        error: <CircleX className="size-5 shrink-0" aria-hidden />,
+        error: <CircleAlert className="size-5 shrink-0" aria-hidden />,
         warning: <TriangleAlert className="size-5 shrink-0" aria-hidden />,
         info: <CircleAlert className="size-5 shrink-0" aria-hidden />,
       }}

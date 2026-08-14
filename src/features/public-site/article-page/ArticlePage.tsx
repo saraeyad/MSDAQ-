@@ -5,10 +5,10 @@ import {
   resolveArticleBody,
 } from "@/features/public-site/article-page/article-content";
 import { RelatedArticlesSidebar } from "@/features/public-site/article-page/RelatedArticlesSidebar";
-import { JsonLd } from "@/lib/seo/JsonLd";
-import { PublicPageHead } from "@/lib/seo/PublicPageHead";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
-import { PublicArticleCover } from "@/lib/cover-image";
+import { PublicArticleCover } from "@/components/cover-image";
 import { resolvePublicArticleAudioSource, publicMediaTypeLabel } from "@/lib/media-labels";
 import { publicArticleCoverUrl, resolveMediaUrl } from "@/lib/media-url";
 import {

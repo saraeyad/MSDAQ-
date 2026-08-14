@@ -1,6 +1,6 @@
 import { PageLoading } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { PublicArticleCover } from "@/lib/cover-image";
+import { PublicArticleCover } from "@/components/cover-image";
 import { publicMediaTypeLabel } from "@/lib/media-labels";
 import { Articles_APIs } from "@/services/api/articles";
 import { useQuery } from "@tanstack/react-query";

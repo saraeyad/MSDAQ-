@@ -1,8 +1,7 @@
-import { CoverBlurEditor } from "@/components/cover-blur-editor";
+import { CoverUploadSection } from "@/features/publishing-flow/steps/Step2Cover/CoverUploadSection";
 import { Button } from "@/components/ui/button";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,32 +10,30 @@ import {
 } from "@/features/tools/components/ToolProcessingDialog";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaStepComplete } from "@/lib/publish-gate";
+import {
+  AI_DETECTION_PROCESSING_STEPS,
+  REVERSE_IMAGE_PROCESSING_STEPS,
+} from "@/lib/tool-processing-steps";
 import { absoluteMediaUrlForApi, resolveMediaUrl } from "@/lib/media-url";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { ImageVerification_APIs } from "@/services/api/tools";
-import { ReverseSearchResults } from "@/features/tools/components/ReverseSearchResults";
 import type {
   AiDetectionResult,
   ReverseSearchMatch,
   StaffArticle,
 } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Search, Shield, Trash2, Upload } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-
-const REVERSE_IMAGE_STEPS = [
-  "جاري تحميل الصورة...",
-  "جاري البحث في المصادر...",
-  "جاري تجميع النتائج...",
-] as const;
 
 interface Step2CoverProps {
   article: StaffArticle;
   onComplete: () => void;
+  onBack?: () => void;
 }
 
-export function Step2Cover({ article, onComplete }: Step2CoverProps) {
+export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLInputElement>(null);
@@ -269,18 +266,18 @@ export function Step2Cover({ article, onComplete }: Step2CoverProps) {
 
   const runAiDetection = async () => {
     if (!originalFile && !preview) return;
-    setDetecting(true);
+    setAiResult(null);
     try {
-      const imageUrl = absoluteMediaUrlForApi(preview);
-      const data = await ImageVerification_APIs.aiDetection({
-        file: originalFile ?? undefined,
-        imageUrl: !originalFile ? (imageUrl ?? undefined) : undefined,
+      await runWithToolProcessing(setDetecting, async () => {
+        const imageUrl = absoluteMediaUrlForApi(preview);
+        const data = await ImageVerification_APIs.aiDetection({
+          file: originalFile ?? undefined,
+          imageUrl: !originalFile ? (imageUrl ?? undefined) : undefined,
+        });
+        setAiResult(data);
       });
-      setAiResult(data);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
-    } finally {
-      setDetecting(false);
     }
   };
 
@@ -296,119 +293,23 @@ export function Step2Cover({ article, onComplete }: Step2CoverProps) {
   const canContinue = mediaStepComplete(localArticle);
 
   const coverSection = (
-    <>
-      {!preview ? (
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border py-16 transition-colors hover:border-primary/50"
-        >
-          <Upload className="size-10 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">ارفع صورة الغلاف</span>
-        </button>
-      ) : (
-        <div className="space-y-4">
-          {blurMode ? (
-            <CoverBlurEditor
-              imageSrc={preview}
-              onSave={handleBlurredSave}
-              onCancel={() => setBlurMode(false)}
-              saving={uploading}
-            />
-          ) : (
-            <div className="relative">
-              <img
-                src={preview}
-                alt=""
-                className="max-h-80 w-full rounded-xl object-cover"
-              />
-              {uploading && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/50">
-                  <Loader2 className="size-8 animate-spin text-primary" />
-                </div>
-              )}
-            </div>
-          )}
-
-          {!blurMode && (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Upload className="size-4" />
-              )}
-              استبدال
-            </Button>
-            <Button variant="outline" size="sm" onClick={deleteCover}>
-              <Trash2 className="size-4" />
-              حذف
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void runReverseSearch()}
-              disabled={searching || uploading || !publicCoverUrl}
-            >
-              {searching ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Search className="size-4" />
-              )}
-              بحث عكسي
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={runAiDetection}
-              disabled={detecting}
-            >
-              {detecting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Shield className="size-4" />
-              )}
-              كشف AI
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setBlurMode(true)}
-              disabled={!preview || uploading}
-            >
-              أداة التمويه
-            </Button>
-          </div>
-          )}
-
-          {reverseSearched ? (
-            <ReverseSearchResults results={searchResults} />
-          ) : null}
-
-          {aiResult && (
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm font-medium">
-                  {aiResult.verdict === "ai_generated"
-                    ? "علامات توليد بالذكاء الاصطناعي"
-                    : aiResult.verdict === "likely_real"
-                      ? "يبدو حقيقياً"
-                      : "غير مؤكد"}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  الثقة: {(aiResult.confidence_score * 100).toFixed(0)}%
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-    </>
+    <CoverUploadSection
+      preview={preview}
+      blurMode={blurMode}
+      uploading={uploading}
+      searching={searching}
+      detecting={detecting}
+      publicCoverUrl={publicCoverUrl}
+      reverseSearched={reverseSearched}
+      searchResults={searchResults}
+      aiResult={aiResult}
+      fileRef={fileRef}
+      onBlurredSave={handleBlurredSave}
+      onBlurModeChange={setBlurMode}
+      onDeleteCover={deleteCover}
+      onReverseSearch={runReverseSearch}
+      onAiDetection={runAiDetection}
+    />
   );
 
   return (
@@ -416,7 +317,12 @@ export function Step2Cover({ article, onComplete }: Step2CoverProps) {
       <ToolProcessingDialog
         open={searching}
         title="جاري البحث العكسي"
-        steps={REVERSE_IMAGE_STEPS}
+        steps={REVERSE_IMAGE_PROCESSING_STEPS}
+      />
+      <ToolProcessingDialog
+        open={detecting}
+        title="جاري كشف الصورة"
+        steps={AI_DETECTION_PROCESSING_STEPS}
       />
 
       <input
@@ -454,8 +360,8 @@ export function Step2Cover({ article, onComplete }: Step2CoverProps) {
 
       {mediaType === "audio" && (
         <>
-          <div className="space-y-4 rounded-xl border border-border p-4">
-            <p className="text-sm font-medium">الصوت المصدر أو رابط SoundCloud</p>
+          <div className="publish-flow-card">
+            <p className="publish-flow-card__title">الصوت المصدر أو رابط SoundCloud</p>
             {audioPreview ? (
               <audio controls className="w-full" src={audioPreview} />
             ) : null}
@@ -505,8 +411,8 @@ export function Step2Cover({ article, onComplete }: Step2CoverProps) {
 
       {mediaType === "video" && (
         <>
-          <div className="space-y-4 rounded-xl border border-border p-4">
-            <p className="text-sm font-medium">الفيديو أو رابط YouTube</p>
+          <div className="publish-flow-card">
+            <p className="publish-flow-card__title">الفيديو أو رابط YouTube</p>
             {videoStatus === "processing" && (
               <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-accent/40 p-3 text-sm">
                 <Loader2 className="size-4 animate-spin" />
@@ -565,7 +471,7 @@ export function Step2Cover({ article, onComplete }: Step2CoverProps) {
         </>
       )}
 
-      <StepActionsRow>
+      <StepActionsRow onBack={onBack}>
         <NextStepButton onClick={onComplete} disabled={!canContinue} />
       </StepActionsRow>
     </div>

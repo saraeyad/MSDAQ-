@@ -1,7 +1,8 @@
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
-import { StatusBadge } from "@/features/admin/dashboard/components/StatusBadge";
+import { StatusBadge } from "@/features/admin/components/StatusBadge";
 import { PublishGatePanel } from "@/features/publishing-flow/components/PublishGatePanel";
 import { SourceConsentBanner } from "@/features/publishing-flow/components/SourceConsentBanner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
@@ -89,6 +90,8 @@ export default function StaffArticleDetailPage() {
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const { data: article, isLoading, isError, error } = useQuery({
     queryKey: ["staff-article", id],
     queryFn: () => ArticlesStaff_APIs.getArticle(id!),
@@ -106,8 +109,7 @@ export default function StaffArticleDetailPage() {
   });
 
   const handleDelete = () => {
-    if (!window.confirm("هل أنت متأكد من حذف هذا المقال؟")) return;
-    deleteMutation.mutate();
+    setConfirmDelete(true);
   };
 
   if (isLoading) {
@@ -331,6 +333,14 @@ export default function StaffArticleDetailPage() {
       <div className="staff-article-gate">
         <PublishGatePanel gate={gate} />
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        description={`هل تريد حذف «${article.title}»؟ لا يمكن التراجع عن هذا الإجراء.`}
+        isPending={deleteMutation.isPending}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={() => deleteMutation.mutate()}
+      />
     </div>
   );
 }

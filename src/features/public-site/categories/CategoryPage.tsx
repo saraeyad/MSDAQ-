@@ -1,7 +1,9 @@
 import { CategoryFeedView } from "@/features/public-site/categories/CategoryFeedView";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
-import { JsonLd } from "@/lib/seo/JsonLd";
-import { PublicPageHead } from "@/lib/seo/PublicPageHead";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { PublicPageHead } from "@/components/seo/PublicPageHead";
+import { useSiteOrigin } from "@/context/site-origin";
+import { findCategoryBySlug } from "@/lib/category-tree";
 import {
   buildCategoryJsonLd,
   buildCategorySeoHead,
@@ -22,6 +24,7 @@ export default function CategoryPage({
   initialData,
   initialPage = 1,
 }: CategoryPageProps) {
+  const origin = useSiteOrigin();
   const { slug } = useParams<{ slug: string }>();
   const [page, setPage] = useState(initialPage);
   const { data: categories = [] } = usePublicCategories();
@@ -31,9 +34,34 @@ export default function CategoryPage({
   }, [slug]);
 
   const cachedCategory = useMemo(
-    () => categories.find((category) => category.slug === slug),
+    () => findCategoryBySlug(categories, slug ?? ""),
     [categories, slug],
   );
+
+  const parentCategory = useMemo(() => {
+    if (!slug) return undefined;
+    for (const parent of categories) {
+      if (parent.slug === slug) return parent;
+      if (parent.children?.some((child) => child.slug === slug)) {
+        return parent;
+      }
+    }
+    return undefined;
+  }, [categories, slug]);
+
+  const subcategoryLinks = useMemo(() => {
+    if (!parentCategory?.children?.length) return [];
+    return parentCategory.children.map((child) => ({
+      slug: child.slug,
+      label: child.name_ar,
+    }));
+  }, [parentCategory]);
+
+  const activeSubcategorySlug = parentCategory?.children?.some(
+    (child) => child.slug === slug,
+  )
+    ? slug
+    : undefined;
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["public-category", slug, page],
@@ -60,9 +88,11 @@ export default function CategoryPage({
 
   const category = data?.category ?? cachedCategory;
   const categoryName = category?.name_ar;
-  const seo = category?.seo;
-  const seoHead = seo ? buildCategorySeoHead(seo) : null;
-  const jsonLd = seo ? buildCategoryJsonLd(seo) : null;
+  const pagination = data?.pagination;
+  const seoHead = category
+    ? buildCategorySeoHead(category, { page, origin, pagination })
+    : null;
+  const jsonLd = category ? buildCategoryJsonLd(category, origin) : null;
   const headerLoading = !categoryName && isLoading && !data;
 
   return (
@@ -75,8 +105,10 @@ export default function CategoryPage({
         title={categoryName ?? ""}
         headerLoading={headerLoading}
         description={category?.description}
+        subcategoryLinks={subcategoryLinks}
+        activeSubcategorySlug={activeSubcategorySlug}
         articles={data?.articles ?? []}
-        pagination={data?.pagination}
+        pagination={pagination}
         isLoading={isLoading && !data}
         page={page}
         onPageChange={setPage}

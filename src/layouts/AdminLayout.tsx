@@ -1,5 +1,4 @@
 import { BrandLogo } from "@/components/brand-logo";
-import { NotificationsBell } from "@/components/notifications-bell";
 import { RouteErrorBoundary } from "@/components/route-error-boundary";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import {
   getVisibleStaffNav,
 } from "@/features/staff/nav/staff-nav";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
-import { ROUTES } from "@/router/routes";
 import { LogOut, Menu } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Outlet } from "react-router-dom";
@@ -41,8 +39,8 @@ function SidebarFooter({
   onLogout: () => void;
 }) {
   return (
-    <div className="space-y-3 border-t border-border p-4">
-      <div className="content-card flex items-center gap-3 p-3">
+    <div className="staff-shell__footer space-y-3">
+      <div className="staff-shell__user">
         <UserAvatar name={userName ?? "?"} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{userName}</p>
@@ -76,15 +74,13 @@ export default function AdminLayout() {
   const userRole = user?.roles?.[0] ?? "مدير";
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 flex-col border-e border-border bg-sidebar md:flex">
-        <div className="border-b border-border p-4">
+    <div className="staff-shell">
+      <aside className="staff-shell__aside">
+        <div className="staff-shell__brand">
           <BrandLogo size="lg" linkToHome={false} />
-          <p className="mt-3 text-xs leading-snug text-muted-foreground">
-            {STAFF_ORG_LABEL}
-          </p>
+          <p className="staff-shell__brand-label">{STAFF_ORG_LABEL}</p>
         </div>
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="staff-shell__nav">
           <StaffNavLinks items={visibleLinks} />
         </div>
         <SidebarFooter
@@ -95,15 +91,10 @@ export default function AdminLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-border bg-card/90 px-4 backdrop-blur-md md:px-6">
+        <header className="staff-shell__topbar">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="md:hidden"
-                aria-label="فتح القائمة"
-              >
+              <Button variant="outline" size="icon" aria-label="فتح القائمة">
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
@@ -132,9 +123,6 @@ export default function AdminLayout() {
               </div>
             </SheetContent>
           </Sheet>
-          <div className="ms-auto">
-            <NotificationsBell calendarRoute={ROUTES.NEWSROOM_CALENDAR} />
-          </div>
         </header>
 
         <main className="admin-shell-main flex-1 py-4 md:py-6">

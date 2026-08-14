@@ -9,13 +9,13 @@ Arabic-first newsroom + public site built with React 19, Vite, and React Router.
 | `components/` | Shared site chrome (`site-header-nav`, `site-footer`) and shadcn `ui/` primitives |
 | `features/` | Domain modules — primary organization unit |
 | `features/public-site/` | Reader-facing pages (home, articles, categories, about, partners) |
-| `features/newsroom/` | Staff workspace (dashboard, article list/detail, file library) |
+| `features/newsroom/` | Staff workspace (articles, article detail, file library) |
 | `features/admin/` | Admin-only screens and `Admin*` panel components |
 | `features/staff/` | Cross-cutting staff UI shared by newsroom + admin (nav) |
 | `features/tools/` | Standalone newsroom tools + smart editor |
 | `features/publishing-flow/` | 7-step article publishing wizard |
 | `layouts/` | Route shells (`PublicLayout`, `NewsroomLayout`, `AdminLayout`) |
-| `lib/` | Pure utilities, SEO helpers, label mappers (`lib/labels/`) |
+| `lib/` | Pure utilities, SEO helpers, label mappers (`lib/*-labels.ts`) |
 | `services/api/` | HTTP clients — one module per API area |
 | `router/` | Routes, permissions, guards |
 | `ssr/` | Server-side render handler for public SEO pages |
@@ -27,7 +27,7 @@ Arabic-first newsroom + public site built with React 19, Vite, and React Router.
 - **Reused across one feature** → `features/<domain>/components/`
 - **Reused across public + staff** → `components/` or `features/staff/`
 - **API calls** → `services/api/` (keep public vs staff endpoints in separate files)
-- **Display label mappers** → `lib/*-labels.ts`, re-export from `lib/labels/`
+- **Display label mappers** → `lib/*-labels.ts`
 
 ## Dev commands
 
@@ -46,4 +46,4 @@ Arabic-first newsroom + public site built with React 19, Vite, and React Router.
 
 ## SEO / SSR
 
-Article and category pages use [`lib/seo/`](lib/seo/) for `<head>` tags and JSON-LD. SSR is handled in [`ssr/handle-request.tsx`](ssr/handle-request.tsx) via [`server/index.ts`](../server/index.ts).
+Public `<head>` React components live in [`components/seo/`](components/seo/). SEO builders and JSON-LD helpers live in [`lib/seo/`](lib/seo/). SSR is handled in [`ssr/handle-request.tsx`](ssr/handle-request.tsx) via [`server/index.ts`](../server/index.ts).

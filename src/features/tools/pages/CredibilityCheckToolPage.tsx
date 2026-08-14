@@ -5,17 +5,14 @@ import {
   runWithToolProcessing,
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
+import { getApiErrorMessage } from "@/lib/api-data";
+import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
 import { ToolsEditorial_APIs } from "@/services/api/tools";
 import type { StandaloneCredibilityResult } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ScoreDonut } from "@/features/tools/components/ScoreDonut";
 import { ToolPageShell } from "./ToolPageShell";
-
-const CREDIBILITY_STEPS = [
-  "جاري استخراج الادعاءات...",
-  "جاري التحقق من المصداقية...",
-  "جاري تجميع النتائج...",
-] as const;
 
 export function CredibilityCheckToolPage() {
   const [content, setContent] = useState("");
@@ -37,7 +34,7 @@ export function CredibilityCheckToolPage() {
         setResult(data);
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "فشل فحص المصداقية");
+      toast.error(getApiErrorMessage(err));
     }
   };
 
@@ -46,7 +43,7 @@ export function CredibilityCheckToolPage() {
       <ToolProcessingDialog
         open={processing}
         title="جاري فحص المصداقية"
-        steps={CREDIBILITY_STEPS}
+        steps={CREDIBILITY_PROCESSING_STEPS}
       />
 
       <Card>
@@ -57,21 +54,26 @@ export function CredibilityCheckToolPage() {
             onChange={(e) => setContent(e.target.value)}
             rows={8}
           />
-          <Button onClick={run} disabled={processing}>
+          <Button onClick={() => void run()} disabled={processing}>
             فحص
           </Button>
         </CardContent>
       </Card>
 
-      {result && (
+      {result ? (
         <Card>
           <CardContent className="p-6">
-            <p className="text-lg font-semibold">
-              درجة المصداقية: {result.credibility_score}
-            </p>
+            <ScoreDonut
+              value={result.credibility_score}
+              max={100}
+              format="percent"
+              size="md"
+              label="درجة المصداقية"
+            />
+            {/* Standalone API returns score only; article flow includes claim details. */}
           </CardContent>
         </Card>
-      )}
+      ) : null}
     </ToolPageShell>
   );
 }

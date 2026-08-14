@@ -14,22 +14,21 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-const CREDIBILITY_STEPS = [
-  "جاري استخراج الادعاءات...",
-  "جاري التحقق من المصداقية...",
-  "جاري تجميع النتائج...",
-] as const;
+import { ScoreDonut } from "@/features/tools/components/ScoreDonut";
+import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
 
 interface Step5CredibilityProps {
   articleId: number;
   sources: ArticleSource[];
   onComplete: () => void;
+  onBack?: () => void;
 }
 
 export function Step5Credibility({
   articleId,
   sources,
   onComplete,
+  onBack,
 }: Step5CredibilityProps) {
   const queryClient = useQueryClient();
   const [processing, setProcessing] = useState(false);
@@ -54,7 +53,7 @@ export function Step5Credibility({
       <ToolProcessingDialog
         open={processing}
         title="جاري فحص المصداقية"
-        steps={CREDIBILITY_STEPS}
+        steps={CREDIBILITY_PROCESSING_STEPS}
       />
 
       <SourceConsentBanner sources={sources} />
@@ -71,12 +70,14 @@ export function Step5Credibility({
         <>
           <Card>
             <CardContent className="p-4">
-              <p className="text-3xl font-bold text-primary">
-                {result.credibility_score}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {result.total_claims} ادعاء — للمراجعة فقط
-              </p>
+              <ScoreDonut
+                value={result.credibility_score}
+                max={100}
+                format="percent"
+                size="md"
+                label="درجة المصداقية"
+                caption={`${result.total_claims} ادعاء — للمراجعة فقط`}
+              />
             </CardContent>
           </Card>
 
@@ -94,7 +95,7 @@ export function Step5Credibility({
         </>
       )}
 
-      <StepActionsRow>
+      <StepActionsRow onBack={onBack}>
         <NextStepButton onClick={onComplete} disabled={!result} />
       </StepActionsRow>
     </div>

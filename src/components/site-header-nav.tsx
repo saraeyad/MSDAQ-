@@ -83,6 +83,7 @@ function NavDropdown({ item }: { item: PublicNavDropdownItem }) {
               to={child.to}
               className={cn(
                 pathname === child.to && "text-primary font-medium",
+                child.indent && "ps-6 text-muted-foreground",
               )}
             >
               {child.label}
@@ -136,7 +137,7 @@ function MobileNavSection({
   onNavigate,
 }: {
   title: string;
-  items: { to: string; label: string }[];
+  items: { to: string; label: string; indent?: boolean }[];
   onNavigate: () => void;
 }) {
   const { pathname } = useLocation();
@@ -157,6 +158,7 @@ function MobileNavSection({
                 pathname.startsWith(item.to))
               ? "bg-accent text-accent-foreground"
               : "text-foreground",
+            item.indent && "pe-3 ps-8 text-muted-foreground",
           )}
         >
           {item.label}

@@ -1,6 +1,11 @@
 import { getApiData, parseStaffArticlesListResponse } from "@/lib/api-data";
+import { normalizeStandardsResult } from "@/lib/standards-normalize";
 import { appendSttAudioField } from "@/lib/voice-audio";
-import { TTS_REQUEST_TIMEOUT_MS, STT_REQUEST_TIMEOUT_MS } from "@/lib/tts-limits";
+import {
+  STANDARDS_REQUEST_TIMEOUT_MS,
+  STT_REQUEST_TIMEOUT_MS,
+  TTS_REQUEST_TIMEOUT_MS,
+} from "@/lib/tts-limits";
 import type {
   ApiResponse,
   CredibilityCheckResult,
@@ -163,18 +168,12 @@ export const ArticlesStaff_APIs = {
   },
 
   standardsCheck: async (id: number | string): Promise<StandardsCheckResult> => {
-    const response = await API.post<
-      ApiResponse<
-        StandardsCheckResult & { breakdown?: StandardsCheckResult["criteria"] }
-      >
-    >(`/api/articles/${id}/standards-check`, {});
-    const data = getApiData(response);
-    return {
-      fusha_passed: data.fusha_passed,
-      total_score: data.total_score,
-      max_score: data.max_score,
-      criteria: data.criteria ?? data.breakdown ?? [],
-    };
+    const response = await API.post<ApiResponse<StandardsCheckResult>>(
+      `/api/articles/${id}/standards-check`,
+      {},
+      { timeout: STANDARDS_REQUEST_TIMEOUT_MS },
+    );
+    return normalizeStandardsResult(getApiData(response));
   },
 
   credibilityCheck: async (id: number | string): Promise<CredibilityCheckResult> => {
@@ -221,6 +220,14 @@ export const ArticlesStaff_APIs = {
   schedule: async (id: number | string, scheduled_for: string) => {
     const response = await API.post<ApiResponse<StaffArticle>>(
       `/api/articles/${id}/publish`,
+      { scheduled_for },
+    );
+    return getApiData(response);
+  },
+
+  reschedule: async (id: number | string, scheduled_for: string) => {
+    const response = await API.post<ApiResponse<StaffArticle>>(
+      `/api/articles/${id}/reschedule`,
       { scheduled_for },
     );
     return getApiData(response);

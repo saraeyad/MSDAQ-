@@ -13,21 +13,19 @@ export function isSuperAdmin(user: AuthUser | null | undefined): boolean {
 }
 
 export function canManageTask(
-  task: CalendarTask,
+  _task: CalendarTask,
   user: AuthUser | null | undefined,
   hasManageTasks: boolean,
 ): boolean {
-  if (!hasManageTasks || !user) return false;
-  return task.creator.id === user.id || isSuperAdmin(user);
+  return Boolean(hasManageTasks && user);
 }
 
 export function canManageEvent(
-  event: CalendarEventRecord,
+  _event: CalendarEventRecord,
   user: AuthUser | null | undefined,
   hasManageEvents: boolean,
 ): boolean {
-  if (!hasManageEvents || !user) return false;
-  return event.creator.id === user.id || isSuperAdmin(user);
+  return Boolean(hasManageEvents && user);
 }
 
 function isTaskAssigneeOrCreator(

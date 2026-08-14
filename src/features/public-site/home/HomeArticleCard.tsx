@@ -1,5 +1,5 @@
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
-import { PublicArticleCover } from "@/lib/cover-image";
+import { PublicArticleCover } from "@/components/cover-image";
 import { mediaTypeLabel, resolvePublicArticleAudioSource } from "@/lib/media-labels";
 import { cn } from "@/lib/utils";
 import type { PublicArticle, PublicMediaType } from "@/types";

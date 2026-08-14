@@ -1,6 +1,11 @@
 import { PERMISSIONS } from "@/router/permissions";
 import { SmartEditor_APIs } from "@/services/api/tools";
-import type { SmartEditorResult } from "@/types";
+import type {
+  EditorialDetectResult,
+  EditorialReviewSpan,
+  EditorialRewriteSpan,
+  SmartEditorResult,
+} from "@/types";
 import type { LucideIcon } from "lucide-react";
 import { AlignLeft, Eraser, Languages, List } from "lucide-react";
 
@@ -12,18 +17,48 @@ export type SmartEditorSlug =
 
 export type SmartEditorToolbarId = "fusha" | "bias" | "discrimination" | "bullets";
 
-export interface SmartEditorToolConfig {
+export type SmartEditorReviewSlug = "bias-neutralizer" | "discrimination-remover";
+
+interface SmartEditorToolBase {
   slug: SmartEditorSlug;
   toolbarId: SmartEditorToolbarId;
   label: string;
   description: string;
   icon: LucideIcon;
   permission: string;
+}
+
+export interface SmartEditorRewriteTool extends SmartEditorToolBase {
+  kind: "rewrite";
   run: (text: string) => Promise<SmartEditorResult>;
+}
+
+export interface SmartEditorReviewTool extends SmartEditorToolBase {
+  kind: "review";
+  detectLabel: string;
+  rewriteLabel: string;
+  detect: (text: string) => Promise<EditorialDetectResult>;
+  rewrite: (
+    text: string,
+    spans: EditorialRewriteSpan[],
+  ) => Promise<SmartEditorResult>;
+}
+
+export type SmartEditorToolConfig = SmartEditorRewriteTool | SmartEditorReviewTool;
+
+export function isReviewTool(
+  tool: SmartEditorToolConfig,
+): tool is SmartEditorReviewTool {
+  return tool.kind === "review";
+}
+
+export function isReviewSlug(slug: SmartEditorSlug): slug is SmartEditorReviewSlug {
+  return slug === "bias-neutralizer" || slug === "discrimination-remover";
 }
 
 export const SMART_EDITOR_TOOLS: SmartEditorToolConfig[] = [
   {
+    kind: "rewrite",
     slug: "fussha-rewriter",
     toolbarId: "fusha",
     label: "إعادة صياغة فصحى",
@@ -33,24 +68,33 @@ export const SMART_EDITOR_TOOLS: SmartEditorToolConfig[] = [
     run: SmartEditor_APIs.fushaRewriter,
   },
   {
+    kind: "review",
     slug: "bias-neutralizer",
     toolbarId: "bias",
     label: "تحييد التحيز",
-    description: "تقليل التحيز اللغوي في النص",
+    detectLabel: "فحص التحيز",
+    rewriteLabel: "إعادة صياغة المحدد",
+    description: "كشف التحيز اللغوي ثم إعادة صياغة المقاطع المختارة فقط",
     icon: AlignLeft,
     permission: PERMISSIONS.RUN_BIAS_NEUTRALIZER,
-    run: SmartEditor_APIs.biasNeutralizer,
+    detect: SmartEditor_APIs.biasNeutralizer.detect,
+    rewrite: SmartEditor_APIs.biasNeutralizer.rewrite,
   },
   {
+    kind: "review",
     slug: "discrimination-remover",
     toolbarId: "discrimination",
     label: "إزالة التمييز",
-    description: "إزالة العبارات المميّزة أو المستبعدة",
+    detectLabel: "فحص التمييز",
+    rewriteLabel: "إعادة صياغة المحدد",
+    description: "كشف التمييز ثم إعادة صياغة المقاطع المختارة فقط",
     icon: Eraser,
     permission: PERMISSIONS.RUN_DISCRIMINATION_REMOVER,
-    run: SmartEditor_APIs.discriminationRemover,
+    detect: SmartEditor_APIs.discriminationRemover.detect,
+    rewrite: SmartEditor_APIs.discriminationRemover.rewrite,
   },
   {
+    kind: "rewrite",
     slug: "bullet-points",
     toolbarId: "bullets",
     label: "تلخيص نقاط",
@@ -84,3 +128,5 @@ export function getSmartEditorByToolbarId(
   if (!tool) throw new Error(`Unknown smart editor toolbar id: ${toolbarId}`);
   return tool;
 }
+
+export type { EditorialReviewSpan };

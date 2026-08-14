@@ -24,6 +24,8 @@ interface DateTimePickerProps {
   className?: string;
   /** When false, only date is selected (yyyy-MM-dd). Default true. */
   includeTime?: boolean;
+  /** When true, the calendar day is fixed and only time can be changed. */
+  dateLocked?: boolean;
 }
 
 function parseDatetimeLocal(value: string): Date | undefined {
@@ -56,6 +58,7 @@ export function DateTimePicker({
   disabled = false,
   className,
   includeTime = true,
+  dateLocked = false,
 }: DateTimePickerProps) {
   const [open, setOpen] = useState(false);
   const selected = useMemo(() => parseDatetimeLocal(value), [value]);
@@ -90,53 +93,67 @@ export function DateTimePicker({
     onChange(toDatetimeLocal(next, true));
   };
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          data-empty={!selected}
-          className={cn(
-            "w-full justify-between font-normal data-[empty=true]:text-muted-foreground",
-            className,
-          )}
-        >
-          <span className="truncate">
-            {selected
-              ? formatDisplay(selected, includeTime)
-              : placeholder}
-          </span>
-          <CalendarIcon className="size-4 shrink-0 opacity-70" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="w-auto overflow-hidden p-0"
-      >
-        <Calendar
-          mode="single"
-          selected={selected}
-          onSelect={handleSelectDate}
-          defaultMonth={selected}
-          autoFocus
-        />
-        {includeTime ? (
-          <div className="border-t border-border px-3 py-3">
-            <Label className="mb-2 block text-xs text-muted-foreground">
-              الوقت
-            </Label>
-            <Input
-              type="time"
-              value={timeValue}
-              onChange={(e) => handleTimeChange(e.target.value)}
-              className="w-full"
-              dir="ltr"
-            />
+  const timeField = includeTime ? (
+    <div className="space-y-2">
+      <Label className="text-xs text-muted-foreground">الوقت</Label>
+      <Input
+        type="time"
+        value={timeValue}
+        onChange={(e) => handleTimeChange(e.target.value)}
+        disabled={disabled}
+        className="w-full"
+        dir="ltr"
+      />
+    </div>
+  ) : null;
+
+  if (dateLocked && includeTime) {
+    return (
+      <div className={cn("space-y-3", className)}>
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">التاريخ</Label>
+          <div className="flex h-10 items-center rounded-md border border-input bg-muted/40 px-3 text-sm">
+            {selected ? formatDisplay(selected, false) : placeholder}
           </div>
-        ) : null}
-      </PopoverContent>
-    </Popover>
+        </div>
+        {timeField}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("space-y-3", className)}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disabled}
+            data-empty={!selected}
+            className="w-full justify-between font-normal data-[empty=true]:text-muted-foreground"
+          >
+            <span className="truncate">
+              {selected
+                ? formatDisplay(selected, includeTime)
+                : placeholder}
+            </span>
+            <CalendarIcon className="size-4 shrink-0 opacity-70" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="w-auto overflow-hidden p-0"
+        >
+          <Calendar
+            mode="single"
+            selected={selected}
+            onSelect={handleSelectDate}
+            defaultMonth={selected}
+            autoFocus
+          />
+        </PopoverContent>
+      </Popover>
+      {timeField}
+    </div>
   );
 }

@@ -22,6 +22,7 @@ interface AdminPanelProps {
   headerActions?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  flush?: boolean;
 }
 
 export function AdminPanel({
@@ -34,6 +35,7 @@ export function AdminPanel({
   headerActions,
   children,
   footer,
+  flush = false,
 }: AdminPanelProps) {
   return (
     <div
@@ -68,7 +70,7 @@ export function AdminPanel({
           ) : null}
         </div>
       )}
-      <div className="p-5">{children}</div>
+      <div className={cn(flush ? "p-0" : "p-5")}>{children}</div>
       {footer ? (
         <div className="border-t border-border/60 bg-muted/20 px-5 py-3">
           {footer}

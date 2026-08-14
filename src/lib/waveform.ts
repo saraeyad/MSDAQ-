@@ -23,24 +23,6 @@ export function generateWaveformHeights(
   });
 }
 
-/** بيانات peaks لـ wavesurfer.js (قيم بين -1 و 1) */
-export function generateWaveformPeaks(
-  seed: number | string,
-  sampleCount = 200,
-): number[][] {
-  const base = numericSeed(seed);
-
-  const channel = Array.from({ length: sampleCount }, (_, index) => {
-    const wave =
-      Math.sin(base * 0.31 + index * 0.55) * 0.55 +
-      Math.sin(base * 0.17 + index * 1.2) * 0.28 +
-      Math.cos(index * 0.9 + base * 0.08) * 0.17;
-    return Math.max(-1, Math.min(1, wave));
-  });
-
-  return [channel];
-}
-
 export function estimateDurationFromSeed(seed: number | string): number {
   const base = numericSeed(seed);
   return 90 + (base % 420);

@@ -2,8 +2,9 @@ import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
 import { HomeHero } from "@/features/public-site/home/HomeHero";
 import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
 import { PartnersStrip } from "@/features/public-site/partners/PartnersStrip";
-import { NewsSlider } from "@/components/news-slider";
+import { NewsSlider } from "@/features/public-site/components/news-slider";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
+import { buildParentSlugMap } from "@/lib/category-tree";
 import { cn } from "@/lib/utils";
 import { Articles_APIs } from "@/services/api/articles";
 import type { PublicArticle } from "@/types";
@@ -15,9 +16,16 @@ const MEDIA_FILTERS = [
   { id: "all", label: "الكل", icon: Layers },
 ] as const;
 
-function matchesFilter(article: PublicArticle, filterId: string): boolean {
+function matchesFilter(
+  article: PublicArticle,
+  filterId: string,
+  slugSets: Map<string, Set<string>>,
+): boolean {
   if (filterId === "all") return true;
-  return article.category?.slug === filterId;
+  const articleSlug = article.category?.slug;
+  if (!articleSlug) return false;
+  const allowedSlugs = slugSets.get(filterId);
+  return allowedSlugs?.has(articleSlug) ?? articleSlug === filterId;
 }
 
 function cardLayout(index: number) {
@@ -53,6 +61,11 @@ export default function HomePage() {
     [categories],
   );
 
+  const parentSlugMap = useMemo(
+    () => buildParentSlugMap(categories),
+    [categories],
+  );
+
   const { data, isLoading } = useQuery({
     queryKey: ["home-articles"],
     queryFn: () => Articles_APIs.list({ latest: true }),
@@ -61,8 +74,8 @@ export default function HomePage() {
   const articles = data?.items ?? [];
 
   const filteredArticles = useMemo(
-    () => articles.filter((a) => matchesFilter(a, activeFilter)),
-    [articles, activeFilter],
+    () => articles.filter((a) => matchesFilter(a, activeFilter, parentSlugMap)),
+    [articles, activeFilter, parentSlugMap],
   );
 
   return (

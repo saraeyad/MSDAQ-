@@ -1,6 +1,7 @@
 export const ROUTES = {
   HOME: "/",
   ARTICLES: "/articles",
+  ARTICLE: "/articles/:id",
   CATEGORY: "/categories/:slug",
   RUYA: "/ruya",
   PUBLICATIONS: "/publications",
@@ -29,6 +30,7 @@ export const ROUTES = {
   ADMIN: "/admin",
   ADMIN_TEAM: "/admin/team",
   ADMIN_ROLES: "/admin/roles",
+  ADMIN_ROLE_EDIT: "/admin/roles/:id/edit",
   ADMIN_CALENDAR: "/admin/calendar",
   ADMIN_LIBRARY: "/admin/library",
   ADMIN_CATEGORIES: "/admin/categories",
@@ -42,6 +44,11 @@ export function categoryPath(slug: string): string {
 /** Public article detail URL (Collection 02 · Public). */
 export function articlePath(id: number | string): string {
   return `/articles/${id}`;
+}
+
+/** Admin role permissions editor URL. */
+export function adminRoleEditPath(id: number | string): string {
+  return `/admin/roles/${id}/edit`;
 }
 
 export { PERMISSIONS, SUPER_ADMIN_ROLE } from "@/router/permissions";

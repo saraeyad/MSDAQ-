@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+.git
+.github
+.cursor
+.vscode
+.idea
+*.log
+*.md
+.env
+.env.*
+coverage
+terminals
+agent-transcripts
+**/*.local
+**/.DS_Store

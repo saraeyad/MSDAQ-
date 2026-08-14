@@ -5,12 +5,12 @@ import CategoriesManagementPage from "@/features/admin/categories/CategoriesMana
 import AdminDashboardPage from "@/features/admin/dashboard/AdminDashboardPage";
 import LibraryPage from "@/features/newsroom/library/LibraryPage";
 import RolesManagementPage from "@/features/admin/roles/RolesManagementPage";
+import RoleEditPage from "@/features/admin/roles/RoleEditPage";
 import TeamManagementPage from "@/features/admin/team/TeamManagementPage";
 import LoginPage from "@/features/auth/LoginPage";
-import CalendarView from "@/features/calendar/CalendarView";
+import CalendarPage from "@/features/calendar/CalendarPage";
 import StaffArticleDetailPage from "@/features/newsroom/StaffArticleDetailPage";
 import NewsroomArticlesPage from "@/features/newsroom/NewsroomArticlesPage";
-import NewsroomDashboard from "@/features/newsroom/NewsroomDashboard";
 import PublishingFlow from "@/features/publishing-flow/PublishingFlow";
 import CategoryPage from "@/features/public-site/categories/CategoryPage";
 import ArticlePage from "@/features/public-site/article-page/ArticlePage";
@@ -44,7 +44,7 @@ export function AppRoutes() {
             element={<NewsSectionPage />}
           />
         ))}
-        <Route path="/articles/:id" element={<ArticlePage />} />
+        <Route path={ROUTES.ARTICLE} element={<ArticlePage />} />
         <Route path={ROUTES.ABOUT} element={<AboutPage />} />
         <Route path={ROUTES.PARTNERS} element={<PartnersPage />} />
         <Route
@@ -99,7 +99,10 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path={ROUTES.NEWSROOM} element={<NewsroomDashboard />} />
+        <Route
+          path={ROUTES.NEWSROOM}
+          element={<Navigate to={ROUTES.NEWSROOM_ARTICLES} replace />}
+        />
         <Route
           path={ROUTES.NEWSROOM_ARTICLES}
           element={
@@ -117,7 +120,7 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/newsroom/articles/:id/edit"
+          path={ROUTES.NEWSROOM_ARTICLE_EDIT}
           element={
             <RequirePermission permission={PERMISSIONS.EDIT_ARTICLES}>
               <PublishingFlow />
@@ -125,7 +128,7 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/newsroom/articles/:id"
+          path={ROUTES.NEWSROOM_ARTICLE_VIEW}
           element={
             <RequirePermission permission={PERMISSIONS.VIEW_ARTICLES}>
               <StaffArticleDetailPage />
@@ -141,7 +144,7 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/newsroom/tools/:tool"
+          path={ROUTES.NEWSROOM_TOOL}
           element={
             <RequirePermission permission={PERMISSIONS.ACCESS_TOOLS}>
               <StandaloneToolPage />
@@ -156,10 +159,9 @@ export function AppRoutes() {
                 PERMISSIONS.VIEW_TASKS,
                 PERMISSIONS.VIEW_EVENTS,
                 PERMISSIONS.VIEW_ALL_CALENDAR,
-                PERMISSIONS.VIEW_CALENDAR,
               ]}
             >
-              <CalendarView />
+              <CalendarPage />
             </RequirePermission>
           }
         />
@@ -201,6 +203,14 @@ export function AppRoutes() {
           element={
             <RequireSuperAdmin>
               <RolesManagementPage />
+            </RequireSuperAdmin>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_ROLE_EDIT}
+          element={
+            <RequireSuperAdmin>
+              <RoleEditPage />
             </RequireSuperAdmin>
           }
         />

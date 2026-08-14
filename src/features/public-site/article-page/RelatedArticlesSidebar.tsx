@@ -1,4 +1,4 @@
-import { PublicArticleCover } from "@/lib/cover-image";
+import { PublicArticleCover } from "@/components/cover-image";
 import { publicMediaTypeLabel } from "@/lib/media-labels";
 import { cn } from "@/lib/utils";
 import { Articles_APIs } from "@/services/api/articles";

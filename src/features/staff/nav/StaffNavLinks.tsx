@@ -18,10 +18,8 @@ export function StaffNavLinks({
   return (
     <div className="space-y-5">
       {grouped.map(({ key, items: groupItems }) => (
-        <div key={key}>
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {STAFF_NAV_GROUPS[key]}
-          </p>
+        <div key={key} className="staff-shell__nav-group">
+          <p className="staff-shell__nav-label">{STAFF_NAV_GROUPS[key]}</p>
           <nav className="space-y-0.5">
             {groupItems.map((link) => (
               <NavLink

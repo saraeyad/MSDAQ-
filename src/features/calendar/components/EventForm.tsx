@@ -10,12 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  CalendarScheduleRow,
+  normalizeScheduleDatetime,
+} from "@/features/calendar/components/CalendarScheduleRow";
 import { ColorPicker } from "@/features/calendar/components/ColorPicker";
 import { UserMultiSelect } from "@/features/calendar/components/UserMultiSelect";
 import {
   datetimeLocalToIso,
+  defaultEndDatetimeLocal,
   isoToDatetimeLocal,
+  parseDatetimeLocal,
 } from "@/lib/calendar-datetime";
+import { CALENDAR_TYPE_COLORS } from "@/lib/calendar-feed";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { CalendarEvents_APIs } from "@/services/api/calendar-events";
 import type {
@@ -28,7 +35,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const DEFAULT_COLOR = "#3b82f6";
+const DEFAULT_COLOR: string = CALENDAR_TYPE_COLORS.event;
 
 const RECURRENCE_OPTIONS: { value: CalendarRecurrence; label: string }[] = [
   { value: "none", label: "بدون تكرار" },
@@ -40,6 +47,8 @@ const RECURRENCE_OPTIONS: { value: CalendarRecurrence; label: string }[] = [
 interface EventFormProps {
   editingEvent?: CalendarEventRecord | null;
   initialStartsAt?: string;
+  dateLocked?: boolean;
+  embedded?: boolean;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -47,6 +56,8 @@ interface EventFormProps {
 export function EventForm({
   editingEvent,
   initialStartsAt = "",
+  dateLocked = false,
+  embedded = false,
   onSuccess,
   onCancel,
 }: EventFormProps) {
@@ -61,13 +72,26 @@ export function EventForm({
 
   useEffect(() => {
     if (!editingEvent) {
-      setStartsAt(initialStartsAt);
+      const normalizedStart = initialStartsAt
+        ? normalizeScheduleDatetime(initialStartsAt)
+        : "";
+      setStartsAt(normalizedStart);
+      setEndAt(
+        normalizedStart ? defaultEndDatetimeLocal(normalizedStart, 60) : "",
+      );
       return;
     }
     setTitle(editingEvent.title);
     setDescription(editingEvent.description ?? "");
-    setStartsAt(isoToDatetimeLocal(editingEvent.starts_at));
-    setEndAt(editingEvent.ends_at ? isoToDatetimeLocal(editingEvent.ends_at) : "");
+    const normalizedStart = normalizeScheduleDatetime(
+      isoToDatetimeLocal(editingEvent.starts_at),
+    );
+    setStartsAt(normalizedStart);
+    setEndAt(
+      editingEvent.ends_at
+        ? normalizeScheduleDatetime(isoToDatetimeLocal(editingEvent.ends_at))
+        : defaultEndDatetimeLocal(normalizedStart, 60),
+    );
     setColor(editingEvent.color ?? DEFAULT_COLOR);
     setRecurrence(editingEvent.recurrence ?? "none");
     setRecurrenceEndAt(
@@ -77,6 +101,30 @@ export function EventForm({
     );
     setParticipantIds(editingEvent.participants.map((p) => p.id));
   }, [editingEvent, initialStartsAt]);
+
+  const handleStartsAtChange = (value: string) => {
+    setStartsAt(value);
+    if (!value) {
+      setEndAt("");
+      return;
+    }
+
+    const end = parseDatetimeLocal(endAt);
+    const start = parseDatetimeLocal(value);
+    if (!end || !start || end <= start) {
+      setEndAt(defaultEndDatetimeLocal(value, 60));
+    }
+  };
+
+  const handleEndAtChange = (value: string) => {
+    const start = parseDatetimeLocal(startsAt);
+    const end = parseDatetimeLocal(value);
+    if (start && end && end <= start) {
+      setEndAt(defaultEndDatetimeLocal(startsAt, 60));
+      return;
+    }
+    setEndAt(value);
+  };
 
   const buildPayload = (): CreateCalendarEventRecordPayload | null => {
     if (!title.trim() || !startsAt) {
@@ -138,92 +186,93 @@ export function EventForm({
     },
   });
 
-  return (
-    <div className="calendar-form-panel">
-      <div className="calendar-form-panel__header">
-        <h3 className="calendar-form-panel__title">
-          {editingEvent ? "تعديل الفعالية" : "فعالية جديدة"}
-        </h3>
-        <p className="calendar-form-panel__desc">
-          {editingEvent
-            ? "حدّث تفاصيل الفعالية والمشاركين"
-            : "أضف فعالية جديدة وحدّد وقت البداية والنهاية"}
-        </p>
-      </div>
+  const formBody = (
+    <>
+      <div className="calendar-form-fields">
+        <div className="calendar-form-field calendar-form-field--title">
+          <Label className="calendar-form-field__label">العنوان</Label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="calendar-form-title-input"
+            placeholder="أدخل عنوان الفعالية"
+          />
+        </div>
 
-      <div className="calendar-form-panel__body space-y-4">
-      <div className="space-y-2">
-        <Label>العنوان</Label>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-      </div>
+        <div className="calendar-form-field">
+          <Label className="calendar-form-field__label">الوصف</Label>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="calendar-form-textarea min-h-24 resize-y"
+            placeholder="أضف وصفاً (اختياري)"
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label>الوصف</Label>
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+        <div className="calendar-form-field calendar-form-field--meta">
+          <Label className="calendar-form-field__label">الوقت</Label>
+          <div className="calendar-form-meta">
+            <CalendarScheduleRow
+              value={startsAt}
+              onChange={handleStartsAtChange}
+              endValue={endAt}
+              onEndChange={handleEndAtChange}
+              showEndTime
+              dateLocked={dateLocked}
+            />
+          </div>
+        </div>
+
+        <div className="calendar-form-row">
+          <ColorPicker compact value={color} onChange={setColor} />
+          <div className="calendar-form-field">
+            <Label className="calendar-form-field__label">التكرار</Label>
+            <Select
+              value={recurrence}
+              onValueChange={(value) =>
+                setRecurrence(value as CalendarRecurrence)
+              }
+            >
+              <SelectTrigger className="calendar-form-select w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RECURRENCE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {recurrence !== "none" && (
+          <div className="calendar-form-field">
+            <Label className="calendar-form-field__label">نهاية التكرار</Label>
+            <DateTimePicker
+              value={recurrenceEndAt}
+              onChange={setRecurrenceEndAt}
+              placeholder="اختر نهاية التكرار"
+            />
+          </div>
+        )}
+
+        <UserMultiSelect
+          label="المشاركون"
+          selectedIds={participantIds}
+          onChange={setParticipantIds}
+          seedUsers={editingEvent?.participants}
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>وقت البداية</Label>
-          <DateTimePicker value={startsAt} onChange={setStartsAt} />
-        </div>
-        <div className="space-y-2">
-          <Label>وقت النهاية (اختياري)</Label>
-          <DateTimePicker
-            value={endAt}
-            onChange={setEndAt}
-            placeholder="اختر وقت النهاية"
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ColorPicker value={color} onChange={setColor} />
-        <div className="space-y-2">
-          <Label>التكرار</Label>
-          <Select
-            value={recurrence}
-            onValueChange={(value) =>
-              setRecurrence(value as CalendarRecurrence)
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RECURRENCE_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {recurrence !== "none" && (
-        <div className="space-y-2">
-          <Label>نهاية التكرار</Label>
-          <DateTimePicker
-            value={recurrenceEndAt}
-            onChange={setRecurrenceEndAt}
-            placeholder="اختر نهاية التكرار"
-          />
-        </div>
-      )}
-
-      <UserMultiSelect
-        label="المشاركون"
-        selectedIds={participantIds}
-        onChange={setParticipantIds}
-        seedUsers={editingEvent?.participants}
-      />
-      </div>
-
-      <div className="calendar-form-panel__actions">
+      <div
+        className={
+          embedded
+            ? "calendar-create-dialog__footer"
+            : "calendar-form-panel__actions"
+        }
+      >
         <Button
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
@@ -237,6 +286,26 @@ export function EventForm({
           إلغاء
         </Button>
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="calendar-create-dialog__form">{formBody}</div>;
+  }
+
+  return (
+    <div className="calendar-form-panel">
+      <div className="calendar-form-panel__header">
+        <h3 className="calendar-form-panel__title">
+          {editingEvent ? "تعديل الفعالية" : "فعالية جديدة"}
+        </h3>
+        <p className="calendar-form-panel__desc">
+          {editingEvent
+            ? "حدّث تفاصيل الفعالية والمشاركين"
+            : "أضف فعالية جديدة وحدّد وقت البداية والنهاية"}
+        </p>
+      </div>
+      {formBody}
     </div>
   );
 }

@@ -16,12 +16,12 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": {
-        target: "https://misdaq-production-1ff3.up.railway.app",
+        target: "https://misdaq-production-83bc.up.railway.app",
         changeOrigin: true,
         secure: true,
       },
       "/storage": {
-        target: "https://misdaq-production-1ff3.up.railway.app",
+        target: "https://misdaq-production-83bc.up.railway.app",
         changeOrigin: true,
         secure: true,
       },

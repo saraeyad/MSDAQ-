@@ -1,5 +1,5 @@
 import { BrandLogo } from "@/components/brand-logo";
-import { NavGhazawiyaLink } from "@/components/nav-ghazawiya-link";
+import { NavGhazawiyaLink } from "@/features/public-site/components/nav-ghazawiya-link";
 import { SiteHeaderSearch } from "@/components/site-header-search";
 import { DesktopSiteNav, MobileSiteNav } from "@/components/site-header-nav";
 import { SiteFooter } from "@/components/site-footer";

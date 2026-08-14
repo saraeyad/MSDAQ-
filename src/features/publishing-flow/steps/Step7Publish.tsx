@@ -1,4 +1,5 @@
 import { PublishGatePanel } from "@/features/publishing-flow/components/PublishGatePanel";
+import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Label } from "@/components/ui/label";
@@ -13,9 +14,10 @@ import { ROUTES } from "@/router/routes";
 
 interface Step7PublishProps {
   articleId: number;
+  onBack?: () => void;
 }
 
-export function Step7Publish({ articleId }: Step7PublishProps) {
+export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   const navigate = useNavigate();
   const { data: gate, article, isLoading } = usePublishGate(articleId);
   const [scheduledFor, setScheduledFor] = useState("");
@@ -63,8 +65,8 @@ export function Step7Publish({ articleId }: Step7PublishProps) {
     <div className="space-y-6">
       <PublishGatePanel gate={gate} isLoading={isLoading} />
 
-      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold">نشر فوري</h3>
+      <div className="publish-flow-card">
+        <h3 className="publish-flow-card__title">نشر فوري</h3>
         <Button
           onClick={handlePublish}
           disabled={publishing || !gate?.can_publish}
@@ -74,8 +76,8 @@ export function Step7Publish({ articleId }: Step7PublishProps) {
         </Button>
       </div>
 
-      <div className="space-y-4 rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold">جدولة النشر</h3>
+      <div className="publish-flow-card">
+        <h3 className="publish-flow-card__title">جدولة النشر</h3>
         <div className="space-y-2">
           <Label>تاريخ ووقت النشر</Label>
           <DateTimePicker
@@ -98,6 +100,8 @@ export function Step7Publish({ articleId }: Step7PublishProps) {
           إرجاع إلى مسودة
         </Button>
       )}
+
+      <StepActionsRow onBack={onBack} />
     </div>
   );
 }

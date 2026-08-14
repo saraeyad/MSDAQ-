@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/context/auth";
 import {
   canCompleteTaskOccurrence,
-  canManageEvent,
   canManageTask,
   canReopenTaskOccurrence,
 } from "@/lib/calendar-access";
@@ -10,7 +10,6 @@ import {
   isArticleMeta,
   isEventMeta,
   isTaskMeta,
-  occurrenceDateFromFeedId,
   TYPE_LABELS,
 } from "@/lib/calendar-feed";
 import { getApiErrorMessage } from "@/lib/api-data";
@@ -37,6 +36,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useState } from "react";
 import { usePermission } from "@/hooks/usePermission";
 import { cn } from "@/lib/utils";
 
@@ -65,10 +65,15 @@ export function CalendarItemDetail({
   const hasManageTasks = usePermission(PERMISSIONS.MANAGE_TASKS);
   const hasManageEvents = usePermission(PERMISSIONS.MANAGE_EVENTS);
   const hasCompleteOwnTasks = usePermission(PERMISSIONS.COMPLETE_OWN_TASKS);
+  const hasScheduleArticles = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
+  const [confirmDelete, setConfirmDelete] = useState<"task" | "event" | null>(
+    null,
+  );
 
   const start = new Date(item.start_at);
   const end = item.end_at ? new Date(item.end_at) : null;
-  const occurrenceDate = occurrenceDateFromFeedId(item.id);
+  const occurrenceDate =
+    isTaskMeta(item) || isEventMeta(item) ? item.meta.occurrence_date : null;
 
   const { data: taskDetail, isLoading: taskLoading } = useQuery({
     queryKey: ["calendar-task", item.source_id],
@@ -146,13 +151,13 @@ export function CalendarItemDetail({
     hasManageTasks,
   );
   const showEditTask =
-    taskDetail && canManageTask(taskDetail, user, hasManageTasks);
+    item.type === "task" && hasManageTasks && Boolean(user);
   const showDeleteTask =
-    taskDetail && canManageTask(taskDetail, user, hasManageTasks);
+    showEditTask && Boolean(taskDetail);
   const showEditEvent =
-    eventDetail && canManageEvent(eventDetail, user, hasManageEvents);
+    item.type === "event" && hasManageEvents && Boolean(user);
   const showDeleteEvent =
-    eventDetail && canManageEvent(eventDetail, user, hasManageEvents);
+    showEditEvent && Boolean(eventDetail);
 
   const isPending =
     completeMutation.isPending ||
@@ -209,8 +214,20 @@ export function CalendarItemDetail({
                 </div>
                 <div className="calendar-detail-dl__row">
                   <dt>الحالة</dt>
-                  <dd>{item.meta.status === "done" ? "مكتملة" : "قيد التنفيذ"}</dd>
+                  <dd>
+                    {item.meta.status === "done"
+                      ? "مكتملة"
+                      : item.meta.status === "overdue"
+                        ? "متأخرة"
+                        : "قيد التنفيذ"}
+                  </dd>
                 </div>
+                {item.meta.is_recurring && (
+                  <div className="calendar-detail-dl__row">
+                    <dt>التكرار</dt>
+                    <dd>مهمة متكررة</dd>
+                  </div>
+                )}
                 <div className="calendar-detail-dl__row">
                   <dt>المُسنَد إليهم</dt>
                   <dd>{item.meta.assignees.map((a) => a.name).join("، ") || "—"}</dd>
@@ -235,6 +252,12 @@ export function CalendarItemDetail({
                   <dt>المشاركون</dt>
                   <dd>{item.meta.participants.map((p) => p.name).join("، ") || "—"}</dd>
                 </div>
+                {item.meta.is_recurring && (
+                  <div className="calendar-detail-dl__row">
+                    <dt>التكرار</dt>
+                    <dd>فعالية متكررة</dd>
+                  </div>
+                )}
                 {eventDetail?.creator && (
                   <div className="calendar-detail-dl__row">
                     <dt>المنشئ</dt>
@@ -262,7 +285,9 @@ export function CalendarItemDetail({
                 </div>
               </dl>
               <p className="calendar-detail-fields__hint">
-                مقال مجدول للنشر — للعرض فقط من التقويم
+                {hasScheduleArticles
+                  ? "يمكنك سحب المقال في التقويم لإعادة جدولة وقت نشره."
+                  : "مقال مجدول للنشر — للعرض فقط من التقويم"}
               </p>
               <Button asChild variant="outline" size="sm" className="gap-1 w-fit">
                 <Link to={`${ROUTES.NEWSROOM_ARTICLES}/${item.source_id}`}>
@@ -306,17 +331,23 @@ export function CalendarItemDetail({
               إعادة فتح
             </Button>
           )}
-          {showEditTask && taskDetail && (
+          {showEditTask && (
             <Button
               size="sm"
               variant="outline"
               className="gap-1"
+              disabled={!taskDetail || taskLoading || isPending}
               onClick={() => {
+                if (!taskDetail) return;
                 onEditTask(taskDetail);
                 onClose();
               }}
             >
-              <Pencil className="size-3" />
+              {taskLoading ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Pencil className="size-3" />
+              )}
               تعديل
             </Button>
           )}
@@ -326,10 +357,7 @@ export function CalendarItemDetail({
               variant="outline"
               className="gap-1 text-destructive"
               disabled={isPending}
-              onClick={() => {
-                if (!window.confirm("حذف هذه المهمة؟")) return;
-                deleteTaskMutation.mutate();
-              }}
+              onClick={() => setConfirmDelete("task")}
             >
               {deleteTaskMutation.isPending ? (
                 <Loader2 className="size-3 animate-spin" />
@@ -339,17 +367,23 @@ export function CalendarItemDetail({
               حذف
             </Button>
           )}
-          {showEditEvent && eventDetail && (
+          {showEditEvent && (
             <Button
               size="sm"
               variant="outline"
               className="gap-1"
+              disabled={!eventDetail || eventLoading || isPending}
               onClick={() => {
+                if (!eventDetail) return;
                 onEditEvent(eventDetail);
                 onClose();
               }}
             >
-              <Pencil className="size-3" />
+              {eventLoading ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Pencil className="size-3" />
+              )}
               تعديل
             </Button>
           )}
@@ -359,10 +393,7 @@ export function CalendarItemDetail({
               variant="outline"
               className="gap-1 text-destructive"
               disabled={isPending}
-              onClick={() => {
-                if (!window.confirm("حذف هذه الفعالية؟")) return;
-                deleteEventMutation.mutate();
-              }}
+              onClick={() => setConfirmDelete("event")}
             >
               {deleteEventMutation.isPending ? (
                 <Loader2 className="size-3 animate-spin" />
@@ -374,6 +405,21 @@ export function CalendarItemDetail({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete === "task"}
+        description="هل تريد حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء."
+        isPending={deleteTaskMutation.isPending}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => deleteTaskMutation.mutate()}
+      />
+      <ConfirmDialog
+        open={confirmDelete === "event"}
+        description="هل تريد حذف هذه الفعالية؟ لا يمكن التراجع عن هذا الإجراء."
+        isPending={deleteEventMutation.isPending}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => deleteEventMutation.mutate()}
+      />
     </div>
   );
 }

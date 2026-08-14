@@ -13,7 +13,7 @@ export type PublicNavDropdownItem = {
   type: "dropdown";
   label: string;
   paths: string[];
-  items: { to: string; label: string }[];
+  items: { to: string; label: string; indent?: boolean }[];
 };
 
 export type PublicNavItem = PublicNavLinkItem | PublicNavDropdownItem;
@@ -67,16 +67,31 @@ function buildCategoriesDropdown(
 ): PublicNavDropdownItem | null {
   if (categories.length === 0) return null;
 
-  const paths = categories.map((category) => categoryPath(category.slug));
+  const paths: string[] = [];
+  const items: PublicNavDropdownItem["items"] = [];
+
+  for (const category of categories) {
+    paths.push(categoryPath(category.slug));
+    items.push({
+      to: categoryPath(category.slug),
+      label: category.name_ar,
+    });
+
+    for (const child of category.children ?? []) {
+      paths.push(categoryPath(child.slug));
+      items.push({
+        to: categoryPath(child.slug),
+        label: child.name_ar,
+        indent: true,
+      });
+    }
+  }
 
   return {
     type: "dropdown",
     label: "الأقسام",
     paths,
-    items: categories.map((category) => ({
-      to: categoryPath(category.slug),
-      label: category.name_ar,
-    })),
+    items,
   };
 }
 
@@ -106,10 +121,21 @@ export function isPublicNavLinkActive(
 }
 
 export function buildPublicFooterLinks(categories: PublicCategory[]) {
-  const categoryLinks = categories.map((category) => ({
-    to: categoryPath(category.slug),
-    label: category.name_ar,
-  }));
+  const categoryLinks: { to: string; label: string }[] = [];
+
+  for (const category of categories) {
+    categoryLinks.push({
+      to: categoryPath(category.slug),
+      label: category.name_ar,
+    });
+
+    for (const child of category.children ?? []) {
+      categoryLinks.push({
+        to: categoryPath(child.slug),
+        label: `\u2003${child.name_ar}`,
+      });
+    }
+  }
 
   return [
     STATIC_FOOTER_LINKS[0],

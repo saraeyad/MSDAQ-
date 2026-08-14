@@ -7,10 +7,16 @@ import type {
 } from "@/types";
 import type { EventInput } from "@fullcalendar/core";
 
-export const TYPE_FALLBACK_COLORS: Record<CalendarItemType, string> = {
-  task: "#10b981",
-  event: "#3b82f6",
+export const CALENDAR_TYPE_COLORS = {
+  task: "#16a34a",
+  event: "#c2410c",
   article: "#f98c34",
+} as const;
+
+export const TYPE_FALLBACK_COLORS: Record<CalendarItemType, string> = {
+  task: CALENDAR_TYPE_COLORS.task,
+  event: CALENDAR_TYPE_COLORS.event,
+  article: CALENDAR_TYPE_COLORS.article,
 };
 
 export const TYPE_LABELS: Record<CalendarItemType, string> = {
@@ -21,7 +27,10 @@ export const TYPE_LABELS: Record<CalendarItemType, string> = {
 
 export type CalendarTypeFilter = "all" | CalendarItemType;
 
-export function feedItemToFcEvent(item: CalendarFeedItem): EventInput {
+export function feedItemToFcEvent(
+  item: CalendarFeedItem,
+  isDraggable = false,
+): EventInput {
   const color = item.color ?? TYPE_FALLBACK_COLORS[item.type];
 
   return {
@@ -30,11 +39,13 @@ export function feedItemToFcEvent(item: CalendarFeedItem): EventInput {
     start: item.start_at,
     end: item.end_at ?? undefined,
     allDay: false,
-    backgroundColor: color,
+    backgroundColor: "transparent",
     borderColor: color,
-    textColor: "#ffffff",
+    textColor: color,
     classNames: [`calendar-item--${item.type}`],
-    extendedProps: { feedItem: item },
+    extendedProps: { feedItem: item, accentColor: color },
+    startEditable: isDraggable,
+    durationEditable: false,
   };
 }
 

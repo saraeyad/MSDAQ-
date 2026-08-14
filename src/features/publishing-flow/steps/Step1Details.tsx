@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,10 +10,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FieldGroup } from "@/features/publishing-flow/steps/Step1Details/FieldGroup";
+import { FormSection } from "@/features/publishing-flow/steps/Step1Details/FormSection";
+import {
+  flattenCategoriesForSelect,
+  formatCategorySelectLabel,
+} from "@/lib/category-tree";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { sourceDisplayName } from "@/lib/publish-gate";
-import { cn } from "@/lib/utils";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type {
@@ -33,7 +37,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const MEDIA_TYPES: { value: StaffMediaType; label: string }[] = [
@@ -72,59 +76,6 @@ function consentLabel(status?: ArticleSource["consent_status"]) {
   return null;
 }
 
-function FormSection({
-  icon: Icon,
-  title,
-  description,
-  children,
-  className,
-}: {
-  icon: typeof FileText;
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={cn("publish-form-section", className)}>
-      <header className="publish-form-section__header">
-        <span className="publish-form-section__icon" aria-hidden>
-          <Icon className="size-4" strokeWidth={1.75} />
-        </span>
-        <div>
-          <h3 className="publish-form-section__title">{title}</h3>
-          {description ? (
-            <p className="publish-form-section__desc">{description}</p>
-          ) : null}
-        </div>
-      </header>
-      <div className="publish-form-section__body">{children}</div>
-    </section>
-  );
-}
-
-function FieldGroup({
-  label,
-  required,
-  children,
-  className,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("publish-field", className)}>
-      <Label className="publish-field__label">
-        {label}
-        {required ? <span className="text-destructive"> *</span> : null}
-      </Label>
-      {children}
-    </div>
-  );
-}
-
 export function Step1Details({
   article,
   onCreated,
@@ -160,6 +111,11 @@ export function Step1Details({
     queryKey: ["public-categories"],
     queryFn: () => PublicCategories_APIs.list(),
   });
+
+  const categoryOptions = useMemo(
+    () => flattenCategoriesForSelect(categories ?? []),
+    [categories],
+  );
 
   const addSource = () =>
     setSources((s) => [
@@ -336,9 +292,9 @@ export function Step1Details({
                 />
               </SelectTrigger>
               <SelectContent>
-                {categories?.map((cat) => (
-                  <SelectItem key={cat.id} value={String(cat.id)}>
-                    {cat.name_ar}
+                {categoryOptions.map((option) => (
+                  <SelectItem key={option.id} value={String(option.id)}>
+                    {formatCategorySelectLabel(option)}
                   </SelectItem>
                 ))}
               </SelectContent>

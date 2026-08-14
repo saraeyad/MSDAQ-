@@ -15,14 +15,19 @@ import { Loader2, Mic, PenLine, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { getToolBySlug } from "@/features/tools/tool-config";
 import { STT_PROCESSING_STEPS } from "@/lib/tts-limits";
 import { STT_ACCEPT_ATTR, validateSttAudioFile } from "@/lib/voice-audio";
+
+const STT_LABEL =
+  getToolBySlug("speech-to-text")?.label ?? "تحويل الصوت إلى نص";
 
 interface Step3BodyProps {
   articleId: number;
   initialBody?: string | null;
   images?: ArticleImage[];
   onComplete: () => void;
+  onBack?: () => void;
 }
 
 export function Step3Body({
@@ -30,6 +35,7 @@ export function Step3Body({
   initialBody = "",
   images = [],
   onComplete,
+  onBack,
 }: Step3BodyProps) {
   const queryClient = useQueryClient();
   const [body, setBody] = useState(initialBody ?? "");
@@ -90,7 +96,7 @@ export function Step3Body({
       await queryClient.invalidateQueries({
         queryKey: ["staff-article", String(articleId)],
       });
-      toast.success("تم حفظ المحتوى — المتابعة لمتعدد اللهجات");
+      toast.success("تم حفظ المحتوى — المتابعة للتبسيط واللهجة");
       onComplete();
     } catch (err) {
       toast.error(getApiErrorMessage(err));
@@ -211,8 +217,8 @@ export function Step3Body({
         </ol>
       </div>
 
-      <div className="space-y-2 rounded-xl border border-border p-4">
-        <p className="text-sm font-medium">١ · صوت المصدر ← نص</p>
+      <div className="publish-flow-card">
+        <p className="publish-flow-card__title">١ · {STT_LABEL}</p>
         <input
           ref={audioRef}
           type="file"
@@ -232,7 +238,7 @@ export function Step3Body({
           {(transcribing || transcriptJobId) && (
             <Loader2 className="size-4 animate-spin" />
           )}
-          {transcriptJobId ? "جاري التفريغ..." : "صوت إلى نص"}
+          {transcriptJobId ? "جاري التفريغ..." : STT_LABEL}
         </Button>
       </div>
 
@@ -276,9 +282,9 @@ export function Step3Body({
         onApply={(text) => setBody(text)}
       />
 
-      <div className="space-y-3 rounded-xl border border-border p-4">
+      <div className="publish-flow-card">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium">صور المحتوى</p>
+          <p className="publish-flow-card__title">صور المحتوى</p>
           <input
             ref={imageRef}
             type="file"
@@ -324,7 +330,7 @@ export function Step3Body({
         )}
       </div>
 
-      <StepActionsRow>
+      <StepActionsRow onBack={onBack}>
         <NextStepButton
           onClick={handleSave}
           disabled={saving || !body.trim()}

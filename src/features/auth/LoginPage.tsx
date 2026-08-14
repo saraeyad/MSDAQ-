@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,15 +45,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center page-gradient p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lg">
-        <h1 className="text-center font-headline text-2xl font-bold">
-          تسجيل الدخول
-        </h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground">
-          منصة CDMC — للموظفين فقط
-        </p>
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-card__brand">
+          <BrandLogo size="lg" linkToHome={false} />
+          <div>
+            <h1 className="login-card__title">تسجيل الدخول</h1>
+            <p className="login-card__subtitle">منصة CDMC — للموظفين فقط</p>
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">البريد الإلكتروني</Label>
             <Input
@@ -60,6 +62,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@cdmc.org"
               required
               dir="ltr"
             />

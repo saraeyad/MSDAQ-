@@ -70,11 +70,11 @@ export function UserMultiSelect({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <Label>{label}</Label>
+    <div className="calendar-user-select">
+      <div className="calendar-user-select__header">
+        <Label className="calendar-form-field__label">{label}</Label>
         {options.length > 0 ? (
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+          <label className="calendar-user-select__select-all">
             <Checkbox
               checked={
                 allVisibleSelected
@@ -93,8 +93,9 @@ export function UserMultiSelect({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="ابحث بالاسم..."
+        className="calendar-form-select"
       />
-      <div className="max-h-40 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
+      <div className="calendar-user-select__list">
         {isLoading && options.length === 0 ? (
           <div className="flex items-center justify-center py-2">
             <Loader2 className="size-4 animate-spin text-primary" aria-hidden />
@@ -103,10 +104,7 @@ export function UserMultiSelect({
           <p className="text-xs text-muted-foreground">لا يوجد مستخدمون</p>
         ) : (
           options.map((user) => (
-            <label
-              key={user.id}
-              className="flex cursor-pointer items-center gap-2 text-sm"
-            >
+            <label key={user.id} className="calendar-user-select__item">
               <Checkbox
                 checked={selectedIds.includes(user.id)}
                 onCheckedChange={(checked) => toggle(user.id, checked === true)}

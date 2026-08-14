@@ -1,36 +1,47 @@
 import { Button } from "@/components/ui/button";
+import { CalendarCreateDialog, type CalendarCreateMode } from "@/features/calendar/components/CalendarCreateDialog";
 import { CalendarGrid, mapFeedToFcEvents } from "@/features/calendar/components/CalendarGrid";
 import { CalendarItemDetail } from "@/features/calendar/components/CalendarItemDetail";
-import { EventForm } from "@/features/calendar/components/EventForm";
-import { TaskForm } from "@/features/calendar/components/TaskForm";
+import { RecurrenceMoveDialog } from "@/features/calendar/components/RecurrenceMoveDialog";
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { usePermission } from "@/hooks/usePermission";
 import {
   filterFeedByType,
+  isEventMeta,
+  isTaskMeta,
   TYPE_FALLBACK_COLORS,
   TYPE_LABELS,
   type CalendarTypeFilter,
 } from "@/lib/calendar-feed";
 import {
   initialMonthRange,
+  isoToDatetimeLocal,
+  moveToOffsetIso,
   openCreateDatetime,
 } from "@/lib/calendar-datetime";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { cn } from "@/lib/utils";
 import { PERMISSIONS } from "@/router/routes";
 import { Calendar_APIs } from "@/services/api/calendar";
+import { CalendarEvents_APIs } from "@/services/api/calendar-events";
+import { CalendarTasks_APIs } from "@/services/api/calendar-tasks";
+import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import type {
   CalendarEventRecord,
   CalendarFeedItem,
+  CalendarMoveScope,
   CalendarTask,
 } from "@/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { EventDropArg } from "@fullcalendar/core";
 import { CalendarDays, CalendarPlus, ClipboardList, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
-type FormMode = "task" | "event" | null;
+type FormMode = CalendarCreateMode | null;
+type PendingMove = { info: EventDropArg; item: CalendarFeedItem };
 
 const TYPE_FILTERS: { id: CalendarTypeFilter; label: string }[] = [
   { id: "all", label: "الكل" },
@@ -57,12 +68,14 @@ export default function CalendarPage({
 
   const hasManageTasks = usePermission(PERMISSIONS.MANAGE_TASKS);
   const hasManageEvents = usePermission(PERMISSIONS.MANAGE_EVENTS);
+  const hasScheduleArticles = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
   const hasViewAllCalendar = usePermission(PERMISSIONS.VIEW_ALL_CALENDAR);
 
   const [dateRange, setDateRange] = useState(initialMonthRange);
   const [typeFilter, setTypeFilter] = useState<CalendarTypeFilter>("all");
   const [formMode, setFormMode] = useState<FormMode>(null);
   const [createDueAt, setCreateDueAt] = useState("");
+  const [createDateLocked, setCreateDateLocked] = useState(false);
   const [editingTask, setEditingTask] = useState<CalendarTask | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEventRecord | null>(
     null,
@@ -70,7 +83,7 @@ export default function CalendarPage({
   const [selectedItem, setSelectedItem] = useState<CalendarFeedItem | null>(
     null,
   );
-  const [createPickerDate, setCreatePickerDate] = useState<Date | null>(null);
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
 
   const {
     data: feed = [],
@@ -78,11 +91,12 @@ export default function CalendarPage({
     isError,
     error,
   } = useQuery({
-    queryKey: ["calendar-feed", dateRange.start, dateRange.end],
+    queryKey: ["calendar-feed", dateRange.start, dateRange.end, typeFilter],
     queryFn: () =>
       Calendar_APIs.list({
         start: dateRange.start,
         end: dateRange.end,
+        types: typeFilter === "all" ? undefined : [typeFilter],
       }),
   });
 
@@ -91,7 +105,15 @@ export default function CalendarPage({
     [feed, typeFilter],
   );
 
-  const fcEvents = useMemo(() => mapFeedToFcEvents(filteredFeed), [filteredFeed]);
+  const fcEvents = useMemo(
+    () =>
+      mapFeedToFcEvents(filteredFeed, (type) => {
+        if (type === "task") return hasManageTasks;
+        if (type === "event") return hasManageEvents;
+        return hasScheduleArticles;
+      }),
+    [filteredFeed, hasManageEvents, hasManageTasks, hasScheduleArticles],
+  );
   const typeCounts = useMemo(() => countByType(feed), [feed]);
 
   const invalidateCalendar = () => {
@@ -103,7 +125,79 @@ export default function CalendarPage({
     setEditingTask(null);
     setEditingEvent(null);
     setCreateDueAt("");
-    setCreatePickerDate(null);
+    setCreateDateLocked(false);
+  };
+
+  const openCreateDialog = (
+    mode: FormMode,
+    date?: Date,
+    lockDate = false,
+  ) => {
+    if (!mode) return;
+    setEditingTask(null);
+    setEditingEvent(null);
+    setCreateDateLocked(lockDate && Boolean(date));
+    setCreateDueAt(openCreateDatetime(date ?? new Date()));
+    setFormMode(mode);
+  };
+
+  const openCreateForDate = (date: Date) => {
+    if (!hasManageTasks && !hasManageEvents) return;
+    if (hasManageTasks && hasManageEvents) {
+      openCreateDialog("pick", date, true);
+      return;
+    }
+    openCreateDialog(hasManageTasks ? "task" : "event", date, true);
+  };
+
+  const performMove = async (
+    info: EventDropArg,
+    item: CalendarFeedItem,
+    scope: CalendarMoveScope,
+  ) => {
+    if (!info.event.start) {
+      info.revert();
+      return;
+    }
+
+    const movedTo = moveToOffsetIso(item.start_at, info.event.start);
+
+    try {
+      if (isTaskMeta(item)) {
+        await CalendarTasks_APIs.move(item.source_id, {
+          occurrence_date: item.meta.occurrence_date,
+          moved_to: movedTo,
+          scope,
+        });
+      } else if (isEventMeta(item)) {
+        await CalendarEvents_APIs.move(item.source_id, {
+          occurrence_date: item.meta.occurrence_date,
+          moved_to: movedTo,
+          scope,
+        });
+      } else {
+        await ArticlesStaff_APIs.reschedule(item.source_id, movedTo);
+      }
+
+      toast.success(
+        item.type === "article"
+          ? "تمت إعادة جدولة المقال"
+          : "تمت إعادة جدولة العنصر",
+      );
+      invalidateCalendar();
+    } catch (error) {
+      info.revert();
+      toast.error(getApiErrorMessage(error));
+    }
+  };
+
+  const handleEventDrop = (info: EventDropArg, item: CalendarFeedItem) => {
+    if ((isTaskMeta(item) || isEventMeta(item)) && item.meta.is_recurring) {
+      setPendingMove({ info, item });
+      return;
+    }
+
+    void performMove(info, item, "all");
   };
 
   const handleFormSuccess = () => {
@@ -111,19 +205,8 @@ export default function CalendarPage({
     invalidateCalendar();
   };
 
-  const openCreateForDate = (date: Date) => {
-    if (!hasManageTasks && !hasManageEvents) return;
-    setCreatePickerDate(date);
-    setCreateDueAt(openCreateDatetime(date));
-    setEditingTask(null);
-    setEditingEvent(null);
-    if (hasManageTasks && !hasManageEvents) {
-      setFormMode("task");
-    } else if (hasManageEvents && !hasManageTasks) {
-      setFormMode("event");
-    } else {
-      setFormMode(null);
-    }
+  const handleCreateDialogChange = (open: boolean) => {
+    if (!open) resetForms();
   };
 
   useEffect(() => {
@@ -146,13 +229,7 @@ export default function CalendarPage({
   const headerActions = (
     <div className="calendar-hero__actions">
       {hasManageTasks && (
-        <Button
-          onClick={() => {
-            resetForms();
-            setFormMode("task");
-          }}
-          className="gap-2"
-        >
+        <Button onClick={() => openCreateDialog("task")} className="gap-2">
           <ClipboardList className="size-4" />
           مهمة جديدة
         </Button>
@@ -160,10 +237,7 @@ export default function CalendarPage({
       {hasManageEvents && (
         <Button
           variant={hasManageTasks ? "outline" : "default"}
-          onClick={() => {
-            resetForms();
-            setFormMode("event");
-          }}
+          onClick={() => openCreateDialog("event")}
           className="gap-2"
         >
           <CalendarPlus className="size-4" />
@@ -211,9 +285,14 @@ export default function CalendarPage({
       events={fcEvents}
       isLoading={isLoading}
       canCreate={canCreate}
+      hasManageTasks={hasManageTasks}
+      hasManageEvents={hasManageEvents}
       onDatesSet={(start, end) => setDateRange({ start, end })}
       onEventClick={setSelectedItem}
-      onDateClick={openCreateForDate}
+      onDateAddClick={openCreateForDate}
+      onEventDrop={handleEventDrop}
+      onAddTask={() => openCreateDialog("task")}
+      onAddEvent={() => openCreateDialog("event")}
     />
   );
 
@@ -232,31 +311,6 @@ export default function CalendarPage({
               <p className="text-sm text-destructive">{getApiErrorMessage(error)}</p>
             </AdminPanel>
           ) : null}
-          {createPickerDate && !formMode && canCreate && (
-            <CreateDatePrompt
-              hasManageTasks={hasManageTasks}
-              hasManageEvents={hasManageEvents}
-              onTask={() => setFormMode("task")}
-              onEvent={() => setFormMode("event")}
-              onCancel={() => setCreatePickerDate(null)}
-            />
-          )}
-          {formMode === "task" && hasManageTasks && (
-            <TaskForm
-              editingTask={editingTask}
-              initialDueAt={createDueAt}
-              onSuccess={handleFormSuccess}
-              onCancel={resetForms}
-            />
-          )}
-          {formMode === "event" && hasManageEvents && (
-            <EventForm
-              editingEvent={editingEvent}
-              initialStartsAt={createDueAt}
-              onSuccess={handleFormSuccess}
-              onCancel={resetForms}
-            />
-          )}
           <AdminPanel title="التقويم">
             <div className="team-calendar calendar-panel calendar-panel--embedded">
               {calendarGrid}
@@ -280,7 +334,6 @@ export default function CalendarPage({
                 </span>
               )}
             </div>
-            {canCreate ? headerActions : null}
           </header>
 
           {calendarToolbar}
@@ -288,34 +341,6 @@ export default function CalendarPage({
           {isError ? (
             <div className="calendar-error">{getApiErrorMessage(error)}</div>
           ) : null}
-
-          {createPickerDate && !formMode && canCreate && (
-            <CreateDatePrompt
-              hasManageTasks={hasManageTasks}
-              hasManageEvents={hasManageEvents}
-              onTask={() => setFormMode("task")}
-              onEvent={() => setFormMode("event")}
-              onCancel={() => setCreatePickerDate(null)}
-            />
-          )}
-
-          {formMode === "task" && hasManageTasks && (
-            <TaskForm
-              editingTask={editingTask}
-              initialDueAt={createDueAt}
-              onSuccess={handleFormSuccess}
-              onCancel={resetForms}
-            />
-          )}
-
-          {formMode === "event" && hasManageEvents && (
-            <EventForm
-              editingEvent={editingEvent}
-              initialStartsAt={createDueAt}
-              onSuccess={handleFormSuccess}
-              onCancel={resetForms}
-            />
-          )}
 
           <div className="team-calendar calendar-panel">
             {calendarGrid}
@@ -329,50 +354,49 @@ export default function CalendarPage({
           onClose={() => setSelectedItem(null)}
           onEditTask={(task) => {
             setEditingTask(task);
+            setEditingEvent(null);
+            setCreateDueAt(isoToDatetimeLocal(task.due_at));
             setFormMode("task");
           }}
           onEditEvent={(event) => {
             setEditingEvent(event);
+            setEditingTask(null);
+            setCreateDueAt(isoToDatetimeLocal(event.starts_at));
             setFormMode("event");
           }}
           onChanged={invalidateCalendar}
         />
       )}
-    </div>
-  );
-}
-
-function CreateDatePrompt({
-  hasManageTasks,
-  hasManageEvents,
-  onTask,
-  onEvent,
-  onCancel,
-}: {
-  hasManageTasks: boolean;
-  hasManageEvents: boolean;
-  onTask: () => void;
-  onEvent: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className="calendar-create-prompt">
-      <span className="calendar-create-prompt__label">إنشاء في هذا التاريخ:</span>
-      <div className="calendar-create-prompt__actions">
-        {hasManageTasks && (
-          <Button size="sm" onClick={onTask}>
-            مهمة
-          </Button>
-        )}
-        {hasManageEvents && (
-          <Button size="sm" variant="outline" onClick={onEvent}>
-            فعالية
-          </Button>
-        )}
-        <Button size="sm" variant="ghost" onClick={onCancel}>
-          إلغاء
-        </Button>
-      </div>
+      <RecurrenceMoveDialog
+        open={pendingMove !== null}
+        onOpenChange={(open) => {
+          if (!open && pendingMove) {
+            pendingMove.info.revert();
+            setPendingMove(null);
+          }
+        }}
+        onSelect={(scope) => {
+          if (!pendingMove) return;
+          const move = pendingMove;
+          setPendingMove(null);
+          void performMove(move.info, move.item, scope);
+        }}
+      />
+      <CalendarCreateDialog
+        open={formMode !== null}
+        mode={formMode}
+        createDueAt={createDueAt}
+        createDateLocked={createDateLocked}
+        editingTask={editingTask}
+        editingEvent={editingEvent}
+        hasManageTasks={hasManageTasks}
+        hasManageEvents={hasManageEvents}
+        onOpenChange={handleCreateDialogChange}
+        onPickTask={() => setFormMode("task")}
+        onPickEvent={() => setFormMode("event")}
+        onSuccess={handleFormSuccess}
+        onCancel={resetForms}
+      />
     </div>
   );
 }

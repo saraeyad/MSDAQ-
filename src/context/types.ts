@@ -1,22 +1,21 @@
-export interface AuthUser {
-  id: number;
-  name: string;
-  email: string;
-  permissions: string[];
-  roles: string[];
-  phone?: string | null;
-  created_at?: string;
-}
+import type { User } from "@/types";
 
-export function normalizeAuthUser(raw: Partial<AuthUser> & Pick<AuthUser, "id" | "name" | "email">): AuthUser {
+/** Authenticated session user (same shape as API `User` + optional phone). */
+export type AuthUser = User & {
+  phone?: string | null;
+};
+
+export function normalizeAuthUser(
+  raw: Partial<AuthUser> & Pick<AuthUser, "id" | "name" | "email">,
+): AuthUser {
   return {
     id: raw.id,
     name: raw.name,
     email: raw.email,
     permissions: raw.permissions ?? [],
     roles: raw.roles ?? [],
+    created_at: raw.created_at ?? "",
     phone: raw.phone ?? null,
-    created_at: raw.created_at,
   };
 }
 

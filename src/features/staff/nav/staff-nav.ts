@@ -6,7 +6,6 @@ import {
   FileText,
   FolderOpen,
   FolderTree,
-  LayoutDashboard,
   Newspaper,
   Shield,
   Users,
@@ -39,14 +38,6 @@ export const STAFF_NAV_GROUPS: Record<StaffNavGroup, string> = {
 /** Newsroom first (primary workspace), then admin-only tools. */
 export const STAFF_NAV_ITEMS: StaffNavItem[] = [
   {
-    to: ROUTES.NEWSROOM,
-    label: "لوحة التحكم",
-    pageTitle: "لوحة التحكم",
-    icon: LayoutDashboard,
-    group: "newsroom",
-    end: true,
-  },
-  {
     to: ROUTES.NEWSROOM_ARTICLES,
     label: "المقالات",
     pageTitle: "المقالات",
@@ -72,7 +63,6 @@ export const STAFF_NAV_ITEMS: StaffNavItem[] = [
       PERMISSIONS.VIEW_TASKS,
       PERMISSIONS.VIEW_EVENTS,
       PERMISSIONS.VIEW_ALL_CALENDAR,
-      PERMISSIONS.VIEW_CALENDAR,
     ],
   },
   {
@@ -149,7 +139,7 @@ export function getStaffPageTitle(pathname: string): string {
   }
 
   const match = STAFF_NAV_ITEMS.find((item) => {
-    if (item.to === ROUTES.NEWSROOM || item.to === ROUTES.ADMIN) {
+    if (item.to === ROUTES.ADMIN) {
       return pathname === item.to;
     }
     return pathname === item.to || pathname.startsWith(`${item.to}/`);

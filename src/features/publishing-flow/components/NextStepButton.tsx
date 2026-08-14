@@ -18,6 +18,7 @@ export function NextStepButton({
 }: NextStepButtonProps) {
   return (
     <Button
+      type="button"
       variant="outline"
       disabled={disabled || loading}
       className={cn("gap-2 border-primary/30 text-primary hover:bg-primary/5", className)}

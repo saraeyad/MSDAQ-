@@ -24,6 +24,8 @@ export function PublicPageHead({ head }: PublicPageHeadProps) {
       {head.ogImage ? (
         <meta property="og:image" content={head.ogImage} />
       ) : null}
+      {head.prev ? <link rel="prev" href={head.prev} /> : null}
+      {head.next ? <link rel="next" href={head.next} /> : null}
     </Helmet>
   );
 }

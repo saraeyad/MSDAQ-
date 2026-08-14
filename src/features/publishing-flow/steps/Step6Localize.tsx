@@ -15,18 +15,19 @@ import {
 } from "@/features/tools/components/ToolProcessingDialog";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { resolveMediaUrl } from "@/lib/media-url";
+import { getToolBySlug } from "@/features/tools/tool-config";
+import { TTS_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
+
+const LOCALIZATION_LABEL =
+  getToolBySlug("localization")?.label ?? "التبسيط واللهجة";
+const TTS_LABEL =
+  getToolBySlug("text-to-speech")?.label ?? "تحويل النص إلى صوت";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { Tts_APIs } from "@/services/api/tools";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-
-const TTS_STEPS = [
-  "جاري تحضير النص...",
-  "جاري توليد الصوت...",
-  "جاري إعداد الملف الصوتي...",
-] as const;
 
 interface Step6LocalizeProps {
   articleId: number;
@@ -36,6 +37,7 @@ interface Step6LocalizeProps {
   generatedAudio?: string | null;
   onComplete: () => void;
   onSkip: () => void;
+  onBack?: () => void;
 }
 
 export function Step6Localize({
@@ -46,6 +48,7 @@ export function Step6Localize({
   generatedAudio: initialGeneratedAudio = "",
   onComplete,
   onSkip,
+  onBack,
 }: Step6LocalizeProps) {
   const queryClient = useQueryClient();
   const [simplified, setSimplified] = useState(initialSimplified ?? "");
@@ -121,11 +124,11 @@ export function Step6Localize({
       <ToolProcessingDialog
         open={generatingTts}
         title="جاري تحويل النص إلى صوت"
-        steps={TTS_STEPS}
+        steps={TTS_PROCESSING_STEPS}
       />
 
       <p className="text-muted-foreground">
-        متعدد اللهجات اختياري. يجب مراجعة كل نسخة يدوياً قبل الحفظ.
+        {LOCALIZATION_LABEL} اختياري. يجب مراجعة كل نسخة يدوياً قبل الحفظ.
       </p>
 
       <Button variant="outline" onClick={generate} disabled={generating}>
@@ -151,8 +154,8 @@ export function Step6Localize({
         />
       </div>
 
-      <div className="space-y-4 rounded-xl border border-border bg-card p-4">
-        <h3 className="font-semibold">توليد النسخة الصوتية (اختياري)</h3>
+      <div className="publish-flow-card">
+        <h3 className="publish-flow-card__title">{TTS_LABEL} (اختياري)</h3>
         <div className="flex flex-wrap gap-3">
           <Select value={voice || undefined} onValueChange={setVoice}>
             <SelectTrigger className="w-48">
@@ -171,7 +174,7 @@ export function Step6Localize({
             onClick={handleTts}
             disabled={!voice || generatingTts}
           >
-            توليد صوت
+            {TTS_LABEL}
           </Button>
         </div>
         {generatedAudio && (
@@ -179,7 +182,7 @@ export function Step6Localize({
         )}
       </div>
 
-      <StepActionsRow>
+      <StepActionsRow onBack={onBack}>
         <Button variant="outline" onClick={onSkip}>
           تخطي
         </Button>

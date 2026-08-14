@@ -1,5 +1,5 @@
 import { PageLoading } from "@/components/loading-spinner";
-import { PublicSettings_APIs } from "@/services/api/admin";
+import { PublicSettings_APIs } from "@/services/api/public-pages";
 import { useQuery } from "@tanstack/react-query";
 
 interface StaticPageProps {

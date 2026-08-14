@@ -7,10 +7,26 @@ import type {
 } from "@/types";
 import API from "./api.repository";
 
+function normalizeCategoryTree(categories: Category[]): Category[] {
+  return categories.map((category) => ({
+    ...category,
+    children: (category.children ?? []).map((child) => ({
+      ...child,
+      children: child.children ?? [],
+    })),
+  }));
+}
+
+export interface CategoriesListOptions {
+  all?: boolean;
+}
+
 export const Categories_APIs = {
-  list: async (): Promise<Category[]> => {
-    const response = await API.get<ApiResponse<Category[]>>("/api/categories");
-    return getApiData(response);
+  list: async (options?: CategoriesListOptions): Promise<Category[]> => {
+    const response = await API.get<ApiResponse<Category[]>>("/api/categories", {
+      params: options?.all ? { all: true } : undefined,
+    });
+    return normalizeCategoryTree(getApiData(response));
   },
 
   get: async (id: number | string): Promise<Category> => {

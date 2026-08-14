@@ -158,8 +158,3 @@ export const AdminDashboard_APIs = {
     return getApiData(response);
   },
 };
-
-export const PublicSettings_APIs = {
-  getPage: (key: string) =>
-    API.get<ApiResponse<{ content: string }>>(`/api/pages/${key}`),
-};
