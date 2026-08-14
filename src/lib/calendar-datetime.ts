@@ -100,7 +100,9 @@ export function dateToOffsetIso(date: Date): string {
 }
 
 export function datetimeLocalToIso(value: string): string {
-  return dateToOffsetIso(new Date(value));
+  const parsed = parseDatetimeLocal(value);
+  if (!parsed) return "";
+  return dateToOffsetIso(parsed);
 }
 
 export function isoToDatetimeLocal(iso: string): string {

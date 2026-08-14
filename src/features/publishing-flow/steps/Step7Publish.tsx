@@ -1,13 +1,17 @@
 import { PublishGatePanel } from "@/features/publishing-flow/components/PublishGatePanel";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
+import { CalendarScheduleRow } from "@/features/calendar/components/CalendarScheduleRow";
 import { Button } from "@/components/ui/button";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { Label } from "@/components/ui/label";
 import { usePublishGate } from "@/hooks/usePublishGate";
 import { getApiErrorMessage } from "@/lib/api-data";
+import {
+  dateToOffsetIso,
+  isoToDatetimeLocal,
+  parseDatetimeLocal,
+} from "@/lib/calendar-datetime";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { CalendarClock, Loader2, Send, Undo2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ROUTES } from "@/router/routes";
@@ -23,6 +27,11 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   const [scheduledFor, setScheduledFor] = useState("");
   const [publishing, setPublishing] = useState(false);
 
+  useEffect(() => {
+    if (!article?.scheduled_for) return;
+    setScheduledFor(isoToDatetimeLocal(article.scheduled_for));
+  }, [article?.scheduled_for]);
+
   const handlePublish = async () => {
     setPublishing(true);
     try {
@@ -37,11 +46,18 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   };
 
   const handleSchedule = async () => {
-    if (!scheduledFor) return;
+    const parsed = parseDatetimeLocal(scheduledFor);
+    if (!parsed) {
+      toast.error("اختر تاريخ ووقت النشر");
+      return;
+    }
+    if (parsed.getTime() <= Date.now()) {
+      toast.error("وقت الجدولة يجب أن يكون في المستقبل");
+      return;
+    }
     setPublishing(true);
     try {
-      const iso = new Date(scheduledFor).toISOString();
-      await ArticlesStaff_APIs.schedule(articleId, iso);
+      await ArticlesStaff_APIs.schedule(articleId, dateToOffsetIso(parsed));
       toast.success("تم جدولة النشر");
       navigate(ROUTES.NEWSROOM_ARTICLES);
     } catch (err) {
@@ -61,42 +77,58 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
     }
   };
 
+  const canPublish = Boolean(gate?.can_publish) && !publishing;
+
   return (
     <div className="space-y-6">
       <PublishGatePanel gate={gate} isLoading={isLoading} />
 
-      <div className="publish-flow-card">
-        <h3 className="publish-flow-card__title">نشر فوري</h3>
-        <Button
-          onClick={handlePublish}
-          disabled={publishing || !gate?.can_publish}
-        >
-          {publishing && <Loader2 className="size-4 animate-spin" />}
-          نشر الآن
-        </Button>
-      </div>
+      <div className="publish-step-publish">
+        <div className="publish-flow-card publish-step-publish__card">
+          <div className="publish-step-publish__header">
+            <span className="publish-step-publish__icon" aria-hidden>
+              <Send className="size-4" />
+            </span>
+            <h3 className="publish-flow-card__title">نشر فوري</h3>
+          </div>
+          <p className="publish-step-publish__lead">
+            يظهر المقال للجمهور مباشرة بعد التأكد من جاهزية بوابة النشر.
+          </p>
+          <Button onClick={() => void handlePublish()} disabled={!canPublish}>
+            {publishing && <Loader2 className="size-4 animate-spin" />}
+            نشر الآن
+          </Button>
+        </div>
 
-      <div className="publish-flow-card">
-        <h3 className="publish-flow-card__title">جدولة النشر</h3>
-        <div className="space-y-2">
-          <Label>تاريخ ووقت النشر</Label>
-          <DateTimePicker
+        <div className="publish-flow-card publish-step-publish__card">
+          <div className="publish-step-publish__header">
+            <span className="publish-step-publish__icon" aria-hidden>
+              <CalendarClock className="size-4" />
+            </span>
+            <h3 className="publish-flow-card__title">جدولة النشر</h3>
+          </div>
+          <p className="publish-step-publish__lead">
+            اختر اليوم ثم الساعة (بتوقيت جهازك) — يُرسل الوقت مع المنطقة الزمنية.
+          </p>
+          <CalendarScheduleRow
             value={scheduledFor}
             onChange={setScheduledFor}
-            placeholder="اختر تاريخ ووقت النشر"
+            disabled={publishing}
           />
+          <Button
+            variant="outline"
+            onClick={() => void handleSchedule()}
+            disabled={!canPublish || !scheduledFor}
+          >
+            {publishing && <Loader2 className="size-4 animate-spin" />}
+            جدولة
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleSchedule}
-          disabled={publishing || !gate?.can_publish || !scheduledFor}
-        >
-          جدولة
-        </Button>
       </div>
 
       {(article?.status === "published" || article?.status === "scheduled") && (
-        <Button variant="destructive" onClick={handleRevert}>
+        <Button variant="destructive" onClick={() => void handleRevert()}>
+          <Undo2 className="size-4" />
           إرجاع إلى مسودة
         </Button>
       )}

@@ -1,11 +1,11 @@
-import { stepsForMediaType } from "@/lib/publish-gate";
+import { isStepFilled, stepsForMediaType } from "@/lib/publish-gate";
 import { cn } from "@/lib/utils";
-import type { StaffMediaType } from "@/types";
-import { Check } from "lucide-react";
+import type { StaffArticle, StaffMediaType } from "@/types";
+import { Check, Send } from "lucide-react";
 
 interface PublishingStepperProps {
   currentStep: number;
-  maxAllowedStep: number;
+  article: StaffArticle;
   mediaType?: StaffMediaType;
   onStepClick?: (step: number) => void;
 }
@@ -24,45 +24,53 @@ function StepConnector({ completed }: { completed: boolean }) {
 
 export function PublishingStepper({
   currentStep,
-  maxAllowedStep,
+  article,
   mediaType = "text",
   onStepClick,
 }: PublishingStepperProps) {
   const steps = stepsForMediaType(mediaType);
-  const currentIndex = steps.findIndex((s) => s.num === currentStep);
 
   return (
     <nav aria-label="خطوات النشر" className="publish-flow-stepper">
       <ol className="publish-flow-stepper__list">
         {steps.map((step, index) => {
           const displayNum = index + 1;
+          const isLast = index === steps.length - 1;
           const isActive = step.num === currentStep;
-          const isComplete = currentIndex > index;
-          const isReachable = step.num <= maxAllowedStep;
+          const isComplete = isStepFilled(step.num, article);
 
           return (
-            <li key={step.num} className="publish-flow-stepper__item">
+            <li
+              key={step.num}
+              className={cn(
+                "publish-flow-stepper__item",
+                isLast && "publish-flow-stepper__item--last",
+              )}
+            >
               <button
                 type="button"
-                disabled={!onStepClick || !isReachable}
+                disabled={!onStepClick}
                 onClick={() => onStepClick?.(step.num)}
                 title={step.label}
                 aria-current={isActive ? "step" : undefined}
                 className={cn(
                   "publish-flow-stepper__step",
-                  !isReachable && "publish-flow-stepper__step--locked",
+                  isLast && "publish-flow-stepper__step--last",
                 )}
               >
                 <span
                   className={cn(
                     "publish-flow-stepper__circle",
                     isComplete && "publish-flow-stepper__circle--done",
-                    isActive && "publish-flow-stepper__circle--active",
+                    isActive && !isComplete && "publish-flow-stepper__circle--active",
                     !isActive && !isComplete && "publish-flow-stepper__circle--pending",
+                    isLast && !isComplete && "publish-flow-stepper__circle--last",
                   )}
                 >
                   {isComplete ? (
                     <Check className="size-4 stroke-[2.5]" aria-hidden />
+                  ) : isLast ? (
+                    <Send className="size-3.5" aria-hidden />
                   ) : (
                     displayNum
                   )}
@@ -72,6 +80,7 @@ export function PublishingStepper({
                     "publish-flow-stepper__label",
                     isActive && "publish-flow-stepper__label--active",
                     isComplete && "publish-flow-stepper__label--done",
+                    isLast && "publish-flow-stepper__label--last",
                   )}
                 >
                   {step.label}
@@ -79,7 +88,7 @@ export function PublishingStepper({
               </button>
 
               {index < steps.length - 1 && (
-                <StepConnector completed={currentIndex > index} />
+                <StepConnector completed={isComplete} />
               )}
             </li>
           );

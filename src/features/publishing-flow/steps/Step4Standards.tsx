@@ -80,7 +80,7 @@ export function Step4Standards({
       ) : null}
 
       <StepActionsRow onBack={onBack}>
-        <NextStepButton onClick={onComplete} disabled={!result?.fusha_passed} />
+        <NextStepButton onClick={onComplete} />
       </StepActionsRow>
     </div>
   );

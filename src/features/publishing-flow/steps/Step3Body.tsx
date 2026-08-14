@@ -96,8 +96,7 @@ export function Step3Body({
       await queryClient.invalidateQueries({
         queryKey: ["staff-article", String(articleId)],
       });
-      toast.success("تم حفظ المحتوى — المتابعة للتبسيط واللهجة");
-      onComplete();
+      toast.success("تم حفظ المحتوى");
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -331,11 +330,16 @@ export function Step3Body({
       </div>
 
       <StepActionsRow onBack={onBack}>
-        <NextStepButton
-          onClick={handleSave}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void handleSave()}
           disabled={saving || !body.trim()}
-          loading={saving}
-        />
+        >
+          {saving && <Loader2 className="size-4 animate-spin" />}
+          حفظ المحتوى
+        </Button>
+        <NextStepButton onClick={onComplete} disabled={saving} />
       </StepActionsRow>
     </div>
   );

@@ -96,7 +96,7 @@ export function Step5Credibility({
       )}
 
       <StepActionsRow onBack={onBack}>
-        <NextStepButton onClick={onComplete} disabled={!result} />
+        <NextStepButton onClick={onComplete} />
       </StepActionsRow>
     </div>
   );

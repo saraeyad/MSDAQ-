@@ -8,11 +8,11 @@ MISDAQ (مصداق) is an Arabic-first internal newsroom platform for CDMC. Staf
 
 ## What we build
 
-| Area | Purpose |
-|------|---------|
-| **Public site** | Home, articles, categories, about, partners, static pages |
-| **Newsroom** | Article list, publishing flow (7 steps), standalone tools, file library, calendar |
-| **Admin** | Dashboard, team, roles & permissions, categories |
+| Area            | Purpose                                                                           |
+| --------------- | --------------------------------------------------------------------------------- |
+| **Public site** | Home, articles, categories, about, partners, static pages                         |
+| **Newsroom**    | Article list, publishing flow (7 steps), standalone tools, file library, calendar |
+| **Admin**       | Dashboard, team, roles & permissions, categories                                  |
 
 Publishing enforces gates (sources, cover, standards, credibility, localization) before publish. Standalone tools mirror many editorial checks outside the article flow.
 
@@ -20,15 +20,15 @@ Publishing enforces gates (sources, cover, standards, credibility, localization)
 
 ## Tech stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 19 + TypeScript |
-| Routing | React Router v7 |
-| Data | TanStack Query v5 |
-| Styling | Tailwind CSS v4 + Radix UI (shadcn-style `components/ui/`) |
-| Build | Vite 8 |
-| SSR | Express + Vite middleware (`server/index.ts`, `src/ssr/`) |
-| Backend API | Laravel (Railway-hosted) |
+| Layer       | Technology                                                 |
+| ----------- | ---------------------------------------------------------- |
+| Frontend    | React 19 + TypeScript                                      |
+| Routing     | React Router v7                                            |
+| Data        | TanStack Query v5                                          |
+| Styling     | Tailwind CSS v4 + Radix UI (shadcn-style `components/ui/`) |
+| Build       | Vite 8                                                     |
+| SSR         | Express + Vite middleware (`server/index.ts`, `src/ssr/`)  |
+| Backend API | Laravel (Railway-hosted)                                   |
 
 ---
 
@@ -58,13 +58,13 @@ src/
 
 ## Commands
 
-| Command | Use |
-|---------|-----|
-| `npm run dev` | Client-only SPA (fast HMR) |
-| `npm run dev:ssr` | Public site with SSR |
-| `npm run build` | Typecheck + client build |
-| `npm run build:ssr` | Production client + SSR bundle |
-| `npm run start` | Production Node server |
+| Command             | Use                                    |
+| ------------------- | -------------------------------------- |
+| `npm run dev`       | Client-only SPA (fast HMR)             |
+| `npm run dev:ssr`   | Public site with SSR                   |
+| `npm run build`     | Typecheck + client build               |
+| `npm run build:ssr` | Production client + SSR bundle         |
+| `npm run start`     | Production Node server                 |
 | `npm run check:ssr` | Smoke-check SSR HTML (after `dev:ssr`) |
 
 ---

@@ -14,7 +14,7 @@ import {
   getPreviousStep,
   inferArticleStep,
   isStepVisible,
-  maxAllowedStep,
+  stepsForMediaType,
 } from "@/lib/publish-gate";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -43,23 +43,15 @@ export default function PublishingFlow() {
     : article
       ? clampArticleStep(step || inferredStep, article)
       : 1;
-  const allowedStep = article
-    ? Math.max(maxAllowedStep(article), currentStep)
-    : 1;
 
   useEffect(() => {
     if (isNew || !article || !step) return;
 
     if (!isStepVisible(step, mediaType)) {
-      void setStep(inferArticleStep(article));
-      return;
+      const fallback = stepsForMediaType(mediaType)[0]?.num ?? 1;
+      void setStep(fallback);
     }
-
-    const max = maxAllowedStep(article);
-    if (step > max) {
-      void setStep(max);
-    }
-  }, [article, inferredStep, isNew, mediaType, setStep, step]);
+  }, [article, isNew, mediaType, setStep, step]);
 
   const goToStep = (next: number) => {
     if (!article) {
@@ -110,7 +102,7 @@ export default function PublishingFlow() {
       {!isNew && article && (
         <PublishingStepper
           currentStep={currentStep}
-          maxAllowedStep={allowedStep}
+          article={article}
           mediaType={mediaType}
           onStepClick={(s) => goToStep(s)}
         />

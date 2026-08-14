@@ -485,13 +485,28 @@ export function Step1Details({
       ) : null}
 
       <StepActionsRow className="publish-step-actions">
-        <NextStepButton
-          onClick={handleSubmit}
-          disabled={loading || !canSubmit}
-          loading={loading}
-        >
-          {isEdit ? undefined : "حفظ والمتابعة"}
-        </NextStepButton>
+        {isEdit ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleSubmit()}
+              disabled={loading || !canSubmit}
+            >
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              حفظ التفاصيل
+            </Button>
+            <NextStepButton onClick={() => onComplete?.()} disabled={loading} />
+          </>
+        ) : (
+          <NextStepButton
+            onClick={handleSubmit}
+            disabled={loading || !canSubmit}
+            loading={loading}
+          >
+            حفظ والمتابعة
+          </NextStepButton>
+        )}
       </StepActionsRow>
     </div>
   );

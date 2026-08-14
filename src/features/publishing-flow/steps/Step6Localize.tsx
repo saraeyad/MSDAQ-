@@ -91,7 +91,6 @@ export function Step6Localize({
         queryKey: ["staff-article", String(articleId)],
       });
       toast.success("تم حفظ اللهجات");
-      onComplete();
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
@@ -186,7 +185,15 @@ export function Step6Localize({
         <Button variant="outline" onClick={onSkip}>
           تخطي
         </Button>
-        <NextStepButton onClick={handleSave} disabled={saving} loading={saving} />
+        <Button
+          variant="outline"
+          onClick={() => void handleSave()}
+          disabled={saving}
+        >
+          {saving && <Loader2 className="size-4 animate-spin" />}
+          حفظ اللهجات
+        </Button>
+        <NextStepButton onClick={onComplete} disabled={saving} />
       </StepActionsRow>
     </div>
   );

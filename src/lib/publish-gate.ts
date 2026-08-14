@@ -195,6 +195,14 @@ export function isRequiredStepComplete(
   }
 }
 
+/** Whether a step has real content — used for stepper checkmarks. */
+export function isStepFilled(step: number, article: StaffArticle): boolean {
+  if (step === 6) {
+    return article.media_type === "text" && hasLocalization(article);
+  }
+  return isRequiredStepComplete(step, article);
+}
+
 /**
  * First step the journalist should work on (next incomplete required step).
  * Optional localization (6) is suggested after credibility when no variants exist.
@@ -274,12 +282,7 @@ export function clampArticleStep(
 ): number {
   const visible = stepsForMediaType(article.media_type).map((s) => s.num);
   if (!visible.includes(requestedStep as (typeof visible)[number])) {
-    return inferArticleStep(article);
-  }
-
-  const max = maxAllowedStep(article);
-  if (requestedStep > max) {
-    return max;
+    return visible[0] ?? 1;
   }
 
   return requestedStep;

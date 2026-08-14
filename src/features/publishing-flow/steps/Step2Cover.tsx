@@ -9,7 +9,6 @@ import {
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
 import { getApiErrorMessage } from "@/lib/api-data";
-import { mediaStepComplete } from "@/lib/publish-gate";
 import {
   AI_DETECTION_PROCESSING_STEPS,
   REVERSE_IMAGE_PROCESSING_STEPS,
@@ -290,8 +289,6 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     video_status: videoStatus,
   };
 
-  const canContinue = mediaStepComplete(localArticle);
-
   const coverSection = (
     <CoverUploadSection
       preview={preview}
@@ -472,7 +469,7 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
       )}
 
       <StepActionsRow onBack={onBack}>
-        <NextStepButton onClick={onComplete} disabled={!canContinue} />
+        <NextStepButton onClick={onComplete} />
       </StepActionsRow>
     </div>
   );
