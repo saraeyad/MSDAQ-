@@ -35,7 +35,11 @@ import type {
   CalendarMoveScope,
   CalendarTask,
 } from "@/types";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { EventDropArg } from "@fullcalendar/core";
 import { CalendarDays, CalendarPlus, ClipboardList, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -100,6 +104,9 @@ export default function CalendarPage({
         end: dateRange.end,
         types: typeFilter === "all" ? undefined : [typeFilter],
       }),
+    // FullCalendar must remain mounted when its view changes. Otherwise the
+    // loading skeleton remounts it with initialView="dayGridMonth".
+    placeholderData: keepPreviousData,
   });
 
   const filteredFeed = useMemo(
