@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,7 +17,10 @@ import { ColorPicker } from "@/features/calendar/components/ColorPicker";
 import { UserMultiSelect } from "@/features/calendar/components/UserMultiSelect";
 import {
   datetimeLocalToIso,
+  defaultRecurrenceEndAt,
   isoToDatetimeLocal,
+  isRecurrenceEndAfterAnchor,
+  type RecurrenceKind,
 } from "@/lib/calendar-datetime";
 import { CALENDAR_TYPE_COLORS } from "@/lib/calendar-feed";
 import { getApiErrorMessage } from "@/lib/api-data";
@@ -94,6 +96,30 @@ export function TaskForm({
     setAssigneeIds(editingTask.assignees.map((a) => a.id));
   }, [editingTask, initialDueAt]);
 
+  const handleDueAtChange = (value: string) => {
+    setDueAt(value);
+    if (recurrence === "none" || !value) return;
+    if (!recurrenceEndAt || !isRecurrenceEndAfterAnchor(value, recurrenceEndAt)) {
+      setRecurrenceEndAt(
+        defaultRecurrenceEndAt(value, recurrence as RecurrenceKind),
+      );
+    }
+  };
+
+  const handleRecurrenceChange = (value: CalendarRecurrence) => {
+    setRecurrence(value);
+    if (value === "none") {
+      setRecurrenceEndAt("");
+      return;
+    }
+    if (!dueAt) return;
+    if (!recurrenceEndAt || !isRecurrenceEndAfterAnchor(dueAt, recurrenceEndAt)) {
+      setRecurrenceEndAt(
+        defaultRecurrenceEndAt(dueAt, value as RecurrenceKind),
+      );
+    }
+  };
+
   const buildPayload = (): CreateCalendarTaskPayload | null => {
     if (!title.trim() || !dueAt) {
       toast.error("العنوان ووقت الاستحقاق مطلوبان");
@@ -102,6 +128,16 @@ export function TaskForm({
 
     if (recurrence !== "none" && !recurrenceEndAt) {
       toast.error("تاريخ نهاية التكرار مطلوب");
+      return null;
+    }
+
+    if (
+      recurrence !== "none" &&
+      recurrenceEndAt &&
+      new Date(datetimeLocalToIso(recurrenceEndAt)) <=
+        new Date(datetimeLocalToIso(dueAt))
+    ) {
+      toast.error("نهاية التكرار يجب أن تكون بعد وقت الاستحقاق");
       return null;
     }
 
@@ -162,7 +198,7 @@ export function TaskForm({
           />
         </div>
 
-        <div className="calendar-form-field">
+        <div className="calendar-form-field calendar-form-field--wide">
           <Label className="calendar-form-field__label">الوصف</Label>
           <Textarea
             value={description}
@@ -177,7 +213,7 @@ export function TaskForm({
           <div className="calendar-form-meta">
             <CalendarScheduleRow
               value={dueAt}
-              onChange={setDueAt}
+              onChange={handleDueAtChange}
               dateLocked={dateLocked}
             />
           </div>
@@ -206,12 +242,7 @@ export function TaskForm({
           <ColorPicker compact value={color} onChange={setColor} />
           <div className="calendar-form-field">
             <Label className="calendar-form-field__label">التكرار</Label>
-            <Select
-              value={recurrence}
-              onValueChange={(value) =>
-                setRecurrence(value as CalendarRecurrence)
-              }
-            >
+            <Select value={recurrence} onValueChange={handleRecurrenceChange}>
               <SelectTrigger className="calendar-form-select w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -227,12 +258,11 @@ export function TaskForm({
         </div>
 
         {recurrence !== "none" && (
-          <div className="calendar-form-field">
+          <div className="calendar-form-field calendar-form-field--wide">
             <Label className="calendar-form-field__label">نهاية التكرار</Label>
-            <DateTimePicker
+            <CalendarScheduleRow
               value={recurrenceEndAt}
               onChange={setRecurrenceEndAt}
-              placeholder="اختر نهاية التكرار"
             />
           </div>
         )}

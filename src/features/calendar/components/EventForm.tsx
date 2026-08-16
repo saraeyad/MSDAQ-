@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,8 +18,11 @@ import { UserMultiSelect } from "@/features/calendar/components/UserMultiSelect"
 import {
   datetimeLocalToIso,
   defaultEndDatetimeLocal,
+  defaultRecurrenceEndAt,
   isoToDatetimeLocal,
+  isRecurrenceEndAfterAnchor,
   parseDatetimeLocal,
+  type RecurrenceKind,
 } from "@/lib/calendar-datetime";
 import { CALENDAR_TYPE_COLORS } from "@/lib/calendar-feed";
 import { getApiErrorMessage } from "@/lib/api-data";
@@ -114,6 +116,34 @@ export function EventForm({
     if (!end || !start || end <= start) {
       setEndAt(defaultEndDatetimeLocal(value, 60));
     }
+
+    if (recurrence !== "none") {
+      if (
+        !recurrenceEndAt ||
+        !isRecurrenceEndAfterAnchor(value, recurrenceEndAt)
+      ) {
+        setRecurrenceEndAt(
+          defaultRecurrenceEndAt(value, recurrence as RecurrenceKind),
+        );
+      }
+    }
+  };
+
+  const handleRecurrenceChange = (value: CalendarRecurrence) => {
+    setRecurrence(value);
+    if (value === "none") {
+      setRecurrenceEndAt("");
+      return;
+    }
+    if (!startsAt) return;
+    if (
+      !recurrenceEndAt ||
+      !isRecurrenceEndAfterAnchor(startsAt, recurrenceEndAt)
+    ) {
+      setRecurrenceEndAt(
+        defaultRecurrenceEndAt(startsAt, value as RecurrenceKind),
+      );
+    }
   };
 
   const handleEndAtChange = (value: string) => {
@@ -144,6 +174,15 @@ export function EventForm({
 
     if (recurrence !== "none" && !recurrenceEndAt) {
       toast.error("تاريخ نهاية التكرار مطلوب");
+      return null;
+    }
+
+    if (
+      recurrence !== "none" &&
+      recurrenceEndAt &&
+      !isRecurrenceEndAfterAnchor(startsAt, recurrenceEndAt)
+    ) {
+      toast.error("نهاية التكرار يجب أن تكون بعد وقت البداية");
       return null;
     }
 
@@ -199,7 +238,7 @@ export function EventForm({
           />
         </div>
 
-        <div className="calendar-form-field">
+        <div className="calendar-form-field calendar-form-field--wide">
           <Label className="calendar-form-field__label">الوصف</Label>
           <Textarea
             value={description}
@@ -209,7 +248,7 @@ export function EventForm({
           />
         </div>
 
-        <div className="calendar-form-field calendar-form-field--meta">
+        <div className="calendar-form-field calendar-form-field--meta calendar-form-field--wide">
           <Label className="calendar-form-field__label">الوقت</Label>
           <div className="calendar-form-meta">
             <CalendarScheduleRow
@@ -227,12 +266,7 @@ export function EventForm({
           <ColorPicker compact value={color} onChange={setColor} />
           <div className="calendar-form-field">
             <Label className="calendar-form-field__label">التكرار</Label>
-            <Select
-              value={recurrence}
-              onValueChange={(value) =>
-                setRecurrence(value as CalendarRecurrence)
-              }
-            >
+            <Select value={recurrence} onValueChange={handleRecurrenceChange}>
               <SelectTrigger className="calendar-form-select w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -248,12 +282,11 @@ export function EventForm({
         </div>
 
         {recurrence !== "none" && (
-          <div className="calendar-form-field">
+          <div className="calendar-form-field calendar-form-field--wide">
             <Label className="calendar-form-field__label">نهاية التكرار</Label>
-            <DateTimePicker
+            <CalendarScheduleRow
               value={recurrenceEndAt}
               onChange={setRecurrenceEndAt}
-              placeholder="اختر نهاية التكرار"
             />
           </div>
         )}

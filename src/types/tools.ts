@@ -154,12 +154,48 @@ export interface TranscriptJob {
   updated_at: string;
 }
 
+export interface DomainDnsRecord {
+  type: string;
+  value: string;
+  ttl?: number;
+}
+
+export interface DomainSecuritySummary {
+  malicious: number;
+  suspicious: number;
+  harmless: number;
+  undetected: number;
+  timeout: number;
+}
+
+export interface DomainSslInfo {
+  issuer?: string | null;
+  expires_at?: string | null;
+}
+
+export interface DomainVotes {
+  harmless: number;
+  malicious: number;
+}
+
 export interface DomainCheckResult {
   domain: string;
+  tld?: string;
   is_available: boolean;
   registered_at?: string | null;
   expires_at?: string | null;
   updated_at?: string | null;
   registrar?: string | null;
   name_servers?: string[];
+  cached?: boolean;
+  categories?: Record<string, string>;
+  days_until_expiry?: number | null;
+  dns_records?: DomainDnsRecord[];
+  last_analysis_date?: string | null;
+  popularity_ranks?: Record<string, number>;
+  reputation?: number | null;
+  security?: DomainSecuritySummary;
+  ssl?: DomainSslInfo | null;
+  tags?: string[];
+  votes?: DomainVotes;
 }

@@ -57,8 +57,14 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
     }
     setPublishing(true);
     try {
-      await ArticlesStaff_APIs.schedule(articleId, dateToOffsetIso(parsed));
-      toast.success("تم جدولة النشر");
+      const when = dateToOffsetIso(parsed);
+      if (article?.status === "scheduled") {
+        await ArticlesStaff_APIs.reschedule(articleId, when);
+        toast.success("تم إعادة جدولة المقال");
+      } else {
+        await ArticlesStaff_APIs.schedule(articleId, when);
+        toast.success("تم جدولة النشر");
+      }
       navigate(ROUTES.NEWSROOM_ARTICLES);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
@@ -114,6 +120,7 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
             value={scheduledFor}
             onChange={setScheduledFor}
             disabled={publishing}
+            requireFuture
           />
           <Button
             variant="outline"

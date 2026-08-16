@@ -5,6 +5,7 @@ import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { PermissionPicker } from "@/features/admin/components/PermissionPicker";
 import { getApiErrorMessage } from "@/lib/api-data";
+import { rolePurpose } from "@/lib/role-labels";
 import { ROUTES } from "@/router/routes";
 import { AdminRoles_APIs } from "@/services/api/admin";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -96,9 +97,10 @@ export default function RoleEditPage() {
       <AdminPageHeader
         title={role.name}
         description={
-          protectedRole
+          rolePurpose(role.name) ??
+          (protectedRole
             ? "دور محمي — يمكن عرض الصلاحيات فقط"
-            : "حدّد الصلاحيات المرتبطة بهذا الدور"
+            : "حدّد الصلاحيات المرتبطة بهذا الدور")
         }
         actions={
           <Button asChild variant="outline" className="gap-2">

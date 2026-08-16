@@ -199,6 +199,7 @@ function ColorPickerPanel({
         <div className="calendar-color-picker__sliders">
           <input
             type="range"
+            dir="ltr"
             min={0}
             max={360}
             value={Math.round(hsv.h)}
@@ -211,6 +212,7 @@ function ColorPickerPanel({
           />
           <input
             type="range"
+            dir="ltr"
             min={0}
             max={100}
             value={opacity}

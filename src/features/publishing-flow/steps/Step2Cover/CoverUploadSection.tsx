@@ -161,7 +161,7 @@ export function CoverUploadSection({
               size="md"
               tone={toneFromAiVerdict(aiResult.verdict)}
               label={labelFromAiVerdict(aiResult.verdict)}
-              caption="مستوى الثقة"
+              caption="نسبة توليدها بالذكاء الاصطناعي"
             />
           </CardContent>
         </Card>

@@ -14,9 +14,12 @@ import {
 import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
+import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { PermissionPicker } from "@/features/admin/components/PermissionPicker";
 import { getApiErrorMessage } from "@/lib/api-data";
+import { paginateList } from "@/lib/table-pagination";
+import { rolePurpose } from "@/lib/role-labels";
 import { adminRoleEditPath } from "@/router/routes";
 import { AdminRoles_APIs } from "@/services/api/admin";
 import type { Role } from "@/types";
@@ -32,6 +35,7 @@ export default function RolesManagementPage() {
   const [newName, setNewName] = useState("");
   const [newPerms, setNewPerms] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Role | null>(null);
+  const [page, setPage] = useState(1);
 
   const {
     data: roles = [],
@@ -83,9 +87,20 @@ export default function RolesManagementPage() {
   });
 
   const handleDelete = (role: Role) => {
-    if (role.is_protected) return;
+    if (role.is_protected || role.users_count > 0) return;
     setDeleteTarget(role);
   };
+
+  const canDeleteRole = (role: Role) =>
+    !role.is_protected && role.users_count === 0;
+
+  const {
+    items: pagedRoles,
+    total,
+    currentPage,
+    lastPage,
+    pageSize,
+  } = paginateList(roles, page);
 
   if (rolesLoading || catalogLoading) {
     return <AdminLoadingState variant="table" />;
@@ -175,7 +190,21 @@ export default function RolesManagementPage() {
           }
         />
       ) : (
-        <AdminPanel title="الأدوار" badge={roles.length} flush>
+        <AdminPanel
+          title="الأدوار"
+          badge={total}
+          flush
+          footer={
+            <AdminPagination
+              currentPage={currentPage}
+              lastPage={lastPage}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              label="صفحات الأدوار"
+            />
+          }
+        >
           <div className="admin-roles-table">
             <Table>
               <TableHeader>
@@ -188,14 +217,21 @@ export default function RolesManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {roles.map((role) => (
+                {pagedRoles.map((role) => (
                   <TableRow key={role.id}>
                     <TableCell>
                       <div className="admin-roles-table__name">
                         <span className="admin-roles-table__name-icon">
                           <Shield className="size-4" />
                         </span>
-                        <span className="font-medium">{role.name}</span>
+                        <div className="min-w-0">
+                          <span className="font-medium">{role.name}</span>
+                          {rolePurpose(role.name) ? (
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {rolePurpose(role.name)}
+                            </p>
+                          ) : null}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -232,7 +268,14 @@ export default function RolesManagementPage() {
                           variant="outline"
                           size="sm"
                           disabled={
-                            role.is_protected || deleteMutation.isPending
+                            !canDeleteRole(role) || deleteMutation.isPending
+                          }
+                          title={
+                            role.users_count > 0
+                              ? "أعد تعيين الأعضاء قبل حذف الدور"
+                              : role.is_protected
+                                ? "دور محمي"
+                                : undefined
                           }
                           aria-label={`حذف ${role.name}`}
                           onClick={() => handleDelete(role)}

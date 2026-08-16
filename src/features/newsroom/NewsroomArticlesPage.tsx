@@ -12,10 +12,13 @@ import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
 import { AdminFilterBar } from "@/features/admin/components/AdminFilterBar";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
+import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { StatusBadge } from "@/features/admin/components/StatusBadge";
+import { RescheduleArticleDialog } from "@/features/newsroom/RescheduleArticleDialog";
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
+import { paginateList, TABLE_PAGE_SIZE } from "@/lib/table-pagination";
 import {
   flattenCategoriesForSelect,
   formatCategorySelectLabel,
@@ -29,8 +32,7 @@ import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type { ArticleStatus, StaffArticle } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ChevronLeft,
-  ChevronRight,
+  CalendarClock,
   Eye,
   FileText,
   PenLine,
@@ -52,12 +54,16 @@ function StaffArticleRow({
   article,
   canEdit,
   canDelete,
+  canReschedule,
   onDelete,
+  onReschedule,
 }: {
   article: StaffArticle;
   canEdit: boolean;
   canDelete: boolean;
+  canReschedule: boolean;
   onDelete: (article: StaffArticle) => void;
+  onReschedule: (article: StaffArticle) => void;
 }) {
   const coverUrl = resolveMediaUrl(article.cover_image);
   const editStep = inferArticleStep(article);
@@ -91,6 +97,11 @@ function StaffArticleRow({
               {formatStepProgress(inferArticleStep(article), article.media_type)}
             </span>
           ) : null}
+          {article.status === "scheduled" && article.scheduled_for ? (
+            <span>
+              مجدول: {new Date(article.scheduled_for).toLocaleString("ar")}
+            </span>
+          ) : null}
           <span>{new Date(article.updated_at).toLocaleDateString("ar")}</span>
         </div>
       </div>
@@ -102,6 +113,16 @@ function StaffArticleRow({
             عرض
           </Link>
         </Button>
+        {canReschedule && article.status === "scheduled" ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onReschedule(article)}
+          >
+            <CalendarClock className="size-3.5" />
+            إعادة جدولة
+          </Button>
+        ) : null}
         {canEdit ? (
           <Button asChild variant="outline" size="sm">
             <Link to={`/newsroom/articles/${article.id}/edit?step=${editStep}`}>
@@ -130,8 +151,12 @@ export default function NewsroomArticlesPage() {
   const queryClient = useQueryClient();
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
+  const canReschedule = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
   const [params, setParams] = useSearchParams();
   const [deleteTarget, setDeleteTarget] = useState<StaffArticle | null>(null);
+  const [rescheduleTarget, setRescheduleTarget] = useState<StaffArticle | null>(
+    null,
+  );
 
   const status = params.get("status") ?? "";
   const category = params.get("category") ?? "";
@@ -149,13 +174,14 @@ export default function NewsroomArticlesPage() {
   );
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["staff-articles", status, category, mine, page],
+    queryKey: ["staff-articles", status, category, mine, page, TABLE_PAGE_SIZE],
     queryFn: () =>
       ArticlesStaff_APIs.list({
         status: status ? (status as ArticleStatus) : undefined,
         category: category ? Number(category) : undefined,
         mine,
         page,
+        per_page: TABLE_PAGE_SIZE,
       }),
   });
 
@@ -169,8 +195,13 @@ export default function NewsroomArticlesPage() {
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
 
-  const articles = data?.items ?? [];
-  const pagination = data?.pagination;
+  const {
+    items: articles,
+    total,
+    currentPage,
+    lastPage,
+    pageSize,
+  } = paginateList(data?.items ?? [], page, data?.pagination);
 
   const updateParams = (updates: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
@@ -277,34 +308,17 @@ export default function NewsroomArticlesPage() {
       ) : (
         <AdminPanel
           title="المقالات"
-          badge={pagination?.total ?? articles.length}
+          badge={total}
           flush
           footer={
-            pagination && pagination.last_page > 1 ? (
-              <div className="flex items-center justify-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                >
-                  <ChevronRight className="size-4" />
-                  السابق
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  صفحة {pagination.current_page} من {pagination.last_page}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= pagination.last_page}
-                  onClick={() => setPage(page + 1)}
-                >
-                  التالي
-                  <ChevronLeft className="size-4" />
-                </Button>
-              </div>
-            ) : undefined
+            <AdminPagination
+              currentPage={currentPage}
+              lastPage={lastPage}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              label="صفحات المقالات"
+            />
           }
         >
           {articles.map((article) => (
@@ -313,7 +327,9 @@ export default function NewsroomArticlesPage() {
               article={article}
               canEdit={canEdit}
               canDelete={canDelete}
+              canReschedule={canReschedule}
               onDelete={setDeleteTarget}
+              onReschedule={setRescheduleTarget}
             />
           ))}
         </AdminPanel>
@@ -327,6 +343,11 @@ export default function NewsroomArticlesPage() {
         onConfirm={() =>
           deleteTarget && deleteMutation.mutate(deleteTarget.id)
         }
+      />
+
+      <RescheduleArticleDialog
+        article={rescheduleTarget}
+        onClose={() => setRescheduleTarget(null)}
       />
     </div>
   );

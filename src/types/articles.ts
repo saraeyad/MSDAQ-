@@ -169,6 +169,7 @@ export interface StaffArticlesListParams {
   category?: number;
   mine?: boolean;
   page?: number;
+  per_page?: number;
 }
 
 export interface StaffArticlesListResult {

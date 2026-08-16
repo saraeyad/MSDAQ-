@@ -15,13 +15,21 @@ import {
 } from "@/components/ui/popover";
 import {
   applyDateToDatetimeLocal,
+  applyPeriodToDatetimeLocal,
   applyTimeToDatetimeLocal,
+  clockAndPeriodToHHmm,
+  formatScheduleClock,
   formatScheduleDate,
-  formatScheduleTime,
+  formatSchedulePeriod,
+  isFutureDatetimeLocal,
+  nextFutureSlot,
   parseDatetimeLocal,
-  SCHEDULE_TIME_SLOTS,
+  SCHEDULE_CLOCK_SLOTS,
   snapTimeToQuarterHour,
+  startOfLocalDay,
+  startOfToday,
   toDatetimeLocal,
+  type SchedulePeriod,
 } from "@/lib/calendar-datetime";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +41,8 @@ interface CalendarScheduleRowProps {
   showEndTime?: boolean;
   dateLocked?: boolean;
   disabled?: boolean;
+  /** Block dates/times that are not after now. */
+  requireFuture?: boolean;
   className?: string;
 }
 
@@ -40,27 +50,28 @@ function TimeChipDropdown({
   value,
   onChange,
   disabled,
-  placeholder = "اختر الوقت",
+  requireFuture,
+  placeholder = "الوقت",
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  requireFuture?: boolean;
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const selected = parseDatetimeLocal(value);
-  const timeHHmm = selected
-    ? snapTimeToQuarterHour(
-        `${String(selected.getHours()).padStart(2, "0")}:${String(selected.getMinutes()).padStart(2, "0")}`,
-      )
-    : "";
+  const period: SchedulePeriod = selected
+    ? formatSchedulePeriod(selected)
+    : "ص";
+  const clock = selected ? formatScheduleClock(selected) : "";
 
   useEffect(() => {
     if (!open) return;
     document
       .querySelector("[data-schedule-time-selected='true']")
       ?.scrollIntoView({ block: "center" });
-  }, [open, timeHHmm]);
+  }, [open, clock]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -73,33 +84,94 @@ function TimeChipDropdown({
             open && "calendar-schedule-row__chip--active",
           )}
         >
-          {selected ? formatScheduleTime(selected) : placeholder}
+          {clock || placeholder}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="calendar-schedule-row__time-menu max-h-56 w-36 p-1"
+        className="calendar-schedule-row__time-menu max-h-56 w-24 p-1"
       >
-        {SCHEDULE_TIME_SLOTS.map((slot) => {
-          const labelDate = selected ?? new Date();
-          const [hours, minutes] = slot.split(":").map(Number);
-          const preview = new Date(labelDate);
-          preview.setHours(hours, minutes, 0, 0);
-          const isSelected = slot === timeHHmm;
+        {SCHEDULE_CLOCK_SLOTS.map((slot) => {
+          const isSelected = slot === clock;
+          const nextValue = applyTimeToDatetimeLocal(
+            value,
+            clockAndPeriodToHHmm(slot, period),
+          );
+          const isPast = requireFuture && !isFutureDatetimeLocal(nextValue);
 
           return (
             <DropdownMenuItem
               key={slot}
+              disabled={isPast}
               data-schedule-time-selected={isSelected ? "true" : undefined}
               className={cn(
                 "calendar-schedule-row__time-item justify-center font-normal",
                 isSelected && "bg-accent text-accent-foreground",
               )}
               onSelect={() => {
-                onChange(applyTimeToDatetimeLocal(value, slot));
+                if (isPast) return;
+                onChange(nextValue);
               }}
             >
-              {formatScheduleTime(preview)}
+              {slot}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function PeriodChip({
+  value,
+  onChange,
+  disabled,
+  requireFuture,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  requireFuture?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = parseDatetimeLocal(value);
+  const period: SchedulePeriod = selected
+    ? formatSchedulePeriod(selected)
+    : "ص";
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          disabled={disabled || !value}
+          className={cn(
+            "calendar-schedule-row__chip calendar-schedule-row__chip--period",
+            open && "calendar-schedule-row__chip--active",
+          )}
+          aria-label={period === "ص" ? "صباحاً" : "مساءً"}
+        >
+          {period}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-20 p-1">
+        {(["ص", "م"] as const).map((option) => {
+          const nextValue = applyPeriodToDatetimeLocal(value, option);
+          const isPast = requireFuture && !isFutureDatetimeLocal(nextValue);
+          return (
+            <DropdownMenuItem
+              key={option}
+              disabled={isPast}
+              className={cn(
+                "justify-center font-normal",
+                option === period && "bg-accent text-accent-foreground",
+              )}
+              onSelect={() => {
+                if (isPast) return;
+                onChange(nextValue);
+              }}
+            >
+              {option}
             </DropdownMenuItem>
           );
         })}
@@ -116,6 +188,7 @@ export function CalendarScheduleRow({
   showEndTime = false,
   dateLocked = false,
   disabled = false,
+  requireFuture = false,
   className,
 }: CalendarScheduleRowProps) {
   const [dateOpen, setDateOpen] = useState(false);
@@ -123,7 +196,16 @@ export function CalendarScheduleRow({
 
   const handleSelectDate = (date: Date | undefined) => {
     if (!date) return;
-    onChange(applyDateToDatetimeLocal(value, date));
+    let next = applyDateToDatetimeLocal(value, date);
+    if (requireFuture && !isFutureDatetimeLocal(next)) {
+      const pickedDay = startOfLocalDay(date);
+      if (pickedDay.getTime() > startOfToday().getTime()) {
+        next = applyTimeToDatetimeLocal(next, "09:00");
+      } else {
+        next = toDatetimeLocal(nextFutureSlot());
+      }
+    }
+    onChange(next);
     setDateOpen(false);
   };
 
@@ -164,6 +246,7 @@ export function CalendarScheduleRow({
               selected={selected}
               onSelect={handleSelectDate}
               defaultMonth={selected}
+              disabled={requireFuture ? { before: startOfToday() } : undefined}
               autoFocus
             />
           </PopoverContent>
@@ -174,6 +257,13 @@ export function CalendarScheduleRow({
         value={value}
         onChange={onChange}
         disabled={disabled}
+        requireFuture={requireFuture}
+      />
+      <PeriodChip
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        requireFuture={requireFuture}
       />
 
       {showEndTime && onEndChange ? (
@@ -185,7 +275,14 @@ export function CalendarScheduleRow({
             value={endValue || value}
             onChange={onEndChange}
             disabled={disabled || !value}
+            requireFuture={requireFuture}
             placeholder="النهاية"
+          />
+          <PeriodChip
+            value={endValue || value}
+            onChange={onEndChange}
+            disabled={disabled || !value}
+            requireFuture={requireFuture}
           />
         </>
       ) : null}

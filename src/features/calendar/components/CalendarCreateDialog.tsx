@@ -51,7 +51,7 @@ export function CalendarCreateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "calendar-create-dialog gap-0 p-0 sm:max-w-lg",
+          "calendar-create-dialog gap-0 p-0 sm:max-w-2xl",
           mode === "task" && "calendar-create-dialog--task",
           mode === "event" && "calendar-create-dialog--event",
         )}

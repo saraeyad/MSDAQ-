@@ -19,6 +19,8 @@ import {
   isoToDatetimeLocal,
   moveToOffsetIso,
   openCreateDatetime,
+  startOfLocalDay,
+  startOfToday,
 } from "@/lib/calendar-datetime";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { cn } from "@/lib/utils";
@@ -143,11 +145,13 @@ export default function CalendarPage({
 
   const openCreateForDate = (date: Date) => {
     if (!hasManageTasks && !hasManageEvents) return;
+    // A past day cannot be scheduled, so leave the date chip editable instead of locking it.
+    const lockDate = startOfLocalDay(date).getTime() >= startOfToday().getTime();
     if (hasManageTasks && hasManageEvents) {
-      openCreateDialog("pick", date, true);
+      openCreateDialog("pick", date, lockDate);
       return;
     }
-    openCreateDialog(hasManageTasks ? "task" : "event", date, true);
+    openCreateDialog(hasManageTasks ? "task" : "event", date, lockDate);
   };
 
   const performMove = async (

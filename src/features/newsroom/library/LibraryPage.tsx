@@ -22,8 +22,10 @@ import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
 import { AdminFilterBar } from "@/features/admin/components/AdminFilterBar";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
+import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { getApiErrorMessage } from "@/lib/api-data";
+import { paginateList, TABLE_PAGE_SIZE } from "@/lib/table-pagination";
 import { LibraryItemCard } from "@/features/newsroom/library/LibraryItemCard";
 import { DeleteLibraryItemDialog } from "@/features/newsroom/library/DeleteLibraryItemDialog";
 import { downloadLibraryItem } from "@/lib/library-download";
@@ -33,8 +35,6 @@ import { PERMISSIONS } from "@/router/routes";
 import type { LibraryFileType, LibraryItem } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ChevronLeft,
-  ChevronRight,
   FileUp,
   FolderOpen,
   Loader2,
@@ -77,14 +77,20 @@ export default function LibraryPage() {
     queryFn: () =>
       Library_APIs.list({
         page,
+        per_page: TABLE_PAGE_SIZE,
         search: search || undefined,
         category: filterCategory || undefined,
         file_type: filterFileType === "all" ? undefined : filterFileType,
       }),
   });
 
-  const items = listQuery.data?.items ?? [];
-  const pagination = listQuery.data?.pagination;
+  const {
+    items,
+    total,
+    currentPage,
+    lastPage,
+    pageSize,
+  } = paginateList(listQuery.data?.items ?? [], page, listQuery.data?.pagination);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ["library"] });
@@ -315,31 +321,16 @@ export default function LibraryPage() {
       ) : (
         <AdminPanel
           title="الملفات"
-          badge={pagination?.total ?? items.length}
+          badge={total}
           footer={
-            pagination && pagination.last_page > 1 ? (
-              <div className="flex items-center justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {page} / {pagination.last_page}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= pagination.last_page}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
-              </div>
-            ) : undefined
+            <AdminPagination
+              currentPage={currentPage}
+              lastPage={lastPage}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              label="صفحات المكتبة"
+            />
           }
         >
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -173,10 +173,11 @@ export function CalendarGrid({
     button.className = "calendar-day-add-btn";
     button.setAttribute("aria-label", "إضافة");
     button.textContent = "+";
+    const cellDate = new Date(date.getTime());
     button.addEventListener("click", (event) => {
       event.stopPropagation();
       event.preventDefault();
-      onDateAddClickRef.current(date);
+      onDateAddClickRef.current(cellDate);
     });
     frame.appendChild(button);
   };

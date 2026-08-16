@@ -1,6 +1,7 @@
 import { Auth_APIs } from "@/services/api/auth";
 import { getApiData } from "@/lib/api-data";
 import { normalizeAuthUser, normalizeMeUser } from "@/context/types";
+import { ROUTES } from "@/router/routes";
 import {
   createContext,
   useCallback,
@@ -18,7 +19,7 @@ interface AuthContextType {
   isInitialized: boolean;
   permissions: string[];
   saveAuth: (token: string, user?: AuthUser) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
@@ -81,10 +82,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuth({ token: newToken, user: normalizedUser });
   };
 
-  const logout = () => {
-    void Auth_APIs.logout();
+  const logout = async () => {
+    // Keep the authenticated tree mounted until the server request finishes.
+    // Clearing React state first makes ProtectedRoute briefly render /login.
+    await Auth_APIs.logout();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    if (typeof window !== "undefined") {
+      window.location.replace(ROUTES.HOME);
+      return;
+    }
     setAuth({ token: null, user: null });
   };
 
@@ -96,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("user", JSON.stringify(user));
       setAuth((prev) => ({ ...prev, user }));
     } catch {
-      logout();
+      void logout();
     }
   };
 

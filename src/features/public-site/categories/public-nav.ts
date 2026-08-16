@@ -9,11 +9,17 @@ export type PublicNavLinkItem = {
   matchPaths?: string[];
 };
 
+export type PublicNavMenuLink = {
+  to: string;
+  label: string;
+  children?: { to: string; label: string }[];
+};
+
 export type PublicNavDropdownItem = {
   type: "dropdown";
   label: string;
   paths: string[];
-  items: { to: string; label: string; indent?: boolean }[];
+  items: PublicNavMenuLink[];
 };
 
 export type PublicNavItem = PublicNavLinkItem | PublicNavDropdownItem;
@@ -68,23 +74,23 @@ function buildCategoriesDropdown(
   if (categories.length === 0) return null;
 
   const paths: string[] = [];
-  const items: PublicNavDropdownItem["items"] = [];
+  const items: PublicNavMenuLink[] = [];
 
   for (const category of categories) {
-    paths.push(categoryPath(category.slug));
-    items.push({
-      to: categoryPath(category.slug),
-      label: category.name_ar,
+    const parentPath = categoryPath(category.slug);
+    paths.push(parentPath);
+
+    const children = (category.children ?? []).map((child) => {
+      const childPath = categoryPath(child.slug);
+      paths.push(childPath);
+      return { to: childPath, label: child.name_ar };
     });
 
-    for (const child of category.children ?? []) {
-      paths.push(categoryPath(child.slug));
-      items.push({
-        to: categoryPath(child.slug),
-        label: child.name_ar,
-        indent: true,
-      });
-    }
+    items.push({
+      to: parentPath,
+      label: category.name_ar,
+      children: children.length ? children : undefined,
+    });
   }
 
   return {

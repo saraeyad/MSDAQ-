@@ -54,6 +54,7 @@ export const ArticlesStaff_APIs = {
         status: params?.status,
         category: params?.category,
         page: params?.page,
+        per_page: params?.per_page,
         mine: params?.mine ? 1 : undefined,
       },
     });

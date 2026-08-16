@@ -25,6 +25,7 @@ import type {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
+import { formatScheduleDate } from "@/lib/calendar-datetime";
 import {
   CheckCircle2,
   ExternalLink,
@@ -45,6 +46,35 @@ const PRIORITY_LABELS = {
   medium: "متوسطة",
   high: "عالية",
 } as const;
+
+const RECURRENCE_LABELS = {
+  none: "بدون تكرار",
+  daily: "يومي",
+  weekly: "أسبوعي",
+  monthly: "شهري",
+} as const;
+
+function PeopleChips({
+  people,
+  empty = "—",
+}: {
+  people: { id: number; name: string }[];
+  empty?: string;
+}) {
+  if (people.length === 0) {
+    return <span className="calendar-detail-people__empty">{empty}</span>;
+  }
+
+  return (
+    <ul className="calendar-detail-people">
+      {people.map((person) => (
+        <li key={person.id} className="calendar-detail-people__chip">
+          {person.name}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 interface CalendarItemDetailProps {
   item: CalendarFeedItem;
@@ -142,6 +172,7 @@ export function CalendarItemDetail({
     user,
     hasCompleteOwnTasks,
     taskDetail,
+    hasManageTasks,
   );
   const showReopen = canReopenTaskOccurrence(
     item,
@@ -183,10 +214,10 @@ export function CalendarItemDetail({
             <h3 className="calendar-detail-modal__title">{item.title}</h3>
             <p className="calendar-detail-modal__datetime">
               {isValid(start)
-                ? format(start, "EEEE d MMMM — HH:mm", { locale: ar })
+                ? `${formatScheduleDate(start)} — ${format(start, "HH:mm", { locale: ar })}`
                 : "—"}
               {end && isValid(end)
-                ? ` → ${format(end, "HH:mm", { locale: ar })}`
+                ? ` – ${format(end, "HH:mm", { locale: ar })}`
                 : ""}
             </p>
           </div>
@@ -222,15 +253,24 @@ export function CalendarItemDetail({
                         : "قيد التنفيذ"}
                   </dd>
                 </div>
-                {item.meta.is_recurring && (
-                  <div className="calendar-detail-dl__row">
-                    <dt>التكرار</dt>
-                    <dd>مهمة متكررة</dd>
-                  </div>
-                )}
                 <div className="calendar-detail-dl__row">
+                  <dt>التكرار</dt>
+                  <dd>
+                    {taskDetail?.recurrence && taskDetail.recurrence !== "none"
+                      ? RECURRENCE_LABELS[taskDetail.recurrence]
+                      : item.meta.is_recurring
+                        ? "مهمة متكررة"
+                        : "بدون تكرار"}
+                    {taskDetail?.recurrence_end_at
+                      ? ` · حتى ${formatScheduleDate(new Date(taskDetail.recurrence_end_at))}`
+                      : ""}
+                  </dd>
+                </div>
+                <div className="calendar-detail-dl__row calendar-detail-dl__row--stack">
                   <dt>المُسنَد إليهم</dt>
-                  <dd>{item.meta.assignees.map((a) => a.name).join("، ") || "—"}</dd>
+                  <dd>
+                    <PeopleChips people={item.meta.assignees} />
+                  </dd>
                 </div>
                 {taskDetail?.creator && (
                   <div className="calendar-detail-dl__row">
@@ -248,16 +288,25 @@ export function CalendarItemDetail({
                 <p className="calendar-detail-fields__desc">{eventDetail.description}</p>
               ) : null}
               <dl className="calendar-detail-dl">
-                <div className="calendar-detail-dl__row">
+                <div className="calendar-detail-dl__row calendar-detail-dl__row--stack">
                   <dt>المشاركون</dt>
-                  <dd>{item.meta.participants.map((p) => p.name).join("، ") || "—"}</dd>
+                  <dd>
+                    <PeopleChips people={item.meta.participants} />
+                  </dd>
                 </div>
-                {item.meta.is_recurring && (
-                  <div className="calendar-detail-dl__row">
-                    <dt>التكرار</dt>
-                    <dd>فعالية متكررة</dd>
-                  </div>
-                )}
+                <div className="calendar-detail-dl__row">
+                  <dt>التكرار</dt>
+                  <dd>
+                    {eventDetail?.recurrence && eventDetail.recurrence !== "none"
+                      ? RECURRENCE_LABELS[eventDetail.recurrence]
+                      : item.meta.is_recurring
+                        ? "فعالية متكررة"
+                        : "بدون تكرار"}
+                    {eventDetail?.recurrence_end_at
+                      ? ` · حتى ${formatScheduleDate(new Date(eventDetail.recurrence_end_at))}`
+                      : ""}
+                  </dd>
+                </div>
                 {eventDetail?.creator && (
                   <div className="calendar-detail-dl__row">
                     <dt>المنشئ</dt>

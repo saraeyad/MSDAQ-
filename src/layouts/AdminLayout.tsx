@@ -1,77 +1,24 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { RouteErrorBoundary } from "@/components/route-error-boundary";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { useAuth } from "@/context/auth";
 import { StaffNavLinks } from "@/features/staff/nav/StaffNavLinks";
+import { StaffShellTopbar } from "@/features/staff/nav/StaffShellTopbar";
 import {
   STAFF_ORG_LABEL,
   getVisibleStaffNav,
 } from "@/features/staff/nav/staff-nav";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
-import { LogOut, Menu } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Outlet } from "react-router-dom";
 
-function UserAvatar({ name }: { name: string }) {
-  const initial = name.trim().charAt(0) || "?";
-  return (
-    <div className="admin-stat-icon admin-stat-icon-primary size-9 text-sm font-bold">
-      {initial}
-    </div>
-  );
-}
-
-function SidebarFooter({
-  userName,
-  userRole,
-  onLogout,
-}: {
-  userName?: string;
-  userRole?: string;
-  onLogout: () => void;
-}) {
-  return (
-    <div className="staff-shell__footer space-y-3">
-      <div className="staff-shell__user">
-        <UserAvatar name={userName ?? "?"} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{userName}</p>
-          <Badge variant="secondary" className="mt-1 text-[10px]">
-            {userRole ?? "مدير"}
-          </Badge>
-        </div>
-      </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-full justify-start gap-2 text-muted-foreground"
-        onClick={onLogout}
-      >
-        <LogOut className="size-4" />
-        تسجيل الخروج
-      </Button>
-    </div>
-  );
-}
-
 export default function AdminLayout() {
-  const { user, logout, permissions } = useAuth();
+  const { permissions } = useAuth();
   const isSuperAdmin = useIsSuperAdmin();
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   const visibleLinks = useMemo(
     () => getVisibleStaffNav(permissions, isSuperAdmin),
     [permissions, isSuperAdmin],
   );
-  const userRole = user?.roles?.[0] ?? "مدير";
 
   return (
     <div className="staff-shell">
@@ -83,48 +30,10 @@ export default function AdminLayout() {
         <div className="staff-shell__nav">
           <StaffNavLinks items={visibleLinks} />
         </div>
-        <SidebarFooter
-          userName={user?.name}
-          userRole={userRole}
-          onLogout={() => logout()}
-        />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="staff-shell__topbar">
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="فتح القائمة">
-                <Menu className="size-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72 p-0">
-              <SheetHeader className="border-b border-border p-4 text-start">
-                <BrandLogo size="md" linkToHome={false} className="mb-2" />
-                <SheetTitle className="font-headline text-sm leading-snug">
-                  {STAFF_ORG_LABEL}
-                </SheetTitle>
-              </SheetHeader>
-              <div className="flex h-[calc(100%-5.5rem)] flex-col">
-                <div className="flex-1 overflow-y-auto p-3">
-                  <StaffNavLinks
-                    items={visibleLinks}
-                    onNavigate={() => setMobileOpen(false)}
-                  />
-                </div>
-                <SidebarFooter
-                  userName={user?.name}
-                  userRole={userRole}
-                  onLogout={() => {
-                    setMobileOpen(false);
-                    logout();
-                  }}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-        </header>
-
+        <StaffShellTopbar items={visibleLinks} />
         <main className="admin-shell-main flex-1 py-4 md:py-6">
           <div className="container-page">
             <RouteErrorBoundary>

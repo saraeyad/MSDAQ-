@@ -4,6 +4,7 @@ import { PublishGatePanel } from "@/features/publishing-flow/components/PublishG
 import { SourceConsentBanner } from "@/features/publishing-flow/components/SourceConsentBanner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { RescheduleArticleDialog } from "@/features/newsroom/RescheduleArticleDialog";
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
@@ -89,8 +90,10 @@ export default function StaffArticleDetailPage() {
   const queryClient = useQueryClient();
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
+  const canReschedule = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
 
   const { data: article, isLoading, isError, error } = useQuery({
     queryKey: ["staff-article", id],
@@ -206,6 +209,12 @@ export default function StaffArticleDetailPage() {
         </div>
 
         <div className="staff-article-hero__actions">
+          {canReschedule && article.status === "scheduled" && (
+            <Button variant="outline" onClick={() => setRescheduleOpen(true)}>
+              <CalendarClock className="size-4" />
+              إعادة جدولة
+            </Button>
+          )}
           {canEdit && (
             <Button asChild>
               <Link
@@ -340,6 +349,11 @@ export default function StaffArticleDetailPage() {
         isPending={deleteMutation.isPending}
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => deleteMutation.mutate()}
+      />
+
+      <RescheduleArticleDialog
+        article={rescheduleOpen ? article : null}
+        onClose={() => setRescheduleOpen(false)}
       />
     </div>
   );

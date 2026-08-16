@@ -29,9 +29,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
+import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
+import { paginateList } from "@/lib/table-pagination";
 import { countCategories, flattenCategoryRows } from "@/lib/category-tree";
 import { cn } from "@/lib/utils";
 import { PERMISSIONS } from "@/router/routes";
@@ -106,6 +108,7 @@ export default function CategoriesManagementPage() {
     category: Category;
     isChild: boolean;
   } | null>(null);
+  const [page, setPage] = useState(1);
 
   const {
     data: categories = [],
@@ -122,6 +125,12 @@ export default function CategoriesManagementPage() {
     [categories],
   );
   const totalCount = useMemo(() => countCategories(categories), [categories]);
+  const {
+    items: pagedRows,
+    currentPage,
+    lastPage,
+    pageSize,
+  } = paginateList(tableRows, page);
   const topLevelCategories = categories;
 
   const createMutation = useMutation({
@@ -344,6 +353,16 @@ export default function CategoriesManagementPage() {
           description="التصنيفات الرئيسية والفرعية كما تظهر في الموقع"
           badge={totalCount}
           flush
+          footer={
+            <AdminPagination
+              currentPage={currentPage}
+              lastPage={lastPage}
+              total={tableRows.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              label="صفحات التصنيفات"
+            />
+          }
         >
           <div className="admin-categories-table">
             <Table>
@@ -359,7 +378,7 @@ export default function CategoriesManagementPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tableRows.map(({ category, isChild }) => {
+                {pagedRows.map(({ category, isChild }) => {
                   const isEditing = editingId === category.id && !!editDraft;
                   const isAddingSub = subcategoryParentId === category.id;
 

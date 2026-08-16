@@ -102,7 +102,7 @@ export function AiDetectionToolPage() {
               size="md"
               tone={toneFromAiVerdict(result.verdict)}
               label={labelFromAiVerdict(result.verdict)}
-              caption="مستوى الثقة"
+              caption="نسبة توليدها بالذكاء الاصطناعي"
             />
           </CardContent>
         </Card>

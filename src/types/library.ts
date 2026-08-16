@@ -31,4 +31,5 @@ export interface LibraryListParams {
   file_type?: LibraryFileType;
   search?: string;
   page?: number;
+  per_page?: number;
 }

@@ -62,7 +62,6 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@cdmc.org"
               required
               dir="ltr"
             />

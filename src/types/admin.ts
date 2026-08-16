@@ -16,6 +16,7 @@ export interface AdminUsersListParams {
   role?: string;
   search?: string;
   page?: number;
+  per_page?: number;
 }
 
 export interface CreateAdminUserPayload {

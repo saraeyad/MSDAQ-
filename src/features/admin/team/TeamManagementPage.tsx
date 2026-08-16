@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -30,27 +29,40 @@ import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
 import { AdminFilterBar } from "@/features/admin/components/AdminFilterBar";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
+import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { PermissionPicker } from "@/features/admin/components/PermissionPicker";
 import { getApiErrorMessage } from "@/lib/api-data";
-import { SUPER_ADMIN_ROLE } from "@/router/routes";
+import { paginateList, TABLE_PAGE_SIZE } from "@/lib/table-pagination";
+import { permissionLabel } from "@/lib/permission-labels";
+import { ROUTES, SUPER_ADMIN_ROLE } from "@/router/routes";
 import { AdminRoles_APIs, AdminUsers_APIs } from "@/services/api/admin";
 import type { Role, User } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ChevronLeft,
-  ChevronRight,
+  KeyRound,
   Loader2,
+  Lock,
   Pencil,
+  Shield,
   Trash2,
   UserPlus,
+  UserRound,
   Users,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { CreateUserPanel } from "./CreateUserPanel";
 import { DeleteUserDialog } from "./DeleteUserDialog";
+
+function permissionsFromPayload(data: {
+  permissions?: string[];
+  user?: { permissions?: string[] };
+}): string[] | undefined {
+  return data.permissions ?? data.user?.permissions;
+}
 
 export default function TeamManagementPage() {
   const queryClient = useQueryClient();
@@ -75,7 +87,6 @@ export default function TeamManagementPage() {
   const [editPasswordConfirm, setEditPasswordConfirm] = useState("");
   const [assignRoleName, setAssignRoleName] = useState<string | undefined>();
   const [directPermsToAdd, setDirectPermsToAdd] = useState<string[]>([]);
-  const [directPermsToRemove, setDirectPermsToRemove] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
   const listQuery = useQuery({
@@ -83,6 +94,7 @@ export default function TeamManagementPage() {
     queryFn: () =>
       AdminUsers_APIs.list({
         page,
+        per_page: TABLE_PAGE_SIZE,
         search: search || undefined,
         role: roleFilter === "all" ? undefined : roleFilter,
       }),
@@ -98,8 +110,14 @@ export default function TeamManagementPage() {
     queryFn: () => AdminRoles_APIs.permissions(),
   });
 
-  const users = listQuery.data?.items ?? [];
-  const pagination = listQuery.data?.pagination;
+  const rawUsers = listQuery.data?.items ?? [];
+  const {
+    items: users,
+    total,
+    currentPage,
+    lastPage,
+    pageSize,
+  } = paginateList(rawUsers, page, listQuery.data?.pagination);
 
   const invalidateUsers = () => {
     void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -113,7 +131,6 @@ export default function TeamManagementPage() {
     setEditPasswordConfirm("");
     setAssignRoleName(undefined);
     setDirectPermsToAdd([]);
-    setDirectPermsToRemove([]);
   };
 
   const resetCreateForm = () => {
@@ -203,13 +220,30 @@ export default function TeamManagementPage() {
     onError: (error) => toast.error(getApiErrorMessage(error)),
   });
 
+  const roleGrantedPerms = useMemo(() => {
+    if (!selectedUser) return new Set<string>();
+    return new Set(
+      roles
+        .filter((role) => selectedUser.roles.includes(role.name))
+        .flatMap((role) => role.permissions ?? []),
+    );
+  }, [roles, selectedUser]);
+
+  const directPerms = useMemo(() => {
+    if (!selectedUser) return [];
+    return (selectedUser.permissions ?? []).filter(
+      (perm) => !roleGrantedPerms.has(perm),
+    );
+  }, [selectedUser, roleGrantedPerms]);
+
   const assignPermsMutation = useMutation({
     mutationFn: () =>
       AdminUsers_APIs.assignPermissions(selectedUser!.id, directPermsToAdd),
     onSuccess: (data) => {
       toast.success("تم منح الصلاحيات");
+      const next = permissionsFromPayload(data);
       setSelectedUser((prev) =>
-        prev ? { ...prev, permissions: data.permissions } : prev,
+        prev ? { ...prev, permissions: next ?? prev.permissions } : prev,
       );
       setDirectPermsToAdd([]);
       invalidateUsers();
@@ -218,14 +252,35 @@ export default function TeamManagementPage() {
   });
 
   const revokePermsMutation = useMutation({
-    mutationFn: () =>
-      AdminUsers_APIs.revokePermissions(selectedUser!.id, directPermsToRemove),
-    onSuccess: (data) => {
-      toast.success("تم سحب الصلاحيات");
+    mutationFn: (permissions: string[]) =>
+      AdminUsers_APIs.revokePermissions(selectedUser!.id, permissions),
+    onSuccess: (data, revoked) => {
+      const next = permissionsFromPayload(data);
+      const stillThere = next
+        ? revoked.filter((perm) => next.includes(perm))
+        : [];
+
+      if (stillThere.length > 0) {
+        toast.error(
+          "هذه الصلاحية قادمة من الدور — عدّل الدور أو اسحبه من تبويب الأدوار.",
+        );
+        setSelectedUser((prev) =>
+          prev ? { ...prev, permissions: next ?? prev.permissions } : prev,
+        );
+        return;
+      }
+
+      toast.success("تم سحب الصلاحية");
       setSelectedUser((prev) =>
-        prev ? { ...prev, permissions: data.permissions } : prev,
+        prev
+          ? {
+              ...prev,
+              permissions:
+                next ??
+                (prev.permissions ?? []).filter((perm) => !revoked.includes(perm)),
+            }
+          : prev,
       );
-      setDirectPermsToRemove([]);
       invalidateUsers();
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
@@ -237,6 +292,9 @@ export default function TeamManagementPage() {
       toast.success("تم حذف العضو");
       setDeleteTarget(null);
       setSelectedUser(null);
+      if (users.length === 1 && page > 1) {
+        setPage((p) => p - 1);
+      }
       invalidateUsers();
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
@@ -246,6 +304,17 @@ export default function TeamManagementPage() {
 
   const canRevokeRole = (user: User, role: string) => {
     if (isSelf(user) && role === SUPER_ADMIN_ROLE) return false;
+    if (role === SUPER_ADMIN_ROLE) {
+      const superAdmins = rawUsers.filter((u) =>
+        u.roles.includes(SUPER_ADMIN_ROLE),
+      );
+      if (
+        superAdmins.length <= 1 &&
+        superAdmins.some((u) => u.id === user.id)
+      ) {
+        return false;
+      }
+    }
     return true;
   };
 
@@ -325,7 +394,7 @@ export default function TeamManagementPage() {
           title="تعذّر تحميل أعضاء الفريق"
           description="تحقق من الاتصال أو الصلاحيات ثم أعد المحاولة."
         />
-      ) : users.length === 0 ? (
+      ) : rawUsers.length === 0 ? (
         <AdminEmptyState
           icon={Users}
           title="لا يوجد أعضاء مطابقون"
@@ -335,32 +404,17 @@ export default function TeamManagementPage() {
         <AdminPanel
           title="أعضاء الفريق"
           description="الأسماء والأدوار والصلاحيات الحالية"
-          badge={pagination?.total ?? users.length}
+          badge={total}
           flush
           footer={
-            pagination && pagination.last_page > 1 ? (
-              <div className="flex items-center justify-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {pagination.current_page} / {pagination.last_page}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= pagination.last_page}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
-              </div>
-            ) : undefined
+            <AdminPagination
+              currentPage={currentPage}
+              lastPage={lastPage}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              label="صفحات الفريق"
+            />
           }
         >
           <div className="admin-team-table">
@@ -448,177 +502,289 @@ export default function TeamManagementPage() {
         open={!!selectedUser}
         onOpenChange={(open) => !open && setSelectedUser(null)}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="admin-team-dialog flex max-h-[90vh] flex-col overflow-hidden sm:max-w-xl">
           {selectedUser ? (
             <>
               <DialogHeader>
-                <DialogTitle>
-                  <span className="admin-team-dialog__header">
-                    <span className="admin-team-table__avatar">
-                      {selectedUser.name.trim().charAt(0) || "؟"}
-                    </span>
-                    {selectedUser.name}
+                <div className="admin-team-dialog__person">
+                  <span className="admin-team-dialog__avatar">
+                    {selectedUser.name.trim().charAt(0) || "؟"}
                   </span>
-                </DialogTitle>
+                  <div className="min-w-0">
+                    <DialogTitle>{selectedUser.name}</DialogTitle>
+                    <p className="admin-team-dialog__email" dir="ltr">
+                      {selectedUser.email}
+                    </p>
+                    <div className="admin-team-dialog__chips">
+                      {(selectedUser.roles ?? []).map((role) => (
+                        <span key={role} className="admin-team-dialog__chip">
+                          {role}
+                        </span>
+                      ))}
+                      {isSelf(selectedUser) ? (
+                        <span className="admin-team-dialog__chip admin-team-dialog__chip--you">
+                          حسابك
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
               </DialogHeader>
 
-              <Tabs defaultValue="profile" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="profile">البيانات</TabsTrigger>
-                  <TabsTrigger value="roles">الأدوار</TabsTrigger>
-                  <TabsTrigger value="permissions">الصلاحيات</TabsTrigger>
+              <Tabs defaultValue="profile" className="admin-team-dialog__tabs">
+                <TabsList className="admin-team-dialog__tablist">
+                  <TabsTrigger value="profile">
+                    <UserRound />
+                    البيانات
+                  </TabsTrigger>
+                  <TabsTrigger value="roles">
+                    <Shield />
+                    الأدوار
+                  </TabsTrigger>
+                  <TabsTrigger value="permissions">
+                    <KeyRound />
+                    الصلاحيات
+                  </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="profile" className="space-y-4 pt-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <Label>الاسم</Label>
-                      <Input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                      />
+                <TabsContent value="profile" className="admin-team-dialog__pane">
+                  <div className="admin-team-dialog__card">
+                    <p className="admin-team-dialog__card-title">بيانات الحساب</p>
+                    <div className="admin-team-dialog__fields">
+                      <div className="space-y-1.5">
+                        <Label>الاسم</Label>
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>البريد</Label>
+                        <Input
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>كلمة مرور جديدة (اختياري)</Label>
+                        <Input
+                          type="password"
+                          value={editPassword}
+                          onChange={(e) => setEditPassword(e.target.value)}
+                          dir="ltr"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>تأكيد كلمة المرور</Label>
+                        <Input
+                          type="password"
+                          value={editPasswordConfirm}
+                          onChange={(e) => setEditPasswordConfirm(e.target.value)}
+                          dir="ltr"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <Label>البريد</Label>
-                      <Input
-                        value={editEmail}
-                        onChange={(e) => setEditEmail(e.target.value)}
-                        dir="ltr"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>كلمة مرور جديدة (اختياري)</Label>
-                      <Input
-                        type="password"
-                        value={editPassword}
-                        onChange={(e) => setEditPassword(e.target.value)}
-                        dir="ltr"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>تأكيد كلمة المرور</Label>
-                      <Input
-                        type="password"
-                        value={editPasswordConfirm}
-                        onChange={(e) => setEditPasswordConfirm(e.target.value)}
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => updateMutation.mutate()}
-                    disabled={
-                      updateMutation.isPending ||
-                      (editPassword !== "" &&
-                        editPassword !== editPasswordConfirm)
-                    }
-                  >
-                    {updateMutation.isPending && (
-                      <Loader2 className="size-4 animate-spin" />
-                    )}
-                    حفظ البيانات
-                  </Button>
-                </TabsContent>
-
-                <TabsContent value="roles" className="space-y-4 pt-4">
-                  <div className="flex flex-wrap gap-2">
-                    {(selectedUser.roles ?? []).map((role) => (
-                      <Badge key={role} variant="secondary" className="gap-1">
-                        {role}
-                        {canRevokeRole(selectedUser, role) ? (
-                          <button
-                            type="button"
-                            className="ms-1 hover:text-destructive"
-                            onClick={() => revokeRoleMutation.mutate(role)}
-                          >
-                            <X className="size-3" />
-                          </button>
-                        ) : null}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap items-end gap-2">
-                    <Select
-                      value={assignRoleName}
-                      onValueChange={setAssignRoleName}
-                    >
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="إضافة دور" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableRolesToAssign.map((role: Role) => (
-                          <SelectItem key={role.id} value={role.name}>
-                            {role.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={!assignRoleName || assignRoleMutation.isPending}
-                      onClick={() => assignRoleMutation.mutate()}
+                      className="admin-team-dialog__action"
+                      onClick={() => updateMutation.mutate()}
+                      disabled={
+                        updateMutation.isPending ||
+                        (editPassword !== "" &&
+                          editPassword !== editPasswordConfirm)
+                      }
                     >
-                      تعيين
+                      {updateMutation.isPending && (
+                        <Loader2 className="size-4 animate-spin" />
+                      )}
+                      حفظ البيانات
                     </Button>
                   </div>
                 </TabsContent>
 
-                <TabsContent value="permissions" className="space-y-4 pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    {selectedUser.permissions.length} صلاحية فعّالة
-                  </p>
-                  <div className="space-y-2">
-                    <Label>منح صلاحيات إضافية</Label>
+                <TabsContent value="roles" className="admin-team-dialog__pane">
+                  <div className="admin-team-dialog__card">
+                    <p className="admin-team-dialog__card-title">
+                      الأدوار الحالية
+                    </p>
+                    {(selectedUser.roles ?? []).length > 0 ? (
+                      <div className="admin-team-dialog__roles">
+                        {(selectedUser.roles ?? []).map((role) => (
+                          <span key={role} className="admin-team-dialog__role">
+                            <Shield className="size-3.5" />
+                            {role}
+                            {canRevokeRole(selectedUser, role) ? (
+                              <button
+                                type="button"
+                                className="admin-team-dialog__role-remove"
+                                aria-label={`سحب دور ${role}`}
+                                onClick={() => revokeRoleMutation.mutate(role)}
+                              >
+                                <X className="size-3" />
+                              </button>
+                            ) : null}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="admin-team-dialog__empty">
+                        لا توجد أدوار معيّنة لهذا العضو.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="admin-team-dialog__card">
+                    <p className="admin-team-dialog__card-title">تعيين دور جديد</p>
+                    <div className="admin-team-dialog__assign">
+                      <Select
+                        value={assignRoleName}
+                        onValueChange={setAssignRoleName}
+                      >
+                        <SelectTrigger className="admin-team-dialog__select">
+                          <SelectValue placeholder="اختر دوراً لإضافته" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableRolesToAssign.map((role: Role) => (
+                            <SelectItem key={role.id} value={role.name}>
+                              {role.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        disabled={
+                          !assignRoleName || assignRoleMutation.isPending
+                        }
+                        onClick={() => assignRoleMutation.mutate()}
+                      >
+                        {assignRoleMutation.isPending ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : null}
+                        تعيين
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent
+                  value="permissions"
+                  className="admin-team-dialog__pane"
+                >
+                  <div className="admin-team-dialog__card">
+                    <p className="admin-team-dialog__card-title">
+                      الصلاحيات من الأدوار
+                      <span className="admin-team-dialog__card-count">
+                        {roleGrantedPerms.size}
+                      </span>
+                    </p>
+                    <p className="admin-team-dialog__empty">
+                      تُمنح عبر الدور — لتغييرها عدّل الدور في{" "}
+                      <Link
+                        to={ROUTES.ADMIN_ROLES}
+                        className="font-semibold text-primary underline-offset-2 hover:underline"
+                        onClick={() => setSelectedUser(null)}
+                      >
+                        الأدوار والصلاحيات
+                      </Link>{" "}
+                      أو اسحب الدور من تبويب الأدوار.
+                    </p>
+                    {roleGrantedPerms.size > 0 ? (
+                      <div className="admin-team-dialog__roles">
+                        {[...(selectedUser.permissions ?? [])]
+                          .filter((perm) => roleGrantedPerms.has(perm))
+                          .map((perm) => (
+                            <span
+                              key={perm}
+                              className="admin-team-dialog__role admin-team-dialog__role--from-role"
+                            >
+                              <KeyRound className="size-3.5" />
+                              {permissionLabel(perm)}
+                              <span
+                                className="admin-team-dialog__role-lock"
+                                title="قادمة من الدور"
+                              >
+                                <Lock className="size-3" />
+                              </span>
+                            </span>
+                          ))}
+                      </div>
+                    ) : (
+                      <p className="admin-team-dialog__empty">
+                        لا توجد صلاحيات من الأدوار.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="admin-team-dialog__card">
+                    <p className="admin-team-dialog__card-title">
+                      صلاحيات إضافية مباشرة
+                      <span className="admin-team-dialog__card-count">
+                        {directPerms.length}
+                      </span>
+                    </p>
+                    <p className="admin-team-dialog__empty">
+                      تُمنح مباشرة للعضو فوق صلاحيات دوره — يمكن سحبها من هنا.
+                    </p>
+                    {directPerms.length > 0 ? (
+                      <div className="admin-team-dialog__roles">
+                        {directPerms.map((perm) => (
+                          <span key={perm} className="admin-team-dialog__role">
+                            <KeyRound className="size-3.5" />
+                            {permissionLabel(perm)}
+                            <button
+                              type="button"
+                              className="admin-team-dialog__role-remove"
+                              aria-label={`سحب صلاحية ${permissionLabel(perm)}`}
+                              disabled={revokePermsMutation.isPending}
+                              onClick={() => revokePermsMutation.mutate([perm])}
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="admin-team-dialog__empty">
+                        لا توجد صلاحيات إضافية مباشرة.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="admin-team-dialog__card">
+                    <p className="admin-team-dialog__card-title">
+                      منح صلاحيات إضافية
+                    </p>
                     <PermissionPicker
                       catalog={permissionCatalog.filter(
-                        (p) => !selectedUser.permissions.includes(p),
+                        (p) => !(selectedUser.permissions ?? []).includes(p),
                       )}
                       selected={directPermsToAdd}
                       onChange={setDirectPermsToAdd}
-                      compact
                     />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={
-                        directPermsToAdd.length === 0 ||
-                        assignPermsMutation.isPending
-                      }
-                      onClick={() => assignPermsMutation.mutate()}
-                    >
-                      منح المحدّد
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>سحب صلاحيات</Label>
-                    <PermissionPicker
-                      catalog={selectedUser.permissions}
-                      selected={directPermsToRemove}
-                      onChange={setDirectPermsToRemove}
-                      compact
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={
-                        directPermsToRemove.length === 0 ||
-                        revokePermsMutation.isPending
-                      }
-                      onClick={() => revokePermsMutation.mutate()}
-                    >
-                      سحب المحدّد
-                    </Button>
+                    <div className="admin-team-dialog__grant-bar">
+                      <Button
+                        className="admin-team-dialog__grant-btn"
+                        size="lg"
+                        disabled={
+                          directPermsToAdd.length === 0 ||
+                          assignPermsMutation.isPending
+                        }
+                        onClick={() => assignPermsMutation.mutate()}
+                      >
+                        {assignPermsMutation.isPending ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : null}
+                        منح المحدّد
+                        {directPermsToAdd.length > 0 ? (
+                          <span className="admin-team-dialog__grant-count">
+                            {directPermsToAdd.length}
+                          </span>
+                        ) : null}
+                      </Button>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedUser(null)}>
-                  إغلاق
-                </Button>
-              </DialogFooter>
             </>
           ) : null}
         </DialogContent>

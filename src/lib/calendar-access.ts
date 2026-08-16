@@ -7,8 +7,13 @@ import type {
 import { isTaskMeta } from "@/lib/calendar-feed";
 
 export function isSuperAdmin(user: AuthUser | null | undefined): boolean {
+  return user?.roles.some((role) => /super[\s-]*admin/i.test(role)) ?? false;
+}
+
+export function isAdminRole(user: AuthUser | null | undefined): boolean {
   return (
-    user?.roles.some((role) => /super\s*admin/i.test(role)) ?? false
+    isSuperAdmin(user) ||
+    (user?.roles.some((role) => /^admin$/i.test(role.trim())) ?? false)
   );
 }
 
@@ -45,10 +50,15 @@ export function canCompleteTaskOccurrence(
   user: AuthUser | null | undefined,
   hasCompleteOwnTasks: boolean,
   task?: CalendarTask | null,
+  hasManageTasks = false,
 ): boolean {
-  if (!hasCompleteOwnTasks || !user || !isTaskMeta(item)) return false;
-  if (item.meta.status !== "pending") return false;
-  return isTaskAssigneeOrCreator(item, user, task) || isSuperAdmin(user);
+  if (!user || !isTaskMeta(item)) return false;
+  if (item.meta.status !== "pending" && item.meta.status !== "overdue") {
+    return false;
+  }
+  if (isAdminRole(user) || hasManageTasks) return true;
+  if (!hasCompleteOwnTasks) return false;
+  return isTaskAssigneeOrCreator(item, user, task);
 }
 
 export function canReopenTaskOccurrence(
@@ -61,6 +71,7 @@ export function canReopenTaskOccurrence(
   if (!user || !isTaskMeta(item)) return false;
   if (item.meta.status !== "done") return false;
   if (task && canManageTask(task, user, hasManageTasks)) return true;
+  if (isAdminRole(user)) return true;
   if (!hasCompleteOwnTasks) return false;
-  return isTaskAssigneeOrCreator(item, user, task) || isSuperAdmin(user);
+  return isTaskAssigneeOrCreator(item, user, task);
 }
