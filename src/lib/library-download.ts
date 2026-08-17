@@ -1,4 +1,5 @@
 import { Library_APIs } from "@/services/api/library";
+import type { LibraryItem } from "@/types";
 
 function extensionFromMime(mime: string | undefined): string {
   if (!mime) return "";
@@ -10,24 +11,32 @@ function extensionFromMime(mime: string | undefined): string {
     "video/mp4": ".mp4",
     "audio/mpeg": ".mp3",
     "audio/wav": ".wav",
+    "text/plain": ".txt",
   };
   return map[mime] ?? "";
 }
 
+function sanitizeFilename(name: string): string {
+  return name.trim().replace(/[/\\?%*:|"<>]/g, "-") || "download";
+}
+
 export async function downloadLibraryItem(
-  id: number,
-  title: string,
-  fileType?: string,
+  item: Pick<LibraryItem, "id" | "title" | "file">,
 ): Promise<void> {
-  const blob = await Library_APIs.download(id);
+  const blob = await Library_APIs.download(item.id);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
 
-  const safeTitle = title.trim().replace(/[/\\?%*:|"<>]/g, "-") || "download";
-  const ext = extensionFromMime(blob.type);
-  const hasExt = /\.[a-z0-9]+$/i.test(safeTitle);
-  anchor.download = hasExt ? safeTitle : `${safeTitle}${ext || (fileType === "pdf" ? ".pdf" : "")}`;
+  const preferredName = item.file?.name?.trim();
+  if (preferredName) {
+    anchor.download = sanitizeFilename(preferredName);
+  } else {
+    const safeTitle = sanitizeFilename(item.title);
+    const ext = extensionFromMime(blob.type || item.file?.mime_type);
+    const hasExt = /\.[a-z0-9]+$/i.test(safeTitle);
+    anchor.download = hasExt ? safeTitle : `${safeTitle}${ext}`;
+  }
 
   document.body.appendChild(anchor);
   anchor.click();

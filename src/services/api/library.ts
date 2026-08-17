@@ -7,7 +7,10 @@ import type {
   PaginatedResponse,
   UpdateLibraryItemPayload,
 } from "@/types";
+import type { AxiosRequestConfig } from "axios";
 import API from "./api.repository";
+
+type LibraryUploadOptions = Pick<AxiosRequestConfig, "onUploadProgress">;
 
 export const Library_APIs = {
   list: async (
@@ -26,14 +29,19 @@ export const Library_APIs = {
     return getApiData(response);
   },
 
-  upload: async (formData: FormData): Promise<LibraryItem> => {
+  upload: async (
+    formData: FormData,
+    options?: LibraryUploadOptions,
+  ): Promise<LibraryItem> => {
     const response = await API.postFormData<ApiResponse<LibraryItem>>(
       "/api/library",
       formData,
+      options,
     );
     return getApiData(response);
   },
 
+  /** JSON update — title/description only; file untouched. */
   update: async (
     id: number | string,
     data: UpdateLibraryItemPayload,
@@ -41,6 +49,23 @@ export const Library_APIs = {
     const response = await API.put<ApiResponse<LibraryItem>>(
       `/api/library/${id}`,
       data,
+    );
+    return getApiData(response);
+  },
+
+  /** Multipart update — optional title, description, and/or file replacement. */
+  updateWithFile: async (
+    id: number | string,
+    formData: FormData,
+    options?: LibraryUploadOptions,
+  ): Promise<LibraryItem> => {
+    if (!formData.has("_method")) {
+      formData.append("_method", "PUT");
+    }
+    const response = await API.postFormData<ApiResponse<LibraryItem>>(
+      `/api/library/${id}`,
+      formData,
+      options,
     );
     return getApiData(response);
   },

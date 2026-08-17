@@ -1,35 +1,34 @@
 import type { User } from "./admin";
 
-export type LibraryFileType =
-  | "image"
-  | "video"
-  | "audio"
-  | "pdf"
-  | "document"
-  | "spreadsheet"
-  | "other";
+export interface LibraryFile {
+  name: string;
+  mime_type: string;
+  size: string;
+  url: string;
+}
 
 export interface LibraryItem {
   id: number;
   title: string;
   description?: string | null;
+  /** Legacy — API returns null; not used for filtering or forms. */
   category?: string | null;
-  file_url?: string | null;
-  file_type: LibraryFileType | string;
+  /** Legacy — API returns null; use `file` instead. */
+  file_type?: string | null;
+  file: LibraryFile;
   uploaded_by?: Pick<User, "id" | "name"> | null;
   created_at: string;
 }
 
 export interface UpdateLibraryItemPayload {
   title?: string;
-  description?: string;
-  category?: string;
+  description?: string | null;
 }
 
 export interface LibraryListParams {
-  category?: string;
-  file_type?: LibraryFileType;
   search?: string;
   page?: number;
-  per_page?: number;
 }
+
+/** Backend default page size for GET /library. */
+export const LIBRARY_PAGE_SIZE = 15;

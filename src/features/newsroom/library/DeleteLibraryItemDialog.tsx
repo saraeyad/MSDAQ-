@@ -25,7 +25,7 @@ export function DeleteLibraryItemDialog({
 }: DeleteLibraryItemDialogProps) {
   return (
     <Dialog open={!!item} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className="library-dialog">
         <DialogHeader>
           <DialogTitle>تأكيد الحذف</DialogTitle>
           <DialogDescription>

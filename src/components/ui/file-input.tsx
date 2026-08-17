@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { formatFileSize } from "@/lib/format-file-size";
 import { cn } from "@/lib/utils";
 import { FileText, ImageIcon, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
@@ -13,12 +14,6 @@ interface FileInputProps {
   chooseLabel?: string;
   emptyLabel?: string;
   showImagePreview?: boolean;
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} بايت`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} ك.ب`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} م.ب`;
 }
 
 function isImageFile(file: File): boolean {

@@ -1,26 +1,75 @@
-import type { LibraryFileType } from "@/types";
+/** Arabic label derived from a MIME type (API no longer sends file_type). */
+export type LibraryFileKind =
+  | "image"
+  | "video"
+  | "audio"
+  | "pdf"
+  | "spreadsheet"
+  | "document"
+  | "other";
 
-const FILE_TYPE_LABELS: Record<LibraryFileType, string> = {
-  image: "صورة",
-  video: "فيديو",
-  audio: "صوت",
-  pdf: "PDF",
-  document: "مستند",
-  spreadsheet: "جدول",
-  other: "أخرى",
-};
+export function libraryFileKind(
+  mimeType: string | null | undefined,
+): LibraryFileKind {
+  if (!mimeType?.trim()) return "other";
 
-export function libraryFileTypeLabel(type: string | null | undefined): string {
-  if (!type) return "—";
-  return FILE_TYPE_LABELS[type as LibraryFileType] ?? type;
+  const mime = mimeType.toLowerCase();
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/")) return "video";
+  if (mime.startsWith("audio/")) return "audio";
+  if (mime === "application/pdf") return "pdf";
+  if (
+    mime.includes("spreadsheet") ||
+    mime.includes("excel") ||
+    mime.includes("csv")
+  ) {
+    return "spreadsheet";
+  }
+  if (
+    mime.includes("word") ||
+    mime.includes("document") ||
+    mime.startsWith("text/")
+  ) {
+    return "document";
+  }
+  return "other";
 }
 
-export const LIBRARY_FILE_TYPE_OPTIONS: {
-  value: LibraryFileType | "all";
-  label: string;
-}[] = [
-  { value: "all", label: "كل الأنواع" },
-  ...(
-    Object.entries(FILE_TYPE_LABELS) as [LibraryFileType, string][]
-  ).map(([value, label]) => ({ value, label })),
-];
+export function libraryMimeTypeLabel(
+  mimeType: string | null | undefined,
+): string {
+  switch (libraryFileKind(mimeType)) {
+    case "image":
+      return "صورة";
+    case "video":
+      return "فيديو";
+    case "audio":
+      return "صوت";
+    case "pdf":
+      return "PDF";
+    case "spreadsheet":
+      return "جدول";
+    case "document":
+      return "مستند";
+    default:
+      if (!mimeType?.trim()) return "ملف";
+      return mimeType.split("/").pop() ?? "ملف";
+  }
+}
+
+export function libraryFileExtension(
+  fileName?: string | null,
+  mimeType?: string | null,
+): string {
+  const fromName = fileName?.includes(".")
+    ? fileName.split(".").pop()?.toUpperCase()
+    : undefined;
+  if (fromName && fromName.length <= 5) return fromName;
+
+  const kind = libraryFileKind(mimeType);
+  if (kind === "pdf") return "PDF";
+  if (kind === "image" && mimeType) {
+    return mimeType.split("/")[1]?.toUpperCase() ?? "IMG";
+  }
+  return "FILE";
+}
