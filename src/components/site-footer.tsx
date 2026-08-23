@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand-logo";
+import { usePlatformFeedback } from "@/context/platform-feedback";
 import {
   buildPublicFooterLinks,
   STATIC_FOOTER_LINKS,
@@ -28,8 +29,8 @@ const MAP_EMBED =
 
 export function SiteFooter() {
   const { data: categories } = usePublicCategories();
-  const quickLinks =
-    categories && categories.length > 0
+  const { openFeedback } = usePlatformFeedback();
+  const quickLinks =    categories && categories.length > 0
       ? buildPublicFooterLinks(categories)
       : STATIC_FOOTER_LINKS;
 
@@ -87,6 +88,15 @@ export function SiteFooter() {
                 </Link>
               </li>
             ))}
+            <li>
+              <button
+                type="button"
+                className="text-sm text-white/70 transition-colors hover:text-primary"
+                onClick={openFeedback}
+              >
+                شاركنا رأيك
+              </button>
+            </li>
           </ul>
           <div className="mt-6 space-y-2 text-sm text-white/70">
             <p className="flex items-center gap-2">

@@ -15,6 +15,7 @@ export interface SoundCloudWidgetInstance {
   toggle(): void;
   seekTo(ms: number): void;
   getDuration(callback: (ms: number) => void): void;
+  getPosition(callback: (ms: number) => void): void;
 }
 
 export function buildSoundCloudWidgetUrl(pageUrl: string): string {

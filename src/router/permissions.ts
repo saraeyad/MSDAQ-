@@ -70,6 +70,10 @@ export const PERMISSIONS = {
   // Admin
   MANAGE_SITE_SETTINGS: "manage-site-settings",
   VIEW_ADMIN_DASHBOARD: "view-admin-dashboard",
+
+  // Trust & feedback
+  VIEW_TRUST_INDEX: "view-trust-index",
+  VIEW_PLATFORM_FEEDBACK: "view-platform-feedback",
 } as const;
 
 export type PermissionSlug =

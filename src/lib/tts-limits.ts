@@ -17,6 +17,9 @@ export const STT_REQUEST_TIMEOUT_MS = 180_000;
 /** Standards check — Gemini THINKING/OUTPUT budgets can take several minutes. */
 export const STANDARDS_REQUEST_TIMEOUT_MS = 180_000;
 
+/** Credibility check — web search per claim can take several minutes. */
+export const CREDIBILITY_REQUEST_TIMEOUT_MS = 180_000;
+
 export const STT_PROCESSING_STEPS = [
   "جاري رفع الملف الصوتي...",
   "جاري تفريغ الكلام...",

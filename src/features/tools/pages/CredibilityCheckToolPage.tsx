@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { CredibilityResultPanel } from "@/features/tools/components/CredibilityResultPanel";
 import {
   runWithToolProcessing,
   ToolProcessingDialog,
@@ -8,16 +9,15 @@ import {
 import { getApiErrorMessage } from "@/lib/api-data";
 import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
 import { ToolsEditorial_APIs } from "@/services/api/tools";
-import type { StandaloneCredibilityResult } from "@/types";
+import type { CredibilityCheckResult } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ScoreDonut } from "@/features/tools/components/ScoreDonut";
 import { ToolPageShell } from "./ToolPageShell";
 
 export function CredibilityCheckToolPage() {
   const [content, setContent] = useState("");
   const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState<StandaloneCredibilityResult | null>(null);
+  const [result, setResult] = useState<CredibilityCheckResult | null>(null);
 
   const run = async () => {
     const len = content.trim().length;
@@ -60,20 +60,7 @@ export function CredibilityCheckToolPage() {
         </CardContent>
       </Card>
 
-      {result ? (
-        <Card>
-          <CardContent className="p-6">
-            <ScoreDonut
-              value={result.credibility_score}
-              max={100}
-              format="percent"
-              size="md"
-              label="درجة المصداقية"
-            />
-            {/* Standalone API returns score only; article flow includes claim details. */}
-          </CardContent>
-        </Card>
-      ) : null}
+      {result ? <CredibilityResultPanel result={result} /> : null}
     </ToolPageShell>
   );
 }

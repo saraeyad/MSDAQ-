@@ -27,16 +27,19 @@ export function paginateList<T>(
   server?: PublicPagination,
   pageSize = TABLE_PAGE_SIZE,
 ) {
+  const effectivePageSize = server?.per_page || pageSize;
   const serverHasPages =
     !!server && (server.last_page > 1 || server.total > items.length);
 
   if (serverHasPages && server) {
+    const currentPage = Math.min(Math.max(1, page), server.last_page);
+
     return {
       items,
       total: server.total,
-      currentPage: server.current_page,
+      currentPage,
       lastPage: server.last_page,
-      pageSize: server.per_page || pageSize,
+      pageSize: effectivePageSize,
     };
   }
 

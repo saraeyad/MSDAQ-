@@ -26,12 +26,13 @@ import {
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { formatStepProgress, inferArticleStep } from "@/lib/publish-gate";
-import { PERMISSIONS, ROUTES } from "@/router/routes";
+import { PERMISSIONS, ROUTES, staffArticleTrustFeedbackPath } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type { ArticleStatus, StaffArticle } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  BarChart3,
   CalendarClock,
   Eye,
   FileText,
@@ -55,6 +56,7 @@ function StaffArticleRow({
   canEdit,
   canDelete,
   canReschedule,
+  canViewTrustIndex,
   onDelete,
   onReschedule,
 }: {
@@ -62,6 +64,7 @@ function StaffArticleRow({
   canEdit: boolean;
   canDelete: boolean;
   canReschedule: boolean;
+  canViewTrustIndex: boolean;
   onDelete: (article: StaffArticle) => void;
   onReschedule: (article: StaffArticle) => void;
 }) {
@@ -123,6 +126,19 @@ function StaffArticleRow({
             إعادة جدولة
           </Button>
         ) : null}
+        {canViewTrustIndex ? (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="newsroom-article-row__feedback-btn"
+          >
+            <Link to={staffArticleTrustFeedbackPath(article.id)}>
+              <BarChart3 className="size-3.5" />
+              التقييمات
+            </Link>
+          </Button>
+        ) : null}
         {canEdit ? (
           <Button asChild variant="outline" size="sm">
             <Link to={`/newsroom/articles/${article.id}/edit?step=${editStep}`}>
@@ -152,6 +168,7 @@ export default function NewsroomArticlesPage() {
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
   const canReschedule = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
+  const canViewTrustIndex = usePermission(PERMISSIONS.VIEW_TRUST_INDEX);
   const [params, setParams] = useSearchParams();
   const [deleteTarget, setDeleteTarget] = useState<StaffArticle | null>(null);
   const [rescheduleTarget, setRescheduleTarget] = useState<StaffArticle | null>(
@@ -328,6 +345,7 @@ export default function NewsroomArticlesPage() {
               canEdit={canEdit}
               canDelete={canDelete}
               canReschedule={canReschedule}
+              canViewTrustIndex={canViewTrustIndex}
               onDelete={setDeleteTarget}
               onReschedule={setRescheduleTarget}
             />

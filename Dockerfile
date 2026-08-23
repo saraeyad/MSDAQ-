@@ -8,7 +8,7 @@ RUN npm ci
 
 COPY . .
 
-ARG VITE_HOST_API=https://misdaq-production-83bc.up.railway.app
+ARG VITE_HOST_API=https://api.sabbarapost.org
 ENV VITE_HOST_API=$VITE_HOST_API
 
 RUN npm run build:ssr \

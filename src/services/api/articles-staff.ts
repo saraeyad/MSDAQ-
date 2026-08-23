@@ -1,4 +1,5 @@
 import { getApiData, parseStaffArticlesListResponse } from "@/lib/api-data";
+import { normalizeCredibilityResult } from "@/lib/credibility-normalize";
 import { normalizeStandardsResult } from "@/lib/standards-normalize";
 import { appendSttAudioField } from "@/lib/voice-audio";
 import {
@@ -182,11 +183,7 @@ export const ArticlesStaff_APIs = {
       `/api/articles/${id}/credibility-check`,
       {},
     );
-    const data = getApiData(response);
-    return {
-      ...data,
-      claims: data.claims ?? [],
-    };
+    return normalizeCredibilityResult(getApiData(response));
   },
 
   generateLocalization: async (id: number | string) => {

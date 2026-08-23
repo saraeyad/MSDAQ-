@@ -11,7 +11,8 @@ export function resolveMediaUrl(url: string | null | undefined): string | null {
   }
 
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-    if (import.meta.env.DEV) {
+    // When calling the API directly (VITE_HOST_API), keep absolute storage URLs.
+    if (import.meta.env.DEV && !import.meta.env.VITE_HOST_API) {
       try {
         const parsed = new URL(trimmed);
         if (parsed.pathname.startsWith("/storage")) {
@@ -26,7 +27,7 @@ export function resolveMediaUrl(url: string | null | undefined): string | null {
 
   const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
   if (import.meta.env.DEV) {
-    return path;
+    return import.meta.env.VITE_HOST_API ? `${apiOrigin()}${path}` : path;
   }
 
   return `${apiOrigin()}${path}`;

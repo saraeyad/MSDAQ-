@@ -7,6 +7,7 @@ import {
   createSoundCloudWidget,
   loadSoundCloudWidgetApi,
 } from "@/lib/soundcloud-widget";
+import type { TrustMediaProgress } from "@/lib/trust-index-labels";
 import { cn } from "@/lib/utils";
 import { Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
@@ -25,6 +26,7 @@ interface PodcastAudioPlayerProps {
   title?: string;
   subtitle?: string;
   coverUrl?: string;
+  onPlaybackProgress?: (progress: TrustMediaProgress) => void;
 }
 
 function waveBarCount(variant: PodcastAudioPlayerVariant) {
@@ -229,8 +231,11 @@ function PodcastAudioPlayerFile({
   title,
   subtitle,
   coverUrl,
+  onPlaybackProgress,
 }: PodcastAudioPlayerProps & { url: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const onProgressRef = useRef(onPlaybackProgress);
+  onProgressRef.current = onPlaybackProgress;
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [durationSeconds, setDurationSeconds] = useState(
@@ -251,11 +256,35 @@ function PodcastAudioPlayerFile({
       }
     };
 
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
+    const emit = (
+      next: Partial<TrustMediaProgress> & Pick<TrustMediaProgress, "currentTime">,
+    ) => {
+      onProgressRef.current?.({
+        currentTime: next.currentTime,
+        duration:
+          Number.isFinite(audio.duration) && audio.duration > 0
+            ? audio.duration
+            : durationSeconds,
+        isPlaying: next.isPlaying ?? !audio.paused,
+        ended: next.ended,
+      });
+    };
+
+    const onTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+      emit({ currentTime: audio.currentTime });
+    };
+    const onPlay = () => {
+      setIsPlaying(true);
+      emit({ currentTime: audio.currentTime, isPlaying: true });
+    };
+    const onPause = () => {
+      setIsPlaying(false);
+      emit({ currentTime: audio.currentTime, isPlaying: false });
+    };
     const onEnded = () => {
       setIsPlaying(false);
+      emit({ currentTime: audio.duration || audio.currentTime, isPlaying: false, ended: true });
       setCurrentTime(0);
     };
 
@@ -338,8 +367,11 @@ function PodcastAudioPlayerSoundCloud({
   title,
   subtitle,
   coverUrl,
+  onPlaybackProgress,
 }: PodcastAudioPlayerProps & { pageUrl: string }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const onProgressRef = useRef(onPlaybackProgress);
+  onProgressRef.current = onPlaybackProgress;
   const widgetRef = useRef<ReturnType<typeof createSoundCloudWidget> | null>(
     null,
   );
@@ -379,24 +411,59 @@ function PodcastAudioPlayerSoundCloud({
         });
 
         widget.bind(Events.PLAY, () => {
-          if (!cancelled) setIsPlaying(true);
+          if (cancelled) return;
+          setIsPlaying(true);
+          widget.getPosition((ms) => {
+            widget.getDuration((durationMs) => {
+              onProgressRef.current?.({
+                currentTime: ms / 1000,
+                duration: durationMs > 0 ? durationMs / 1000 : 0,
+                isPlaying: true,
+              });
+            });
+          });
         });
 
         widget.bind(Events.PAUSE, () => {
-          if (!cancelled) setIsPlaying(false);
+          if (cancelled) return;
+          setIsPlaying(false);
+          widget.getPosition((ms) => {
+            widget.getDuration((durationMs) => {
+              onProgressRef.current?.({
+                currentTime: ms / 1000,
+                duration: durationMs > 0 ? durationMs / 1000 : 0,
+                isPlaying: false,
+              });
+            });
+          });
         });
 
         widget.bind(Events.PLAY_PROGRESS, (data) => {
-          if (!cancelled && data?.currentPosition != null) {
-            setCurrentTime(data.currentPosition / 1000);
-          }
+          if (cancelled || data?.currentPosition == null) return;
+          const nextTime = data.currentPosition / 1000;
+          setCurrentTime(nextTime);
+          widget.getDuration((durationMs) => {
+            onProgressRef.current?.({
+              currentTime: nextTime,
+              duration: durationMs > 0 ? durationMs / 1000 : 0,
+              isPlaying: true,
+            });
+          });
         });
 
         widget.bind(Events.FINISH, () => {
-          if (!cancelled) {
-            setIsPlaying(false);
-            setCurrentTime(0);
-          }
+          if (cancelled) return;
+          setIsPlaying(false);
+          widget.getDuration((durationMs) => {
+            const durationSec = durationMs > 0 ? durationMs / 1000 : 0;
+            onProgressRef.current?.({
+              currentTime: durationSec,
+              duration: durationSec,
+              isPlaying: false,
+              ended: true,
+            });
+          });
+          setCurrentTime(0);
         });
       })
       .catch(() => {
@@ -469,6 +536,7 @@ export function PodcastAudioPlayer({
   title,
   subtitle,
   coverUrl,
+  onPlaybackProgress,
 }: PodcastAudioPlayerProps) {
   if (interactive && hostedPageUrl) {
     return (
@@ -481,6 +549,7 @@ export function PodcastAudioPlayer({
         title={title}
         subtitle={subtitle}
         coverUrl={coverUrl}
+        onPlaybackProgress={onPlaybackProgress}
       />
     );
   }
@@ -496,6 +565,7 @@ export function PodcastAudioPlayer({
         title={title}
         subtitle={subtitle}
         coverUrl={coverUrl}
+        onPlaybackProgress={onPlaybackProgress}
       />
     );
   }

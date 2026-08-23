@@ -1,10 +1,14 @@
 import { getApiData } from "@/lib/api-data";
+import { normalizeCredibilityResult } from "@/lib/credibility-normalize";
 import { normalizeLocalizationResult } from "@/lib/localization-normalize";
 import { normalizeStandardsResult } from "@/lib/standards-normalize";
-import { STANDARDS_REQUEST_TIMEOUT_MS } from "@/lib/tts-limits";
+import {
+  CREDIBILITY_REQUEST_TIMEOUT_MS,
+  STANDARDS_REQUEST_TIMEOUT_MS,
+} from "@/lib/tts-limits";
 import type {
   ApiResponse,
-  StandaloneCredibilityResult,
+  CredibilityCheckResult,
   StandaloneLocalizationResult,
   StandardsCheckResult,
 } from "@/types";
@@ -23,12 +27,15 @@ export const ToolsEditorial_APIs = {
     return normalizeStandardsResult(getApiData(response));
   },
 
-  credibilityCheck: async (data: { content: string }) => {
-    const response = await API.post<ApiResponse<StandaloneCredibilityResult>>(
+  credibilityCheck: async (data: {
+    content: string;
+  }): Promise<CredibilityCheckResult> => {
+    const response = await API.post<ApiResponse<CredibilityCheckResult>>(
       "/api/tools/credibility",
       data,
+      { timeout: CREDIBILITY_REQUEST_TIMEOUT_MS },
     );
-    return getApiData(response);
+    return normalizeCredibilityResult(getApiData(response));
   },
 
   localization: async (data: { content: string }) => {

@@ -4,6 +4,8 @@ import PublicLayout from "@/layouts/PublicLayout";
 import CategoriesManagementPage from "@/features/admin/categories/CategoriesManagementPage";
 import AdminDashboardPage from "@/features/admin/dashboard/AdminDashboardPage";
 import LibraryPage from "@/features/newsroom/library/LibraryPage";
+import PlatformFeedbackPage from "@/features/platform-feedback/PlatformFeedbackPage";
+import TrustIndexPlatformPage from "@/features/trust-index/TrustIndexPlatformPage";
 import RolesManagementPage from "@/features/admin/roles/RolesManagementPage";
 import RoleEditPage from "@/features/admin/roles/RoleEditPage";
 import TeamManagementPage from "@/features/admin/team/TeamManagementPage";
@@ -170,6 +172,22 @@ export function AppRoutes() {
           element={
             <RequirePermission permission={PERMISSIONS.VIEW_LIBRARY}>
               <LibraryPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path={ROUTES.NEWSROOM_TRUST_INDEX}
+          element={
+            <RequirePermission permission={PERMISSIONS.VIEW_TRUST_INDEX}>
+              <TrustIndexPlatformPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path={ROUTES.NEWSROOM_PLATFORM_FEEDBACK}
+          element={
+            <RequirePermission permission={PERMISSIONS.VIEW_PLATFORM_FEEDBACK}>
+              <PlatformFeedbackPage />
             </RequirePermission>
           }
         />

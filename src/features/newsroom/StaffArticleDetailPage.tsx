@@ -4,17 +4,24 @@ import { PublishGatePanel } from "@/features/publishing-flow/components/PublishG
 import { SourceConsentBanner } from "@/features/publishing-flow/components/SourceConsentBanner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { ArticleTrustIndexSection } from "@/features/trust-index/ArticleTrustIndexSection";
 import { RescheduleArticleDialog } from "@/features/newsroom/RescheduleArticleDialog";
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { derivePublishGate, inferArticleStep } from "@/lib/publish-gate";
-import { PERMISSIONS, ROUTES } from "@/router/routes";
+import { cn } from "@/lib/utils";
+import {
+  ARTICLE_TRUST_FEEDBACK_HASH,
+  PERMISSIONS,
+  ROUTES,
+} from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  BarChart3,
   CalendarClock,
   ExternalLink,
   FileText,
@@ -24,7 +31,7 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -66,13 +73,17 @@ function SectionPanel({
   icon: Icon,
   title,
   children,
+  id,
+  className,
 }: {
   icon: ComponentType<{ className?: string }>;
   title: string;
   children: ReactNode;
+  id?: string;
+  className?: string;
 }) {
   return (
-    <section className="staff-article-section">
+    <section id={id} className={cn("staff-article-section", className)}>
       <header className="staff-article-section__header">
         <span className="staff-article-section__icon" aria-hidden>
           <Icon className="size-4" />
@@ -91,6 +102,7 @@ export default function StaffArticleDetailPage() {
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
   const canReschedule = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
+  const canViewTrustIndex = usePermission(PERMISSIONS.VIEW_TRUST_INDEX);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
@@ -110,6 +122,20 @@ export default function StaffArticleDetailPage() {
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
+
+  useEffect(() => {
+    if (!article || !canViewTrustIndex) return;
+    if (window.location.hash !== `#${ARTICLE_TRUST_FEEDBACK_HASH}`) return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById(ARTICLE_TRUST_FEEDBACK_HASH)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [article?.id, canViewTrustIndex]);
 
   const handleDelete = () => {
     setConfirmDelete(true);
@@ -336,6 +362,17 @@ export default function StaffArticleDetailPage() {
               </li>
             ))}
           </ul>
+        </SectionPanel>
+      )}
+
+      {canViewTrustIndex && (
+        <SectionPanel
+          id={ARTICLE_TRUST_FEEDBACK_HASH}
+          icon={BarChart3}
+          title="مؤشر ثقة الجمهور"
+          className="staff-article-section--trust"
+        >
+          <ArticleTrustIndexSection articleId={article.id} />
         </SectionPanel>
       )}
 

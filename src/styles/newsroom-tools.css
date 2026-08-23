@@ -764,6 +764,37 @@
     gap: 1rem 1.5rem;
   }
 
+  .credibility-verdict {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border-radius: 999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .credibility-verdict--verified {
+    background: color-mix(in srgb, #16a34a 14%, white);
+    color: #15803d;
+  }
+
+  .credibility-verdict--unverified {
+    background: color-mix(in srgb, #6b7280 14%, white);
+    color: #4b5563;
+  }
+
+  .credibility-verdict--false {
+    background: color-mix(in srgb, #dc2626 14%, white);
+    color: #b91c1c;
+  }
+
+  .credibility-verdict--disputed {
+    background: color-mix(in srgb, #f98c34 16%, white);
+    color: #c2410c;
+  }
+
   .domain-check-result {
     display: flex;
     flex-direction: column;

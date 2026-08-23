@@ -2,10 +2,12 @@ import { PERMISSIONS } from "@/router/permissions";
 import { ROUTES } from "@/router/routes";
 import type { LucideIcon } from "lucide-react";
 import {
+  BarChart3,
   Calendar,
   FileText,
   FolderOpen,
   FolderTree,
+  MessageSquareText,
   Newspaper,
   Shield,
   Users,
@@ -72,6 +74,22 @@ export const STAFF_NAV_ITEMS: StaffNavItem[] = [
     icon: FolderOpen,
     group: "newsroom",
     permission: PERMISSIONS.VIEW_LIBRARY,
+  },
+  {
+    to: ROUTES.NEWSROOM_TRUST_INDEX,
+    label: "مؤشر الثقة",
+    pageTitle: "مؤشر ثقة الجمهور",
+    icon: BarChart3,
+    group: "newsroom",
+    permission: PERMISSIONS.VIEW_TRUST_INDEX,
+  },
+  {
+    to: ROUTES.NEWSROOM_PLATFORM_FEEDBACK,
+    label: "ملاحظات المنصة",
+    pageTitle: "ملاحظات المنصة",
+    icon: MessageSquareText,
+    group: "newsroom",
+    permission: PERMISSIONS.VIEW_PLATFORM_FEEDBACK,
   },
   {
     to: ROUTES.ADMIN,

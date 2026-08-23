@@ -47,7 +47,7 @@ export function getApiData<T>(response: AxiosResponse<ApiResponse<T>>): T {
   return body.data;
 }
 
-function normalizePagination(meta: {
+export function normalizePagination(meta: {
   current_page: number;
   last_page: number;
   per_page: number;
@@ -149,22 +149,38 @@ export function parseStaffArticlesListResponse(
 
 /** Parse full envelope for paginated list endpoints (data[] + sibling meta). */
 export function parsePaginatedListResponse<T>(
-  body: ApiResponse<T[] | PaginatedResponse<T>>,
+  body: ApiResponse<T[] | PaginatedResponse<T>> & {
+    pagination?: PublicPagination;
+  },
 ): PaginatedListResult<T> {
   if (!isApiSuccessful(body)) {
     throw new Error(body.message || "Request failed");
   }
+
+  const siblingMeta = body.meta
+    ? normalizePagination(body.meta)
+    : body.pagination
+      ? normalizePagination(body.pagination)
+      : undefined;
+
   if (Array.isArray(body.data)) {
     return {
       items: body.data,
-      pagination: body.meta ? normalizePagination(body.meta) : undefined,
+      pagination: siblingMeta,
     };
   }
+
+  const nested = body.data as PaginatedResponse<T> & {
+    pagination?: PublicPagination;
+  };
+
   return {
-    items: body.data.data ?? [],
-    pagination: body.data.meta
-      ? normalizePagination(body.data.meta)
-      : undefined,
+    items: nested.data ?? [],
+    pagination: nested.meta
+      ? normalizePagination(nested.meta)
+      : nested.pagination
+        ? normalizePagination(nested.pagination)
+        : siblingMeta,
   };
 }
 

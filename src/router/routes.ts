@@ -26,6 +26,8 @@ export const ROUTES = {
   NEWSROOM_TOOL: "/newsroom/tools/:tool",
   NEWSROOM_CALENDAR: "/newsroom/calendar",
   NEWSROOM_LIBRARY: "/newsroom/library",
+  NEWSROOM_TRUST_INDEX: "/newsroom/trust-index",
+  NEWSROOM_PLATFORM_FEEDBACK: "/newsroom/platform-feedback",
 
   ADMIN: "/admin",
   ADMIN_TEAM: "/admin/team",
@@ -44,6 +46,18 @@ export function categoryPath(slug: string): string {
 /** Public article detail URL (Collection 02 · Public). */
 export function articlePath(id: number | string): string {
   return `/articles/${id}`;
+}
+
+/** Staff newsroom article detail URL. */
+export function staffArticlePath(id: number | string): string {
+  return `/newsroom/articles/${id}`;
+}
+
+export const ARTICLE_TRUST_FEEDBACK_HASH = "article-trust-feedback";
+
+/** Staff article trust index section anchor. */
+export function staffArticleTrustFeedbackPath(id: number | string): string {
+  return `${staffArticlePath(id)}#${ARTICLE_TRUST_FEEDBACK_HASH}`;
 }
 
 /** Admin role permissions editor URL. */

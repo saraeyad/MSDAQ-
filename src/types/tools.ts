@@ -50,10 +50,6 @@ export interface StandaloneStandardsResult extends StandardsCheckResult {
   breakdown?: StandaloneStandardsBreakdown[];
 }
 
-export interface StandaloneCredibilityResult {
-  credibility_score: number;
-}
-
 export interface StandaloneLocalizationResult {
   content_simplified: string;
   content_dialect: string;

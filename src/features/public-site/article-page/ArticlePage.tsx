@@ -23,40 +23,82 @@ import { ROUTES } from "@/router/routes";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { useState } from "react";
+import { usePlatformFeedback } from "@/context/platform-feedback";
+import { TrustIndexDialog } from "@/features/public-site/trust-index/TrustIndexDialog";
+import { useTrustIndexMediaTrigger } from "@/features/public-site/trust-index/useTrustIndexMediaTrigger";
+import { useTrustIndexTrigger } from "@/features/public-site/trust-index/useTrustIndexTrigger";
+import { countWords, type TrustMediaProgress } from "@/lib/trust-index-labels";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+function useArticleTrustSurvey({
+  articleId,
+  body,
+  mediaEnabled,
+}: {
+  articleId: number | string;
+  body: string;
+  mediaEnabled: boolean;
+}) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [mediaProgress, setMediaProgress] = useState<TrustMediaProgress | null>(
+    null,
+  );
+  const wordCount = useMemo(() => countWords(body), [body]);
+  const { setTrustIndexOpen } = usePlatformFeedback();
+  const hasTextBody = wordCount > 0;
+
+  const textTrigger = useTrustIndexTrigger({
+    articleId,
+    wordCount,
+    bodyRef,
+    enabled: hasTextBody,
+  });
+
+  const mediaTrigger = useTrustIndexMediaTrigger({
+    articleId,
+    enabled: mediaEnabled && !hasTextBody,
+    progress: mediaProgress,
+  });
+
+  const open = textTrigger.open || mediaTrigger.open;
+  const dismiss = useCallback(() => {
+    textTrigger.dismiss();
+    mediaTrigger.dismiss();
+  }, [mediaTrigger, textTrigger]);
+
+  useEffect(() => {
+    setTrustIndexOpen(open);
+    return () => setTrustIndexOpen(false);
+  }, [open, setTrustIndexOpen]);
+
+  const onVideoProgress = (ended = false) => {
+    const video = videoRef.current;
+    if (!video) return;
+    setMediaProgress({
+      currentTime: video.currentTime,
+      duration: Number.isFinite(video.duration) ? video.duration : 0,
+      isPlaying: !video.paused && !video.ended,
+      ended: ended || video.ended,
+    });
+  };
+
+  return {
+    bodyRef,
+    videoRef,
+    open,
+    dismiss,
+    onAudioProgress: setMediaProgress,
+    onVideoProgress,
+  };
+}
 
 interface ArticlePageProps {
   initialArticle?: PublicArticle;
 }
 
-export default function ArticlePage({ initialArticle }: ArticlePageProps) {
-  const { id } = useParams();
+function ArticlePageContent({ article }: { article: PublicArticle }) {
   const [lang, setLang] = useState<LangVariant>("formal");
-
-  const { data: article, isLoading, isError } = useQuery({
-    queryKey: ["public-article", id],
-    queryFn: () => Articles_APIs.get(id!),
-    enabled: Boolean(id),
-    initialData: initialArticle,
-    retry: false,
-  });
-
-  if (isLoading && !article) {
-    return (
-      <div className="container-page">
-        <PageLoading />
-      </div>
-    );
-  }
-
-  if (isError || !article) {
-    return (
-      <div className="container-page py-10">
-        <p>المقال غير موجود.</p>
-      </div>
-    );
-  }
-
   const origin = useSiteOrigin();
   const seoHead = buildArticleSeoHead(article, origin);
   const jsonLd = buildArticleJsonLd(article, origin);
@@ -64,6 +106,22 @@ export default function ArticlePage({ initialArticle }: ArticlePageProps) {
   const audioSource = resolvePublicArticleAudioSource(article);
   const videoUrl = resolveMediaUrl(article.video ?? article.media_url);
   const coverUrl = publicArticleCoverUrl(article);
+  const isAudio = article.media_type === "audio";
+  const isVideo = article.media_type === "video";
+  const hasPlayableAudio = isAudio && Boolean(audioSource);
+  const hasPlayableVideo = isVideo && Boolean(videoUrl);
+  const {
+    bodyRef,
+    videoRef,
+    open,
+    dismiss,
+    onAudioProgress,
+    onVideoProgress,
+  } = useArticleTrustSurvey({
+    articleId: article.id,
+    body,
+    mediaEnabled: hasPlayableAudio || hasPlayableVideo,
+  });
   const sources = article.sources ?? [];
   const galleryImages =
     article.images?.map((image) => resolveMediaUrl(image.full)).filter(Boolean) ??
@@ -100,11 +158,13 @@ export default function ArticlePage({ initialArticle }: ArticlePageProps) {
                   variant="cover"
                   interactive={Boolean(audioSource)}
                   className="size-full min-h-[12rem]"
+                  onPlaybackProgress={onAudioProgress}
                 />
               </div>
             ) : article.media_type === "video" && videoUrl ? (
               <div className="relative mb-8 aspect-video overflow-hidden rounded-2xl bg-black">
                 <video
+                  ref={videoRef}
                   src={videoUrl}
                   poster={
                     resolveMediaUrl(article.video_poster) ??
@@ -113,6 +173,10 @@ export default function ArticlePage({ initialArticle }: ArticlePageProps) {
                   }
                   controls
                   className="size-full object-contain"
+                  onTimeUpdate={() => onVideoProgress()}
+                  onPlay={() => onVideoProgress()}
+                  onPause={() => onVideoProgress()}
+                  onEnded={() => onVideoProgress(true)}
                 />
               </div>
             ) : coverUrl ? (
@@ -194,6 +258,7 @@ export default function ArticlePage({ initialArticle }: ArticlePageProps) {
                   }
                   variant="embed"
                   interactive
+                  onPlaybackProgress={onAudioProgress}
                 />
               </div>
             )}
@@ -215,7 +280,10 @@ export default function ArticlePage({ initialArticle }: ArticlePageProps) {
               )}
 
             {body ? (
-              <div className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed">
+              <div
+                ref={bodyRef}
+                className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed"
+              >
                 {body}
               </div>
             ) : article.media_type !== "audio" &&
@@ -224,6 +292,12 @@ export default function ArticlePage({ initialArticle }: ArticlePageProps) {
                 لا يوجد محتوى نصي لهذا المقال.
               </p>
             ) : null}
+
+            <TrustIndexDialog
+              articleId={article.id}
+              open={open}
+              onDismiss={dismiss}
+            />
 
             {galleryImages.length > 0 && (
               <section className="mt-10">
@@ -266,4 +340,34 @@ export default function ArticlePage({ initialArticle }: ArticlePageProps) {
       </article>
     </>
   );
+}
+
+export default function ArticlePage({ initialArticle }: ArticlePageProps) {
+  const { id } = useParams();
+
+  const { data: article, isLoading, isError } = useQuery({
+    queryKey: ["public-article", id],
+    queryFn: () => Articles_APIs.get(id!),
+    enabled: Boolean(id),
+    initialData: initialArticle,
+    retry: false,
+  });
+
+  if (isLoading && !article) {
+    return (
+      <div className="container-page">
+        <PageLoading />
+      </div>
+    );
+  }
+
+  if (isError || !article) {
+    return (
+      <div className="container-page py-10">
+        <p>المقال غير موجود.</p>
+      </div>
+    );
+  }
+
+  return <ArticlePageContent article={article} />;
 }

@@ -12,6 +12,7 @@ export const PERMISSION_GROUPS = [
   "standalone-tools",
   "library",
   "calendar",
+  "trust",
   "users",
   "admin",
   "other",
@@ -30,6 +31,7 @@ const GROUP_LABELS: Record<PermissionGroupKey, string> = {
   "standalone-tools": "أدوات مستقلة",
   library: "المكتبة",
   calendar: "التقويم",
+  trust: "الثقة والملاحظات",
   users: "إدارة المستخدمين",
   admin: "الإدارة",
   other: "أخرى",
@@ -46,6 +48,7 @@ const GROUP_ACCENTS: Record<PermissionGroupKey, string> = {
   "standalone-tools": "#64748b",
   library: "#22c55e",
   calendar: "#f59e0b",
+  trust: "#f97316",
   users: "#6366f1",
   admin: "#ef4444",
   other: "#94a3b8",
@@ -107,6 +110,9 @@ const PERMISSION_TO_GROUP: Record<string, PermissionGroupKey> = {
 
   [PERMISSIONS.MANAGE_SITE_SETTINGS]: "admin",
   [PERMISSIONS.VIEW_ADMIN_DASHBOARD]: "admin",
+
+  [PERMISSIONS.VIEW_TRUST_INDEX]: "trust",
+  [PERMISSIONS.VIEW_PLATFORM_FEEDBACK]: "trust",
 };
 
 const PERMISSION_LABELS: Record<string, string> = {
@@ -165,6 +171,9 @@ const PERMISSION_LABELS: Record<string, string> = {
 
   [PERMISSIONS.MANAGE_SITE_SETTINGS]: "إعدادات الموقع",
   [PERMISSIONS.VIEW_ADMIN_DASHBOARD]: "لوحة الإدارة",
+
+  [PERMISSIONS.VIEW_TRUST_INDEX]: "عرض مؤشر الثقة",
+  [PERMISSIONS.VIEW_PLATFORM_FEEDBACK]: "عرض ملاحظات المنصة",
 };
 
 function inferGroup(slug: string): PermissionGroupKey {
@@ -201,6 +210,9 @@ function inferGroup(slug: string): PermissionGroupKey {
     slug.includes("calendar")
   ) {
     return "calendar";
+  }
+  if (slug.includes("trust-index") || slug.includes("platform-feedback")) {
+    return "trust";
   }
   if (slug.includes("user") || slug.includes("role")) return "users";
   if (slug.includes("admin") || slug.includes("site-settings")) return "admin";

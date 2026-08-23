@@ -36,7 +36,7 @@ export function StaffShellTopbar({ items }: { items: StaffNavItem[] }) {
               {STAFF_ORG_LABEL}
             </SheetTitle>
           </SheetHeader>
-          <div className="overflow-y-auto p-3">
+          <div className="staff-shell__mobile-nav">
             <StaffNavLinks
               items={items}
               onNavigate={() => setMobileOpen(false)}

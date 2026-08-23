@@ -3,6 +3,8 @@ import { NavGhazawiyaLink } from "@/features/public-site/components/nav-ghazawiy
 import { SiteHeaderSearch } from "@/components/site-header-search";
 import { DesktopSiteNav, MobileSiteNav } from "@/components/site-header-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { PlatformFeedbackProvider } from "@/context/platform-feedback";
+import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/PlatformFeedbackFab";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
 import { ROUTES } from "@/router/routes";
@@ -15,8 +17,9 @@ export default function PublicLayout() {
   const authLabel = token ? "مساحة العمل" : "تسجيل الدخول";
 
   return (
-    <div className="min-h-screen page-gradient">
-      <header className="site-header ghazawiya-pattern">
+    <PlatformFeedbackProvider>
+      <div className="min-h-screen page-gradient">
+        <header className="site-header ghazawiya-pattern">
         <div className="site-header__inner container-page flex min-h-[4.5rem] items-center gap-3 py-3 md:gap-4">
           <div className="flex shrink-0 items-center gap-3 md:gap-4">
             <BrandLogo size="lg" />
@@ -36,11 +39,13 @@ export default function PublicLayout() {
         </div>
       </header>
 
-      <main>
-        <Outlet />
-      </main>
+        <main>
+          <Outlet />
+        </main>
 
-      <SiteFooter />
-    </div>
+        <SiteFooter />
+        <PlatformFeedbackFab />
+      </div>
+    </PlatformFeedbackProvider>
   );
 }
