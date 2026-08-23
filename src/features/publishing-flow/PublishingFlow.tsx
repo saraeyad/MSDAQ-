@@ -1,4 +1,3 @@
-import { PageLoading } from "@/components/loading-spinner";
 import { SourceConsentBanner } from "@/features/publishing-flow/components/SourceConsentBanner";
 import { PublishingStepper } from "@/features/publishing-flow/PublishingStepper";
 import { Step1Details } from "@/features/publishing-flow/steps/Step1Details";
@@ -18,7 +17,7 @@ import {
 } from "@/lib/publish-gate";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PenLine } from "lucide-react";
+import { Loader2, PenLine } from "lucide-react";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -80,7 +79,15 @@ export default function PublishingFlow() {
   if (!isNew && isLoading) {
     return (
       <div className="publish-flow-page">
-        <PageLoading />
+        <div className="publish-flow-loader publish-flow-loader--page" role="status">
+          <span className="publish-flow-loader__ring" aria-hidden>
+            <Loader2 className="size-5 animate-spin" />
+          </span>
+          <div className="publish-flow-loader__copy">
+            <p className="publish-flow-loader__title">جاري تجهيز المقال</p>
+            <p className="publish-flow-loader__hint">لحظة واحدة ريثما تُحمَّل بيانات المسار</p>
+          </div>
+        </div>
       </div>
     );
   }

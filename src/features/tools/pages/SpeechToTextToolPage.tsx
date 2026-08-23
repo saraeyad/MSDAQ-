@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FileInput } from "@/components/ui/file-input";
+import { FileUploadProgressCard } from "@/components/ui/file-upload-progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
 import { Textarea } from "@/components/ui/textarea";
 import { VoiceDraftNotice } from "@/features/tools/components/VoiceDraftNotice";
 import {
@@ -42,6 +44,7 @@ export function SpeechToTextToolPage() {
   const [transcript, setTranscript] = useState("");
   const [name, setName] = useState("");
   const [transcribing, setTranscribing] = useState(false);
+  const fileUpload = useFileUploadProgress();
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -96,6 +99,7 @@ export function SpeechToTextToolPage() {
   const handleFile = (selected: File | null) => {
     if (!selected) {
       setFile(null);
+      fileUpload.reset();
       return;
     }
     const validationError = validateSttAudioFile(selected);
@@ -125,9 +129,13 @@ export function SpeechToTextToolPage() {
     setOwnedDraftId(null);
     setTranscript("");
     setName("");
+    fileUpload.start(file);
     try {
       await runWithToolProcessing(setTranscribing, async () => {
-        const data = await ToolsVoice_APIs.speechToText(file);
+        const data = await ToolsVoice_APIs.speechToText(file, {
+          onUploadProgress: fileUpload.onUploadProgress,
+        });
+        fileUpload.complete();
         setDraft(data);
         setOwnedDraftId(data.id);
         if (data.status === "completed") {
@@ -140,7 +148,9 @@ export function SpeechToTextToolPage() {
         }
       });
     } catch (err) {
-      toast.error(getApiErrorMessage(err));
+      const message = getApiErrorMessage(err);
+      fileUpload.fail(message);
+      toast.error(message);
     }
   };
 
@@ -188,7 +198,10 @@ export function SpeechToTextToolPage() {
   return (
     <ToolPageShell title="تحويل الصوت إلى نص">
       <ToolProcessingDialog
-        open={isProcessing}
+        open={
+          isProcessing &&
+          (!fileUpload.progress || fileUpload.progress.progress >= 99)
+        }
         title="جاري تفريغ الصوت"
         steps={STT_PROCESSING_STEPS}
         description="قد يستغرق التفريغ عدة دقائق حسب طول التسجيل — يُرجى الانتظار وعدم إغلاق الصفحة."
@@ -200,14 +213,28 @@ export function SpeechToTextToolPage() {
         <CardContent className="space-y-4 p-6">
           <div className="space-y-2">
             <Label>ملف صوتي (MP3, WAV, M4A — حتى 25 ميغابايت)</Label>
-            <FileInput
-              accept={STT_ACCEPT_ATTR}
-              value={file}
-              onChange={handleFile}
-              disabled={isProcessing}
-              chooseLabel="اختر ملفاً"
-              emptyLabel="لم يُختَر ملف صوتي بعد"
-            />
+            {file && fileUpload.progress ? (
+              <FileUploadProgressCard
+                file={file}
+                status={fileUpload.progress.status}
+                progress={fileUpload.progress.progress}
+                errorMessage={fileUpload.progress.error}
+                onRemove={
+                  isProcessing
+                    ? undefined
+                    : () => handleFile(null)
+                }
+              />
+            ) : (
+              <FileInput
+                accept={STT_ACCEPT_ATTR}
+                value={file}
+                onChange={handleFile}
+                disabled={isProcessing}
+                chooseLabel="اختر ملفاً"
+                emptyLabel="لم يُختَر ملف صوتي بعد"
+              />
+            )}
           </div>
 
           <Button onClick={transcribe} disabled={isProcessing || !file}>

@@ -20,6 +20,7 @@ interface ToolProcessingDialogProps {
   title: string;
   description?: string;
   steps?: readonly string[];
+  className?: string;
 }
 
 export function ToolProcessingDialog({
@@ -27,6 +28,7 @@ export function ToolProcessingDialog({
   title,
   description = "قد تستغرق العملية بضع ثوانٍ — يُرجى الانتظار وعدم إغلاق الصفحة.",
   steps = DEFAULT_TOOL_PROCESSING_STEPS,
+  className,
 }: ToolProcessingDialogProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [elapsed, setElapsed] = useState(0);
@@ -57,13 +59,13 @@ export function ToolProcessingDialog({
   return (
     <Dialog open={open}>
       <DialogContent
-        className="sm:max-w-md [&>button]:hidden"
+        className={cn("sm:max-w-md [&>button]:hidden", className)}
         onPointerDownOutside={(event) => event.preventDefault()}
         onEscapeKeyDown={(event) => event.preventDefault()}
         aria-describedby="tool-processing-description"
       >
         <DialogHeader className="items-center text-center sm:items-center sm:text-center">
-          <div className="mx-auto mb-2 flex size-14 items-center justify-center rounded-full bg-primary/10">
+          <div className="tool-processing-dialog__spinner mx-auto mb-2 flex size-14 items-center justify-center rounded-full bg-primary/10">
             <Loader2 className="size-7 animate-spin text-primary" aria-hidden />
           </div>
           <DialogTitle>{title}</DialogTitle>
@@ -72,8 +74,8 @@ export function ToolProcessingDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div className="tool-processing-dialog__body space-y-4">
+          <div className="tool-processing-dialog__track h-1.5 overflow-hidden rounded-full bg-muted">
             <div className="tool-processing-bar h-full w-1/3 rounded-full bg-primary" />
           </div>
 

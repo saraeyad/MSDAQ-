@@ -266,6 +266,67 @@
     color: #1f2937;
   }
 
+  .cover-upload-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    background: linear-gradient(180deg, #f4f5f7 0%, #eceef1 100%);
+    min-height: 12rem;
+  }
+
+  .cover-upload-preview__image {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: min(32rem, 70vh);
+    object-fit: contain;
+  }
+
+  .cover-blur-stage {
+    display: flex;
+    min-height: 14rem;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    border: 1px solid #e8eaed;
+    background: linear-gradient(180deg, #f4f5f7 0%, #eceef1 100%);
+  }
+
+  .cover-blur-stage__state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem 1.25rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+
+  .cover-blur-stage__hint {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  .cover-blur-stage__canvas-wrap {
+    position: relative;
+    max-width: 100%;
+  }
+
+  .cover-blur-stage__canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    max-height: min(32rem, 70vh);
+    cursor: crosshair;
+    touch-action: none;
+  }
+
   .publish-step-publish {
     display: grid;
     gap: 1rem;
@@ -893,5 +954,112 @@
 
   .staff-article-gate .rounded-xl {
     border-radius: 1.25rem;
+  }
+
+  .publish-flow-loader {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(249, 140, 52, 0.22);
+    background: linear-gradient(135deg, #fffaf5 0%, #ffffff 70%);
+    padding: 0.875rem 1rem;
+    box-shadow: 0 1px 2px rgba(26, 26, 26, 0.04);
+  }
+
+  .publish-flow-loader--page {
+    justify-content: center;
+    min-height: 12rem;
+    padding: 2rem 1.5rem;
+    border-radius: 1.25rem;
+    border-color: rgba(211, 212, 213, 0.85);
+  }
+
+  .publish-flow-loader__ring {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1.5px solid color-mix(in srgb, var(--primary) 40%, white);
+    background: color-mix(in srgb, var(--primary) 10%, white);
+    color: var(--primary);
+  }
+
+  .publish-flow-loader__copy {
+    min-width: 0;
+  }
+
+  .publish-flow-loader__title {
+    margin: 0;
+    font-family: var(--font-headline);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .publish-flow-loader__hint {
+    margin: 0.15rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: #6b7280;
+  }
+
+  .publish-flow-page .file-upload-progress {
+    border-radius: 1rem;
+    border-color: rgba(211, 212, 213, 0.9);
+    background: linear-gradient(135deg, #fffaf5 0%, #ffffff 62%, #fafafa 100%);
+    box-shadow: 0 1px 2px rgba(26, 26, 26, 0.04);
+  }
+
+  .publish-flow-page .file-upload-progress__bar {
+    background: color-mix(in srgb, var(--primary) 12%, #f3f4f6);
+  }
+
+  .publish-flow-processing {
+    overflow: hidden;
+    border-radius: 1.25rem !important;
+    border: 1px solid rgba(211, 212, 213, 0.85) !important;
+    background: linear-gradient(180deg, #fffaf5 0%, #ffffff 48%, #fafafa 100%) !important;
+    box-shadow:
+      0 1px 2px rgba(26, 26, 26, 0.04),
+      0 18px 40px rgba(26, 26, 26, 0.08) !important;
+    padding: 1.75rem 1.5rem !important;
+  }
+
+  .publish-flow-processing .tool-processing-dialog__spinner {
+    width: 3.5rem;
+    height: 3.5rem;
+    border: 1.5px solid color-mix(in srgb, var(--primary) 38%, white);
+    background: color-mix(in srgb, var(--primary) 10%, white);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 8%, transparent);
+  }
+
+  .publish-flow-processing [data-slot="dialog-title"] {
+    font-family: var(--font-headline);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .publish-flow-processing [data-slot="dialog-description"] {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: #6b7280;
+  }
+
+  .publish-flow-processing .tool-processing-dialog__track {
+    height: 0.4rem;
+    background: color-mix(in srgb, var(--primary) 12%, #f3f4f6);
+  }
+
+  .publish-flow-processing .tool-processing-bar {
+    background: linear-gradient(
+      90deg,
+      var(--primary),
+      color-mix(in srgb, var(--primary) 75%, white)
+    );
   }
 }

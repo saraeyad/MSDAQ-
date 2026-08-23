@@ -22,17 +22,19 @@ import { paginateList } from "@/lib/table-pagination";
 import { LibraryFileGlyph } from "@/features/newsroom/library/LibraryFileGlyph";
 import { LibraryItemCard } from "@/features/newsroom/library/LibraryItemCard";
 import { DeleteLibraryItemDialog } from "@/features/newsroom/library/DeleteLibraryItemDialog";
+import { LibraryPreviewDialog } from "@/features/newsroom/library/LibraryPreviewDialog";
 import {
   FileUploadProgressCard,
   type FileUploadProgressStatus,
 } from "@/features/newsroom/library/FileUploadProgressCard";
-import { downloadLibraryItem } from "@/lib/library-download";
+import { downloadLibraryItem, fetchLibraryFile } from "@/lib/library-download";
+import { uploadPercentFromEvent } from "@/lib/upload-progress";
 import { Library_APIs } from "@/services/api/library";
 import { PERMISSIONS } from "@/router/routes";
 import { LIBRARY_PAGE_SIZE, type LibraryItem } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileUp, FolderOpen, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -43,11 +45,6 @@ type UploadProgressState = {
   progress: number;
   error?: string;
 };
-
-function uploadPercentFromEvent(loaded: number, total?: number): number {
-  if (!total) return 0;
-  return Math.min(99, Math.round((loaded * 100) / total));
-}
 
 function assertLibraryFileSize(file: File) {
   if (file.size > MAX_FILE_SIZE) {
@@ -95,6 +92,15 @@ export default function LibraryPage() {
   const [editUploadProgress, setEditUploadProgress] =
     useState<UploadProgressState | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [previewingId, setPreviewingId] = useState<number | null>(null);
+  const [previewItem, setPreviewItem] = useState<LibraryItem | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const listQuery = useQuery({
     queryKey: ["library", search, page],
@@ -144,7 +150,7 @@ export default function LibraryPage() {
         onUploadProgress: (event) => {
           setUploadProgress({
             status: "uploading",
-            progress: uploadPercentFromEvent(event.loaded, event.total),
+            progress: uploadPercentFromEvent(event),
           });
         },
       });
@@ -178,7 +184,7 @@ export default function LibraryPage() {
           onUploadProgress: (event) => {
             setEditUploadProgress({
               status: "uploading",
-              progress: uploadPercentFromEvent(event.loaded, event.total),
+              progress: uploadPercentFromEvent(event),
             });
           },
         });
@@ -248,6 +254,12 @@ export default function LibraryPage() {
     setEditUploadProgress(null);
   };
 
+  const closePreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPreviewItem(null);
+  };
+
   const handleDownload = async (item: LibraryItem) => {
     setDownloadingId(item.id);
     try {
@@ -256,6 +268,20 @@ export default function LibraryPage() {
       toast.error(getApiErrorMessage(err));
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handlePreview = async (item: LibraryItem) => {
+    setPreviewingId(item.id);
+    try {
+      const blob = await fetchLibraryFile(item.id, "inline");
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(URL.createObjectURL(blob));
+      setPreviewItem(item);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setPreviewingId(null);
     }
   };
 
@@ -268,7 +294,7 @@ export default function LibraryPage() {
     <div className="library-page space-y-6">
       <AdminPageHeader
         title="المكتبة"
-        description="مستندات وملفات مشتركة — تصفح، حمّل، وارفع حسب صلاحياتك"
+        description="مستندات وملفات مشتركة — عاين، حمّل، وارفع حسب صلاحياتك"
         actions={
           canUpload ? (
             <Button
@@ -410,10 +436,12 @@ export default function LibraryPage() {
                 onEdit={openEdit}
                 onDelete={setItemToDelete}
                 onDownload={handleDownload}
+                onPreview={handlePreview}
                 isDeleting={
                   deleteMutation.isPending && itemToDelete?.id === item.id
                 }
                 isDownloading={downloadingId === item.id}
+                isPreviewing={previewingId === item.id}
               />
             ))}
           </div>
@@ -514,6 +542,12 @@ export default function LibraryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <LibraryPreviewDialog
+        item={previewItem}
+        blobUrl={previewUrl}
+        onClose={closePreview}
+      />
 
       <DeleteLibraryItemDialog
         item={itemToDelete}

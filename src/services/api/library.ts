@@ -77,9 +77,15 @@ export const Library_APIs = {
     return getApiData(response);
   },
 
-  download: async (id: number | string): Promise<Blob> => {
+  download: async (
+    id: number | string,
+    options?: { disposition?: "attachment" | "inline" },
+  ): Promise<Blob> => {
     const response = await API.get<Blob>(`/api/library/${id}/download`, {
       responseType: "blob",
+      headers: {
+        "Content-Disposition": options?.disposition ?? "attachment",
+      },
     });
     return response.data;
   },

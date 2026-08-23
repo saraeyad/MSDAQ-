@@ -7,6 +7,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { StaffHomeLink } from "@/features/staff/nav/StaffHomeLink";
 import { StaffNavLinks } from "@/features/staff/nav/StaffNavLinks";
 import { StaffUserMenu } from "@/features/staff/nav/StaffUserMenu";
 import { STAFF_ORG_LABEL, type StaffNavItem } from "@/features/staff/nav/staff-nav";
@@ -45,7 +46,10 @@ export function StaffShellTopbar({ items }: { items: StaffNavItem[] }) {
         </SheetContent>
       </Sheet>
 
-      <StaffUserMenu />
+      <div className="staff-shell__topbar-actions">
+        <StaffHomeLink />
+        <StaffUserMenu />
+      </div>
     </header>
   );
 }

@@ -1,9 +1,11 @@
 import { CoverUploadSection } from "@/features/publishing-flow/steps/Step2Cover/CoverUploadSection";
 import { Button } from "@/components/ui/button";
+import { FileUploadProgressCard } from "@/components/ui/file-upload-progress";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
 import {
   runWithToolProcessing,
   ToolProcessingDialog,
@@ -49,6 +51,8 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     resolveMediaUrl(article.video) ?? "",
   );
   const [videoStatus, setVideoStatus] = useState(article.video_status);
+  const audioUpload = useFileUploadProgress();
+  const videoUpload = useFileUploadProgress();
   const [uploading, setUploading] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -158,13 +162,20 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
 
   const handleAudio = async (file: File) => {
     setUploadingAudio(true);
+    audioUpload.start(file);
     try {
-      const data = await ArticlesStaff_APIs.uploadSourceAudio(articleId, file);
+      const data = await ArticlesStaff_APIs.uploadSourceAudio(articleId, file, {
+        onUploadProgress: audioUpload.onUploadProgress,
+      });
+      audioUpload.complete();
       setAudioPreview(resolveMediaUrl(data.audio_url) ?? data.audio_url);
       toast.success("تم رفع الصوت المصدر");
       await refreshArticle();
+      window.setTimeout(audioUpload.reset, 900);
     } catch (err) {
-      toast.error(getApiErrorMessage(err));
+      const message = getApiErrorMessage(err);
+      audioUpload.fail(message);
+      toast.error(message);
     } finally {
       setUploadingAudio(false);
     }
@@ -172,13 +183,20 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
 
   const handleVideo = async (file: File) => {
     setUploadingVideo(true);
+    videoUpload.start(file);
     try {
-      const data = await ArticlesStaff_APIs.uploadVideo(articleId, file);
+      const data = await ArticlesStaff_APIs.uploadVideo(articleId, file, {
+        onUploadProgress: videoUpload.onUploadProgress,
+      });
+      videoUpload.complete();
       setVideoStatus(data.video_status);
       toast.success(data.message ?? "جاري معالجة الفيديو...");
       await refreshArticle();
+      window.setTimeout(videoUpload.reset, 900);
     } catch (err) {
-      toast.error(getApiErrorMessage(err));
+      const message = getApiErrorMessage(err);
+      videoUpload.fail(message);
+      toast.error(message);
     } finally {
       setUploadingVideo(false);
     }
@@ -301,6 +319,7 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
       searchResults={searchResults}
       aiResult={aiResult}
       fileRef={fileRef}
+      sourceFile={originalFile}
       onBlurredSave={handleBlurredSave}
       onBlurModeChange={setBlurMode}
       onDeleteCover={deleteCover}
@@ -315,11 +334,13 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
         open={searching}
         title="جاري البحث العكسي"
         steps={REVERSE_IMAGE_PROCESSING_STEPS}
+        className="publish-flow-processing"
       />
       <ToolProcessingDialog
         open={detecting}
         title="جاري كشف الصورة"
         steps={AI_DETECTION_PROCESSING_STEPS}
+        className="publish-flow-processing"
       />
 
       <input
@@ -362,13 +383,20 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
             {audioPreview ? (
               <audio controls className="w-full" src={audioPreview} />
             ) : null}
+            {audioUpload.file && audioUpload.progress ? (
+              <FileUploadProgressCard
+                file={audioUpload.file}
+                status={audioUpload.progress.status}
+                progress={audioUpload.progress.progress}
+                errorMessage={audioUpload.progress.error}
+              />
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 onClick={() => audioRef.current?.click()}
                 disabled={uploadingAudio}
               >
-                {uploadingAudio && <Loader2 className="size-4 animate-spin" />}
                 رفع ملف صوتي
               </Button>
               {audioPreview && (
@@ -411,9 +439,16 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
           <div className="publish-flow-card">
             <p className="publish-flow-card__title">الفيديو أو رابط YouTube</p>
             {videoStatus === "processing" && (
-              <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-accent/40 p-3 text-sm">
-                <Loader2 className="size-4 animate-spin" />
-                جاري معالجة الفيديو...
+              <div className="publish-flow-loader" role="status">
+                <span className="publish-flow-loader__ring" aria-hidden>
+                  <Loader2 className="size-4 animate-spin" />
+                </span>
+                <div className="publish-flow-loader__copy">
+                  <p className="publish-flow-loader__title">جاري معالجة الفيديو</p>
+                  <p className="publish-flow-loader__hint">
+                    يُعالج الملف على السيرفر — يمكنك متابعة باقي الخطوات
+                  </p>
+                </div>
               </div>
             )}
             {videoPreview && videoStatus === "ready" && (
@@ -424,13 +459,20 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
                 poster={resolveMediaUrl(article.video_poster) ?? undefined}
               />
             )}
+            {videoUpload.file && videoUpload.progress ? (
+              <FileUploadProgressCard
+                file={videoUpload.file}
+                status={videoUpload.progress.status}
+                progress={videoUpload.progress.progress}
+                errorMessage={videoUpload.progress.error}
+              />
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 onClick={() => videoRef.current?.click()}
                 disabled={uploadingVideo || videoStatus === "processing"}
               >
-                {uploadingVideo && <Loader2 className="size-4 animate-spin" />}
                 رفع ملف فيديو
               </Button>
               {videoPreview && (

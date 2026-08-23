@@ -55,6 +55,7 @@ export function Step4Standards({
         open={processing}
         title="جاري فحص المعايير"
         steps={STANDARDS_PROCESSING_STEPS}
+        className="publish-flow-processing"
       />
 
       <p className="text-muted-foreground">

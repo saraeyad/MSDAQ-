@@ -2,7 +2,10 @@ import { getApiData } from "@/lib/api-data";
 import { extractPublicMediaUrl } from "@/lib/media-url";
 import { Library_APIs } from "@/services/api/library";
 import type { AiDetectionResult, ApiResponse, ReverseSearchMatch } from "@/types";
+import type { AxiosRequestConfig } from "axios";
 import API from "./api.repository";
+
+type UploadProgressOptions = Pick<AxiosRequestConfig, "onUploadProgress">;
 
 function unwrapReverseSearchMatches(payload: unknown): ReverseSearchMatch[] {
   if (Array.isArray(payload)) return payload;
@@ -36,6 +39,7 @@ export const ImageVerification_APIs = {
    */
   uploadPublicImage: async (
     file: File,
+    options?: UploadProgressOptions,
   ): Promise<{ url: string; libraryId: number | null }> => {
     const formData = new FormData();
     formData.append("title", `بحث عكسي — ${file.name}`);
@@ -44,6 +48,7 @@ export const ImageVerification_APIs = {
     const response = await API.postFormData<ApiResponse<unknown>>(
       "/api/library",
       formData,
+      options,
     );
     const data = getApiData(response);
     let publicUrl =
@@ -85,13 +90,17 @@ export const ImageVerification_APIs = {
     return unwrapReverseSearchMatches(getApiData(response));
   },
 
-  aiDetection: async (input: { file?: File; imageUrl?: string }) => {
+  aiDetection: async (
+    input: { file?: File; imageUrl?: string },
+    options?: UploadProgressOptions,
+  ) => {
     const formData = new FormData();
     if (input.file) formData.append("image_file", input.file);
     else if (input.imageUrl) formData.append("image_url", input.imageUrl);
     const response = await API.postFormData<ApiResponse<AiDetectionResult>>(
       "/api/tools/ai-detect",
       formData,
+      options,
     );
     return getApiData(response);
   },

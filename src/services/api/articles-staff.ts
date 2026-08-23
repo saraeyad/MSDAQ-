@@ -22,7 +22,10 @@ import type {
   VideoUploadResult,
 } from "@/types";
 import type { CreateSourcePayload } from "@/types";
+import type { AxiosRequestConfig } from "axios";
 import API from "./api.repository";
+
+type UploadProgressOptions = Pick<AxiosRequestConfig, "onUploadProgress">;
 
 export interface CreateArticlePayload {
   title: string;
@@ -88,12 +91,17 @@ export const ArticlesStaff_APIs = {
     return getApiData(response);
   },
 
-  uploadCover: async (id: number | string, file: File) => {
+  uploadCover: async (
+    id: number | string,
+    file: File,
+    options?: UploadProgressOptions,
+  ) => {
     const formData = new FormData();
     formData.append("cover", file);
     const response = await API.postFormData<ApiResponse<{ cover_url: string }>>(
       `/api/articles/${id}/cover`,
       formData,
+      options,
     );
     return getApiData(response);
   },
@@ -105,14 +113,18 @@ export const ArticlesStaff_APIs = {
     return getApiData(response);
   },
 
-  uploadBodyImages: async (id: number | string, files: File[]) => {
+  uploadBodyImages: async (
+    id: number | string,
+    files: File[],
+    options?: UploadProgressOptions,
+  ) => {
     const formData = new FormData();
     for (const file of files) {
       formData.append("images[]", file);
     }
     const response = await API.postFormData<
       ApiResponse<{ images: StaffArticle["images"] }>
-    >(`/api/articles/${id}/images`, formData);
+    >(`/api/articles/${id}/images`, formData, options);
     return getApiData(response);
   },
 
@@ -123,12 +135,17 @@ export const ArticlesStaff_APIs = {
     return getApiData(response);
   },
 
-  uploadSourceAudio: async (id: number | string, file: File) => {
+  uploadSourceAudio: async (
+    id: number | string,
+    file: File,
+    options?: UploadProgressOptions,
+  ) => {
     const formData = new FormData();
     formData.append("audio", file);
     const response = await API.postFormData<ApiResponse<{ audio_url: string }>>(
       `/api/articles/${id}/source-audio`,
       formData,
+      options,
     );
     return getApiData(response);
   },
@@ -140,12 +157,17 @@ export const ArticlesStaff_APIs = {
     return getApiData(response);
   },
 
-  uploadVideo: async (id: number | string, file: File) => {
+  uploadVideo: async (
+    id: number | string,
+    file: File,
+    options?: UploadProgressOptions,
+  ) => {
     const formData = new FormData();
     formData.append("video", file);
     const response = await API.postFormData<ApiResponse<VideoUploadResult>>(
       `/api/articles/${id}/video`,
       formData,
+      options,
     );
     return getApiData(response);
   },
@@ -158,13 +180,17 @@ export const ArticlesStaff_APIs = {
   },
 
   /** Article publishing: STT from uploaded file (text articles). Not the standalone tool. */
-  speechToText: async (id: number | string, file: File) => {
+  speechToText: async (
+    id: number | string,
+    file: File,
+    options?: UploadProgressOptions,
+  ) => {
     const formData = new FormData();
     appendSttAudioField(formData, file);
     const response = await API.postFormData<ApiResponse<Transcript>>(
       `/api/articles/${id}/speech-to-text`,
       formData,
-      { timeout: STT_REQUEST_TIMEOUT_MS },
+      { timeout: STT_REQUEST_TIMEOUT_MS, ...options },
     );
     return getApiData(response);
   },

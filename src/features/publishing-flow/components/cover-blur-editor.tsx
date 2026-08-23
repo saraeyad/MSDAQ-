@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, RotateCcw, Undo2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 interface Rect {
   x: number;
@@ -11,9 +11,72 @@ interface Rect {
 
 interface CoverBlurEditorProps {
   imageSrc: string;
+  sourceFile?: File | null;
   onSave: (file: File) => Promise<void>;
   onCancel: () => void;
   saving?: boolean;
+}
+
+function sameOriginMediaUrl(src: string): string {
+  if (src.startsWith("blob:") || src.startsWith("data:")) return src;
+  try {
+    const url = new URL(src, window.location.href);
+    if (url.pathname.startsWith("/storage")) {
+      return `${url.pathname}${url.search}`;
+    }
+  } catch {
+    /* keep original */
+  }
+  return src;
+}
+
+function loadHtmlImage(src: string, useCors: boolean): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    if (useCors) img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("image-load-failed"));
+    img.src = src;
+  });
+}
+
+async function loadImageForCanvas(
+  src: string,
+  file?: File | null,
+): Promise<{ image: HTMLImageElement; revokeUrl?: string }> {
+  if (file) {
+    const url = URL.createObjectURL(file);
+    const image = await loadHtmlImage(url, false);
+    return { image, revokeUrl: url };
+  }
+
+  const local = sameOriginMediaUrl(src);
+  const skipCors =
+    local.startsWith("blob:") ||
+    local.startsWith("data:") ||
+    local.startsWith("/") ||
+    local.startsWith(window.location.origin);
+
+  if (skipCors) {
+    try {
+      return { image: await loadHtmlImage(local, false) };
+    } catch {
+      /* try fetch fallback */
+    }
+  } else {
+    try {
+      return { image: await loadHtmlImage(local, true) };
+    } catch {
+      /* try fetch fallback */
+    }
+  }
+
+  const response = await fetch(local);
+  if (!response.ok) throw new Error("image-fetch-failed");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const image = await loadHtmlImage(url, false);
+  return { image, revokeUrl: url };
 }
 
 const MAX_DISPLAY_WIDTH = 720;
@@ -91,6 +154,7 @@ function applyBlurRegion(
 
 export function CoverBlurEditor({
   imageSrc,
+  sourceFile,
   onSave,
   onCancel,
   saving = false,
@@ -101,6 +165,7 @@ export function CoverBlurEditor({
   const originalImageDataRef = useRef<ImageData | null>(null);
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
   const [displaySize, setDisplaySize] = useState({ w: 0, h: 0 });
   const [dragging, setDragging] = useState(false);
@@ -144,55 +209,59 @@ export function CoverBlurEditor({
 
   useEffect(() => {
     let cancelled = false;
+    let revokeUrl: string | undefined;
     setLoading(true);
+    setLoadError(false);
     historyRef.current = [];
     originalImageDataRef.current = null;
     setCanUndo(false);
     setSelection(null);
 
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      if (cancelled) return;
+    void loadImageForCanvas(imageSrc, sourceFile)
+      .then(({ image, revokeUrl: url }) => {
+        if (cancelled) {
+          if (url) URL.revokeObjectURL(url);
+          return;
+        }
+        revokeUrl = url;
 
-      const nw = img.naturalWidth;
-      const nh = img.naturalHeight;
-      const s = Math.min(1, MAX_DISPLAY_WIDTH / nw);
-      const dw = Math.max(1, Math.round(nw * s));
-      const dh = Math.max(1, Math.round(nh * s));
+        const nw = image.naturalWidth;
+        const nh = image.naturalHeight;
+        const s = Math.min(1, MAX_DISPLAY_WIDTH / nw);
+        const dw = Math.max(1, Math.round(nw * s));
+        const dh = Math.max(1, Math.round(nh * s));
 
-      const source = document.createElement("canvas");
-      source.width = nw;
-      source.height = nh;
-      const sourceCtx = source.getContext("2d");
-      sourceCtx?.drawImage(img, 0, 0, nw, nh);
-      sourceRef.current = source;
-      originalImageDataRef.current =
-        sourceCtx?.getImageData(0, 0, nw, nh) ?? null;
+        const source = document.createElement("canvas");
+        source.width = nw;
+        source.height = nh;
+        const sourceCtx = source.getContext("2d");
+        sourceCtx?.drawImage(image, 0, 0, nw, nh);
+        sourceRef.current = source;
+        originalImageDataRef.current =
+          sourceCtx?.getImageData(0, 0, nw, nh) ?? null;
 
-      setNaturalSize({ w: nw, h: nh });
-      setDisplaySize({ w: dw, h: dh });
-      setLoading(false);
-
-      requestAnimationFrame(() => {
-        redrawDisplay();
-        syncRenderSize();
+        setNaturalSize({ w: nw, h: nh });
+        setDisplaySize({ w: dw, h: dh });
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoading(false);
+          setLoadError(true);
+        }
       });
-    };
-    img.onerror = () => {
-      if (!cancelled) setLoading(false);
-    };
-    img.src = imageSrc;
 
     return () => {
       cancelled = true;
+      if (revokeUrl) URL.revokeObjectURL(revokeUrl);
     };
-  }, [imageSrc, redrawDisplay, syncRenderSize]);
+  }, [imageSrc, sourceFile]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (loading || loadError) return;
     redrawDisplay();
     syncRenderSize();
-  }, [displaySize, redrawDisplay, syncRenderSize]);
+  }, [displaySize, loading, loadError, redrawDisplay, syncRenderSize]);
 
   useEffect(() => {
     const canvas = displayRef.current;
@@ -354,18 +423,26 @@ export function CoverBlurEditor({
         </p>
       </div>
 
-      <div className="relative mx-auto w-fit max-w-full overflow-hidden rounded-xl border border-border bg-card">
+      <div className="cover-blur-stage">
         {loading ? (
-          <div className="flex h-48 w-full min-w-70 items-center justify-center text-sm text-muted-foreground">
-            <Loader2 className="size-5 animate-spin" />
+          <div className="cover-blur-stage__state">
+            <Loader2 className="size-5 animate-spin text-primary" />
+            <p>جاري تجهيز الصورة...</p>
+          </div>
+        ) : loadError ? (
+          <div className="cover-blur-stage__state">
+            <p>تعذّر تحميل الصورة للتمويه.</p>
+            <p className="cover-blur-stage__hint">
+              أغلقي الأداة ثم ارفعي الصورة مجدداً وحاولي مرة أخرى.
+            </p>
           </div>
         ) : (
-          <>
+          <div className="cover-blur-stage__canvas-wrap">
             <canvas
               ref={displayRef}
               width={displaySize.w}
               height={displaySize.h}
-              className="block max-h-80 max-w-full cursor-crosshair touch-none"
+              className="cover-blur-stage__canvas"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={finishPointer}
@@ -377,7 +454,7 @@ export function CoverBlurEditor({
                 style={selectionStyle}
               />
             )}
-          </>
+          </div>
         )}
       </div>
 
@@ -387,7 +464,7 @@ export function CoverBlurEditor({
           variant="outline"
           size="sm"
           onClick={undoBlur}
-          disabled={!canUndo || saving || loading}
+          disabled={!canUndo || saving || loading || loadError}
         >
           <Undo2 className="size-4" />
           تراجع
@@ -397,7 +474,7 @@ export function CoverBlurEditor({
           variant="outline"
           size="sm"
           onClick={resetImage}
-          disabled={saving || loading}
+          disabled={saving || loading || loadError}
         >
           <RotateCcw className="size-4" />
           إعادة ضبط
@@ -406,7 +483,7 @@ export function CoverBlurEditor({
           type="button"
           size="sm"
           onClick={handleSave}
-          disabled={saving || loading}
+          disabled={saving || loading || loadError}
         >
           {saving && <Loader2 className="size-4 animate-spin" />}
           رفع النسخة المعدّلة

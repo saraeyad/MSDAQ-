@@ -1,9 +1,11 @@
 import { SmartEditorToolbar } from "@/features/tools/smart-editor/SmartEditorToolbar";
 import { Button } from "@/components/ui/button";
+import { FileUploadProgressCard } from "@/components/ui/file-upload-progress";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
 import { ToolProcessingDialog } from "@/features/tools/components/ToolProcessingDialog";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { resolveMediaUrl } from "@/lib/media-url";
@@ -43,6 +45,7 @@ export function Step3Body({
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const audioUpload = useFileUploadProgress();
   const [transcriptJobId, setTranscriptJobId] = useState<number | null>(null);
   const [pendingTranscript, setPendingTranscript] = useState<string | null>(
     null,
@@ -106,12 +109,10 @@ export function Step3Body({
 
   const handleImages = async (files: FileList | null) => {
     if (!files?.length) return;
+    const list = Array.from(files);
     setUploadingImages(true);
     try {
-      const data = await ArticlesStaff_APIs.uploadBodyImages(
-        articleId,
-        Array.from(files),
-      );
+      const data = await ArticlesStaff_APIs.uploadBodyImages(articleId, list);
       setBodyImages(data.images);
       toast.success("تم رفع الصور");
     } catch (err) {
@@ -131,8 +132,13 @@ export function Step3Body({
 
     setPendingTranscript(null);
     setTranscribing(true);
+    audioUpload.start(file);
     try {
-      const result = await ArticlesStaff_APIs.speechToText(articleId, file);
+      const result = await ArticlesStaff_APIs.speechToText(articleId, file, {
+        onUploadProgress: audioUpload.onUploadProgress,
+      });
+      audioUpload.complete();
+      window.setTimeout(audioUpload.reset, 1200);
 
       if (result.status === "completed" && result.transcript?.trim()) {
         setPendingTranscript(result.transcript.trim());
@@ -148,7 +154,9 @@ export function Step3Body({
 
       toast.error("فشل التفريغ");
     } catch (err) {
-      toast.error(getApiErrorMessage(err));
+      const message = getApiErrorMessage(err);
+      audioUpload.fail(message);
+      toast.error(message);
     } finally {
       setTranscribing(false);
       if (audioRef.current) audioRef.current.value = "";
@@ -179,10 +187,15 @@ export function Step3Body({
   return (
     <div className="space-y-4">
       <ToolProcessingDialog
-        open={transcribing || !!transcriptJobId}
+        open={
+          !!transcriptJobId ||
+          (transcribing &&
+            (!audioUpload.progress || audioUpload.progress.progress >= 99))
+        }
         title="جاري تفريغ الصوت"
         steps={STT_PROCESSING_STEPS}
         description="قد يستغرق التفريغ عدة دقائق حسب طول التسجيل — يُرجى الانتظار وعدم إغلاق الصفحة."
+        className="publish-flow-processing"
       />
 
       <div className="publish-step-intro">
@@ -228,15 +241,20 @@ export function Step3Body({
             if (file) void handleSpeechToText(file);
           }}
         />
+        {audioUpload.file && audioUpload.progress ? (
+          <FileUploadProgressCard
+            file={audioUpload.file}
+            status={audioUpload.progress.status}
+            progress={audioUpload.progress.progress}
+            errorMessage={audioUpload.progress.error}
+          />
+        ) : null}
         <Button
           variant="outline"
           size="sm"
           onClick={() => audioRef.current?.click()}
           disabled={transcribing || !!transcriptJobId}
         >
-          {(transcribing || transcriptJobId) && (
-            <Loader2 className="size-4 animate-spin" />
-          )}
           {transcriptJobId ? "جاري التفريغ..." : STT_LABEL}
         </Button>
       </div>
@@ -298,11 +316,7 @@ export function Step3Body({
             onClick={() => imageRef.current?.click()}
             disabled={uploadingImages}
           >
-            {uploadingImages ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Upload className="size-4" />
-            )}
+            <Upload className="size-4" />
             رفع صور
           </Button>
         </div>

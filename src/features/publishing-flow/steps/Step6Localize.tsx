@@ -124,6 +124,7 @@ export function Step6Localize({
         open={generatingTts}
         title="جاري تحويل النص إلى صوت"
         steps={TTS_PROCESSING_STEPS}
+        className="publish-flow-processing"
       />
 
       <p className="text-muted-foreground">

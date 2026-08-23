@@ -28,6 +28,7 @@ interface CoverUploadSectionProps {
   searchResults: ReverseSearchMatch[];
   aiResult: AiDetectionResult | null;
   fileRef: RefObject<HTMLInputElement | null>;
+  sourceFile?: File | null;
   onBlurredSave: (file: File) => Promise<void>;
   onBlurModeChange: (value: boolean) => void;
   onDeleteCover: () => Promise<void>;
@@ -46,6 +47,7 @@ export function CoverUploadSection({
   searchResults,
   aiResult,
   fileRef,
+  sourceFile,
   onBlurredSave,
   onBlurModeChange,
   onDeleteCover,
@@ -57,10 +59,13 @@ export function CoverUploadSection({
       <button
         type="button"
         onClick={() => fileRef.current?.click()}
-        className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border py-16 transition-colors hover:border-primary/50"
+        disabled={uploading}
+        className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border py-16 transition-colors hover:border-primary/50 disabled:opacity-60"
       >
         <Upload className="size-10 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">ارفع صورة الغلاف</span>
+        <span className="text-sm text-muted-foreground">
+          ارفع صورة الغلاف
+        </span>
       </button>
     );
   }
@@ -70,22 +75,14 @@ export function CoverUploadSection({
       {blurMode ? (
         <CoverBlurEditor
           imageSrc={preview}
+          sourceFile={sourceFile}
           onSave={onBlurredSave}
           onCancel={() => onBlurModeChange(false)}
           saving={uploading}
         />
       ) : (
-        <div className="relative">
-          <img
-            src={preview}
-            alt=""
-            className="max-h-80 w-full rounded-xl object-cover"
-          />
-          {uploading && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/50">
-              <Loader2 className="size-8 animate-spin text-primary" />
-            </div>
-          )}
+        <div className="cover-upload-preview">
+          <img src={preview} alt="" className="cover-upload-preview__image" />
         </div>
       )}
 
@@ -104,7 +101,11 @@ export function CoverUploadSection({
             )}
             استبدال
           </Button>
-          <Button variant="outline" size="sm" onClick={() => void onDeleteCover()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void onDeleteCover()}
+          >
             <Trash2 className="size-4" />
             حذف
           </Button>
@@ -145,7 +146,9 @@ export function CoverUploadSection({
         </div>
       )}
 
-      {reverseSearched ? <ReverseSearchResults results={searchResults} /> : null}
+      {reverseSearched ? (
+        <ReverseSearchResults results={searchResults} />
+      ) : null}
 
       {aiResult && (
         <Card>

@@ -1,6 +1,5 @@
 import {
   isTrustIndexDismissed,
-  isTrustIndexTabActive,
   markTrustIndexDismissed,
   trustMediaThresholdReached,
   type TrustMediaProgress,
@@ -13,6 +12,11 @@ interface UseTrustIndexMediaTriggerOptions {
   progress: TrustMediaProgress | null;
 }
 
+function isMediaTabVisible(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.visibilityState === "visible";
+}
+
 export function useTrustIndexMediaTrigger({
   articleId,
   enabled = true,
@@ -22,6 +26,8 @@ export function useTrustIndexMediaTrigger({
   const playedMsRef = useRef(0);
   const lastTickRef = useRef<number | null>(null);
   const triggeredRef = useRef(false);
+  const progressRef = useRef(progress);
+  progressRef.current = progress;
 
   const dismiss = useCallback(() => {
     markTrustIndexDismissed(articleId);
@@ -44,6 +50,17 @@ export function useTrustIndexMediaTrigger({
     [articleId],
   );
 
+  const evaluate = useCallback(() => {
+    const current = progressRef.current;
+    if (!current) return;
+    tryOpen({
+      playedSeconds: playedMsRef.current / 1000,
+      currentTime: current.currentTime,
+      duration: current.duration,
+      ended: current.ended,
+    });
+  }, [tryOpen]);
+
   useEffect(() => {
     triggeredRef.current = false;
     playedMsRef.current = 0;
@@ -53,40 +70,28 @@ export function useTrustIndexMediaTrigger({
 
   useEffect(() => {
     if (!enabled || !progress) return;
+    evaluate();
+  }, [enabled, evaluate, progress]);
 
-    tryOpen({
-      playedSeconds: playedMsRef.current / 1000,
-      currentTime: progress.currentTime,
-      duration: progress.duration,
-      ended: progress.ended,
-    });
-
-    const playing =
-      progress.isPlaying && !progress.ended && isTrustIndexTabActive();
-
-    if (!playing) {
-      lastTickRef.current = null;
-      return;
-    }
-
-    lastTickRef.current = performance.now();
+  useEffect(() => {
+    if (!enabled) return;
 
     const tick = () => {
-      if (!isTrustIndexTabActive()) {
+      const current = progressRef.current;
+      const playing =
+        Boolean(current?.isPlaying) && !current?.ended && isMediaTabVisible();
+
+      if (!playing) {
         lastTickRef.current = null;
         return;
       }
+
       const now = performance.now();
       if (lastTickRef.current != null) {
         playedMsRef.current += now - lastTickRef.current;
       }
       lastTickRef.current = now;
-      tryOpen({
-        playedSeconds: playedMsRef.current / 1000,
-        currentTime: progress.currentTime,
-        duration: progress.duration,
-        ended: progress.ended,
-      });
+      evaluate();
     };
 
     const interval = window.setInterval(tick, 500);
@@ -96,7 +101,7 @@ export function useTrustIndexMediaTrigger({
       window.clearInterval(interval);
       window.removeEventListener("visibilitychange", tick);
     };
-  }, [enabled, progress, tryOpen]);
+  }, [enabled, evaluate]);
 
   return { open, dismiss };
 }

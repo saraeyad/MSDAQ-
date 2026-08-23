@@ -53,6 +53,7 @@ export function Step5Credibility({
         open={processing}
         title="جاري فحص المصداقية"
         steps={CREDIBILITY_PROCESSING_STEPS}
+        className="publish-flow-processing"
       />
 
       <SourceConsentBanner sources={sources} />

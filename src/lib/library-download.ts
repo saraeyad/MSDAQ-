@@ -20,10 +20,17 @@ function sanitizeFilename(name: string): string {
   return name.trim().replace(/[/\\?%*:|"<>]/g, "-") || "download";
 }
 
+export async function fetchLibraryFile(
+  id: number | string,
+  disposition: "attachment" | "inline" = "attachment",
+): Promise<Blob> {
+  return Library_APIs.download(id, { disposition });
+}
+
 export async function downloadLibraryItem(
   item: Pick<LibraryItem, "id" | "title" | "file">,
 ): Promise<void> {
-  const blob = await Library_APIs.download(item.id);
+  const blob = await fetchLibraryFile(item.id, "attachment");
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

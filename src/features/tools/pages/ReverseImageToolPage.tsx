@@ -92,13 +92,9 @@ export function ReverseImageToolPage() {
   return (
     <ToolPageShell title="بحث عكسي عن الصور">
       <ToolProcessingDialog
-        open={processing || uploading}
-        title={uploading ? "جاري رفع الصورة" : "جاري البحث العكسي"}
-        steps={
-          uploading
-            ? ["جاري رفع الصورة...", "جاري تجهيز الرابط العام..."]
-            : REVERSE_IMAGE_PROCESSING_STEPS
-        }
+        open={processing}
+        title="جاري البحث العكسي"
+        steps={REVERSE_IMAGE_PROCESSING_STEPS}
       />
 
       <Card>

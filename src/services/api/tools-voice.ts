@@ -9,7 +9,10 @@ import type {
   Transcript,
   TtsVoice,
 } from "@/types";
+import type { AxiosRequestConfig } from "axios";
 import API from "./api.repository";
+
+type UploadProgressOptions = Pick<AxiosRequestConfig, "onUploadProgress">;
 
 /** Standalone newsroom tools — draft → save lifecycle (not article-scoped). */
 export const ToolsVoice_APIs = {
@@ -26,13 +29,16 @@ export const ToolsVoice_APIs = {
     return getApiData(response);
   },
 
-  speechToText: async (file: File): Promise<Transcript> => {
+  speechToText: async (
+    file: File,
+    options?: UploadProgressOptions,
+  ): Promise<Transcript> => {
     const formData = new FormData();
     appendSttAudioField(formData, file);
     const response = await API.postFormData<ApiResponse<Transcript>>(
       "/api/tools/speech-to-text",
       formData,
-      { timeout: STT_REQUEST_TIMEOUT_MS },
+      { timeout: STT_REQUEST_TIMEOUT_MS, ...options },
     );
     return getApiData(response);
   },

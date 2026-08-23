@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { LibraryFileGlyph } from "@/features/newsroom/library/LibraryFileGlyph";
-import { libraryMimeTypeLabel } from "@/lib/library-labels";
+import {
+  canPreviewLibraryFile,
+  libraryMimeTypeLabel,
+} from "@/lib/library-labels";
 import type { LibraryItem } from "@/types";
-import { Calendar, Download, Loader2, Pencil, Trash2, User } from "lucide-react";
+import { Calendar, Download, Eye, Loader2, Pencil, Trash2, User } from "lucide-react";
 
 interface LibraryItemCardProps {
   item: LibraryItem;
@@ -11,8 +14,10 @@ interface LibraryItemCardProps {
   onEdit: (item: LibraryItem) => void;
   onDelete: (item: LibraryItem) => void;
   onDownload: (item: LibraryItem) => void;
+  onPreview: (item: LibraryItem) => void;
   isDeleting: boolean;
   isDownloading: boolean;
+  isPreviewing: boolean;
 }
 
 export function LibraryItemCard({
@@ -22,12 +27,15 @@ export function LibraryItemCard({
   onEdit,
   onDelete,
   onDownload,
+  onPreview,
   isDeleting,
   isDownloading,
+  isPreviewing,
 }: LibraryItemCardProps) {
   const fileName = item.file?.name;
   const fileSize = item.file?.size;
   const typeLabel = libraryMimeTypeLabel(item.file?.mime_type);
+  const canPreview = canPreviewLibraryFile(item.file?.mime_type);
 
   return (
     <article className="library-item-card">
@@ -72,10 +80,25 @@ export function LibraryItemCard({
       </div>
 
       <div className="library-item-card__actions">
+        {canPreview ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isPreviewing || isDownloading}
+            onClick={() => onPreview(item)}
+          >
+            {isPreviewing ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Eye className="size-3.5" />
+            )}
+            معاينة
+          </Button>
+        ) : null}
         <Button
           variant="outline"
           size="sm"
-          disabled={isDownloading}
+          disabled={isDownloading || isPreviewing}
           onClick={() => onDownload(item)}
         >
           {isDownloading ? (

@@ -73,3 +73,17 @@ export function libraryFileExtension(
   }
   return "FILE";
 }
+
+/** File kinds the browser can show without forcing a download. */
+export function canPreviewLibraryFile(
+  mimeType: string | null | undefined,
+): boolean {
+  const kind = libraryFileKind(mimeType);
+  return (
+    kind === "image" ||
+    kind === "video" ||
+    kind === "audio" ||
+    kind === "pdf" ||
+    mimeType?.toLowerCase() === "text/plain"
+  );
+}
