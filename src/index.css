@@ -168,16 +168,16 @@
 }
 
 /* Sonner toasts — unlayered so they override sonner/dist/styles.css */
-.misdaq-toaster {
+.sabbara-toaster {
   --width: 22.5rem;
   font-family: var(--font-body);
 }
 
-.misdaq-toaster [data-sonner-toaster] {
+.sabbara-toaster [data-sonner-toaster] {
   direction: rtl;
 }
 
-.misdaq-toast {
+.sabbara-toast {
   position: relative;
   display: flex;
   align-items: center;
@@ -195,8 +195,8 @@
     0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
-.misdaq-toast [data-icon],
-.misdaq-toast__icon {
+.sabbara-toast [data-icon],
+.sabbara-toast__icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -208,12 +208,12 @@
   background: var(--muted);
 }
 
-.misdaq-toast [data-content] {
+.sabbara-toast [data-content] {
   flex: 1;
   min-width: 0;
 }
 
-.misdaq-toast__title {
+.sabbara-toast__title {
   font-family: var(--font-headline);
   font-size: 0.9rem;
   font-weight: 700;
@@ -222,16 +222,16 @@
   color: var(--foreground);
 }
 
-.misdaq-toast__description {
+.sabbara-toast__description {
   margin-top: 0.15rem;
   font-size: 0.8rem;
   line-height: 1.5;
   color: var(--muted-foreground);
 }
 
-.misdaq-toaster [data-close-button],
-.misdaq-toaster [dir="rtl"] [data-close-button],
-.misdaq-toast__close {
+.sabbara-toaster [data-close-button],
+.sabbara-toaster [dir="rtl"] [data-close-button],
+.sabbara-toast__close {
   position: static !important;
   inset: unset !important;
   left: unset !important;
@@ -256,62 +256,62 @@
   opacity: 0.72;
 }
 
-.misdaq-toaster [data-close-button]:hover,
-.misdaq-toast__close:hover {
+.sabbara-toaster [data-close-button]:hover,
+.sabbara-toast__close:hover {
   background: var(--muted) !important;
   color: var(--foreground) !important;
   opacity: 1;
 }
 
-.misdaq-toaster [data-close-button] svg {
+.sabbara-toaster [data-close-button] svg {
   width: 0.875rem;
   height: 0.875rem;
 }
 
-.misdaq-toast--success {
+.sabbara-toast--success {
   border-color: rgba(22, 163, 74, 0.22);
   border-inline-start-color: #16a34a;
   background: #f7fdf9;
 }
 
-.misdaq-toast--success .misdaq-toast__icon,
-.misdaq-toast--success [data-icon] {
+.sabbara-toast--success .sabbara-toast__icon,
+.sabbara-toast--success [data-icon] {
   background: rgba(22, 163, 74, 0.12);
   color: #16a34a;
 }
 
-.misdaq-toast--error {
+.sabbara-toast--error {
   border-color: rgba(220, 38, 38, 0.22);
   border-inline-start-color: #dc2626;
   background: #fff8f8;
 }
 
-.misdaq-toast--error .misdaq-toast__icon,
-.misdaq-toast--error [data-icon] {
+.sabbara-toast--error .sabbara-toast__icon,
+.sabbara-toast--error [data-icon] {
   background: rgba(220, 38, 38, 0.12);
   color: #dc2626;
 }
 
-.misdaq-toast--warning {
+.sabbara-toast--warning {
   border-color: rgba(249, 140, 52, 0.28);
   border-inline-start-color: var(--primary);
   background: #fffaf5;
 }
 
-.misdaq-toast--warning .misdaq-toast__icon,
-.misdaq-toast--warning [data-icon] {
+.sabbara-toast--warning .sabbara-toast__icon,
+.sabbara-toast--warning [data-icon] {
   background: rgba(249, 140, 52, 0.14);
   color: var(--primary);
 }
 
-.misdaq-toast--info {
+.sabbara-toast--info {
   border-color: rgba(15, 23, 42, 0.08);
   border-inline-start-color: #64748b;
   background: #f8fafc;
 }
 
-.misdaq-toast--info .misdaq-toast__icon,
-.misdaq-toast--info [data-icon] {
+.sabbara-toast--info .sabbara-toast__icon,
+.sabbara-toast--info [data-icon] {
   background: rgba(15, 23, 42, 0.06);
   color: #475569;
 }

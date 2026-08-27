@@ -35,7 +35,7 @@ function injectTemplate(
     : "";
 
   return template
-    .replace("<!--ssr-head-->", head || "<title>مصداق — CDMC</title>")
+    .replace("<!--ssr-head-->", head || "<title>صبارة بوست</title>")
     .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`)
     .replace("<!--ssr-state-->", stateScript);
 }

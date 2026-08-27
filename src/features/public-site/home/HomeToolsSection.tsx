@@ -47,7 +47,7 @@ export function HomeToolsSection() {
             أدواتنا للتحقق من الأخبار
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-            يستخدم فريق CDMC أدوات متقدمة لضمان جودة المحتوى المنشور —
+            يستخدم فريق صبارة بوست أدوات متقدمة لضمان جودة المحتوى المنشور —
             من تحليل الصور إلى فحص المصداقية.
           </p>
         </div>

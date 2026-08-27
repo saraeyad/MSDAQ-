@@ -1,8 +1,8 @@
-# مصداق — MISDAQ
+# صبارة بوست
 
 **Investigate. Verify. Publish with trust.**
 
-MISDAQ (مصداق) is an Arabic-first internal newsroom platform for CDMC. Staff use a **Newsroom Workspace** and **Admin** area on top of one backend; readers get a plain, read-only public site (no scores, no login).
+صبارة بوست is an Arabic-first internal newsroom platform. Staff use a **Newsroom Workspace** and **Admin** area on top of one backend; readers get a plain, read-only public site (no scores, no login).
 
 ---
 

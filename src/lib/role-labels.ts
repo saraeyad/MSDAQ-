@@ -1,4 +1,4 @@
-/** Built-in role purposes from the Misdaq API collection. */
+/** Built-in role purposes from the صبارة بوست API collection. */
 export const ROLE_PURPOSES: Record<string, string> = {
   "super-admin":
     "صلاحيات كاملة — يتجاوز فحص الملكية ويدير المستخدمين والأدوار",

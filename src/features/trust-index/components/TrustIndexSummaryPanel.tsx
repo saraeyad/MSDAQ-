@@ -9,12 +9,14 @@ import {
   trustBandClass,
   trustBandLabel,
   trustIndexHasData,
+  type TrustDimensionDefinition,
 } from "@/lib/trust-index-labels";
 import type { TrustIndexSummary } from "@/types";
 
 interface TrustIndexSummaryPanelProps {
   summary: TrustIndexSummary | undefined;
   isLoading?: boolean;
+  dimensions?: readonly TrustDimensionDefinition[];
 }
 
 function DistributionBars({
@@ -57,6 +59,7 @@ function DistributionBars({
 export function TrustIndexSummaryPanel({
   summary,
   isLoading = false,
+  dimensions = TRUST_DIMENSIONS,
 }: TrustIndexSummaryPanelProps) {
   if (isLoading) {
     return (
@@ -105,9 +108,11 @@ export function TrustIndexSummaryPanel({
           title="متوسط الأبعاد"
           subtitle="من 5"
           maxValue={5}
-          data={TRUST_DIMENSIONS.map((dimension) => ({
+          data={dimensions.map((dimension) => ({
             name: dimension.label,
-            value: data.dimensions[dimension.key].average ?? 0,
+            value:
+              data.dimensions[dimension.key as keyof typeof data.dimensions]
+                ?.average ?? 0,
           }))}
         />
 
@@ -142,13 +147,19 @@ export function TrustIndexSummaryPanel({
           </p>
         </header>
         <div className="trust-summary-distributions">
-          {TRUST_DIMENSIONS.map((dimension) => (
-            <DistributionBars
-              key={dimension.key}
-              title={dimension.label}
-              distribution={[...data.dimensions[dimension.key].distribution]}
-            />
-          ))}
+          {dimensions.map((dimension) => {
+            const dimensionSummary =
+              data.dimensions[dimension.key as keyof typeof data.dimensions];
+            if (!dimensionSummary) return null;
+
+            return (
+              <DistributionBars
+                key={dimension.key}
+                title={dimension.label}
+                distribution={[...dimensionSummary.distribution]}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

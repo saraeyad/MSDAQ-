@@ -128,22 +128,38 @@ export function parsePublicArticlesListResponse(
 
 /** Parse full envelope for GET /api/articles staff list (meta may sit beside data array). */
 export function parseStaffArticlesListResponse(
-  body: ApiResponse<StaffArticle[] | PaginatedResponse<StaffArticle>>,
+  body: ApiResponse<StaffArticle[] | PaginatedResponse<StaffArticle>> & {
+    pagination?: PublicPagination;
+  },
 ): StaffArticlesListResult {
   if (!isApiSuccessful(body)) {
     throw new Error(body.message || "Request failed");
   }
+
+  const siblingMeta = body.meta
+    ? normalizePagination(body.meta)
+    : body.pagination
+      ? normalizePagination(body.pagination)
+      : undefined;
+
   if (Array.isArray(body.data)) {
     return {
       items: body.data,
-      pagination: body.meta ? normalizePagination(body.meta) : undefined,
+      pagination: siblingMeta,
     };
   }
+
+  const nested = body.data as PaginatedResponse<StaffArticle> & {
+    pagination?: PublicPagination;
+  };
+
   return {
-    items: body.data.data ?? [],
-    pagination: body.data.meta
-      ? normalizePagination(body.data.meta)
-      : undefined,
+    items: nested.data ?? [],
+    pagination: nested.meta
+      ? normalizePagination(nested.meta)
+      : nested.pagination
+        ? normalizePagination(nested.pagination)
+        : siblingMeta,
   };
 }
 

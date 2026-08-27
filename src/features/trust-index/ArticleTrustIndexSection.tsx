@@ -1,16 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { isAllDatesRange } from "@/components/ui/date-range-filter";
+import { ArticleTrustResponsesBlock } from "@/features/trust-index/components/ArticleTrustResponsesBlock";
 import { TrustIndexDateFilter } from "@/features/trust-index/components/TrustIndexDateFilter";
-import { TrustIndexResponsesTable } from "@/features/trust-index/components/TrustIndexResponsesTable";
 import { TrustIndexSummaryPanel } from "@/features/trust-index/components/TrustIndexSummaryPanel";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { triggerBlobDownload } from "@/lib/blob-download";
-import { paginateList } from "@/lib/table-pagination";
 import { TrustIndex_APIs } from "@/services/api/trust-index";
-import { ARTICLE_TRUST_RESPONSES_PAGE_SIZE } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Download, Loader2, MessageSquareQuote } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface ArticleTrustIndexSectionProps {
@@ -22,7 +20,6 @@ const ALL_DATES = { start: "", end: "" };
 export function ArticleTrustIndexSection({
   articleId,
 }: ArticleTrustIndexSectionProps) {
-  const [page, setPage] = useState(1);
   const [draftDates, setDraftDates] = useState(ALL_DATES);
   const [appliedDates, setAppliedDates] = useState(ALL_DATES);
 
@@ -33,35 +30,26 @@ export function ArticleTrustIndexSection({
   };
 
   const summaryQuery = useQuery({
-    queryKey: ["trust-index-article-summary", articleId, appliedDates.start, appliedDates.end],
+    queryKey: [
+      "trust-index-article-summary",
+      articleId,
+      appliedDates.start,
+      appliedDates.end,
+    ],
     queryFn: () => TrustIndex_APIs.articleSummary(articleId, filterParams),
   });
 
   const responsesQuery = useQuery({
-    queryKey: ["trust-index-article-responses", articleId, appliedDates.start, appliedDates.end],
+    queryKey: [
+      "trust-index-article-responses",
+      articleId,
+      appliedDates.start,
+      appliedDates.end,
+    ],
     queryFn: () => TrustIndex_APIs.articleResponses(articleId, filterParams),
   });
 
-  const allResponses = responsesQuery.data?.items ?? [];
-
-  const {
-    items,
-    total,
-    currentPage,
-    lastPage,
-    pageSize,
-  } = paginateList(
-    allResponses,
-    page,
-    undefined,
-    ARTICLE_TRUST_RESPONSES_PAGE_SIZE,
-  );
-
-  useEffect(() => {
-    if (page > 1 && items.length === 0 && allResponses.length > 0) {
-      setPage(1);
-    }
-  }, [allResponses.length, items.length, page]);
+  const total = responsesQuery.data?.items.length ?? 0;
 
   const exportMutation = useMutation({
     mutationFn: () => TrustIndex_APIs.articleExport(articleId, filterParams),
@@ -74,13 +62,11 @@ export function ArticleTrustIndexSection({
 
   const applyDates = () => {
     setAppliedDates(draftDates);
-    setPage(1);
   };
 
   const clearDates = () => {
     setDraftDates(ALL_DATES);
     setAppliedDates(ALL_DATES);
-    setPage(1);
   };
 
   return (
@@ -93,7 +79,8 @@ export function ArticleTrustIndexSection({
         <div className="article-trust-feedback__hero-body">
           <p className="article-trust-feedback__kicker">تقييم القرّاء</p>
           <p className="article-trust-feedback__lead">
-            ملخص مؤشر الثقة واستجابات القرّاء على هذا المقال خلال الفترة المحددة.
+            ملخص مؤشر الثقة واستجابات القرّاء على هذا المقال خلال الفترة
+            المحددة.
           </p>
         </div>
         {total > 0 ? (
@@ -146,29 +133,18 @@ export function ArticleTrustIndexSection({
         <header className="article-trust-feedback__responses-header">
           <h4 className="article-trust-feedback__responses-title">الاستجابات</h4>
           {total > 0 ? (
-            <span className="article-trust-feedback__responses-badge">{total}</span>
+            <span className="article-trust-feedback__responses-badge">
+              {total}
+            </span>
           ) : null}
         </header>
 
-        <div className="article-trust-feedback__responses-body">
-          {responsesQuery.isLoading ? (
-            <p className="article-trust-feedback__empty">جاري التحميل...</p>
-          ) : responsesQuery.isError ? (
-            <p className="article-trust-feedback__error">
-              {getApiErrorMessage(responsesQuery.error)}
-            </p>
-          ) : (
-            <TrustIndexResponsesTable
-              items={items}
-              currentPage={currentPage}
-              lastPage={lastPage}
-              total={total}
-              pageSize={pageSize}
-              hasDateFilter={hasActiveFilter}
-              onPageChange={setPage}
-            />
-          )}
-        </div>
+        <ArticleTrustResponsesBlock
+          articleId={articleId}
+          filterParams={filterParams}
+          hasDateFilter={hasActiveFilter}
+          className="article-trust-feedback__responses-body"
+        />
       </div>
     </div>
   );

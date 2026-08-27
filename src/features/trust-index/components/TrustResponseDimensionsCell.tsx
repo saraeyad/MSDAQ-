@@ -1,9 +1,13 @@
 import { cn } from "@/lib/utils";
-import { TRUST_DIMENSIONS } from "@/lib/trust-index-labels";
+import {
+  TRUST_DIMENSIONS,
+  type TrustDimensionDefinition,
+} from "@/lib/trust-index-labels";
 import type { TrustIndexResponseRow } from "@/types";
 
 interface TrustResponseDimensionsCellProps {
   scores: TrustIndexResponseRow["scores"];
+  dimensions?: readonly TrustDimensionDefinition[];
 }
 
 function scoreTone(score: number): "high" | "mid" | "low" {
@@ -14,11 +18,13 @@ function scoreTone(score: number): "high" | "mid" | "low" {
 
 export function TrustResponseDimensionsCell({
   scores,
+  dimensions = TRUST_DIMENSIONS,
 }: TrustResponseDimensionsCellProps) {
   return (
     <div className="trust-response-dimensions">
-      {TRUST_DIMENSIONS.map(({ key, label }) => {
-        const score = scores[key];
+      {dimensions.map(({ key, label }) => {
+        const score = scores[key as keyof typeof scores];
+        if (score == null) return null;
 
         return (
           <span

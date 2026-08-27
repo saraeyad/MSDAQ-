@@ -25,6 +25,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { usePlatformFeedback } from "@/context/platform-feedback";
 import { TrustIndexDialog } from "@/features/public-site/trust-index/TrustIndexDialog";
+import { ArticleTrustFeedbackButton } from "@/features/public-site/trust-index/ArticleTrustFeedbackButton";
 import { useTrustIndexMediaTrigger } from "@/features/public-site/trust-index/useTrustIndexMediaTrigger";
 import { useTrustIndexTrigger } from "@/features/public-site/trust-index/useTrustIndexTrigger";
 import { countWords, type TrustMediaProgress } from "@/lib/trust-index-labels";
@@ -44,6 +45,7 @@ function useArticleTrustSurvey({
   const [mediaProgress, setMediaProgress] = useState<TrustMediaProgress | null>(
     null,
   );
+  const [manualOpen, setManualOpen] = useState(false);
   const wordCount = useMemo(() => countWords(body), [body]);
   const { setTrustIndexOpen } = usePlatformFeedback();
   const hasTextBody = wordCount > 0;
@@ -61,11 +63,22 @@ function useArticleTrustSurvey({
     progress: mediaProgress,
   });
 
-  const open = textTrigger.open || mediaTrigger.open;
+  const autoOpen = textTrigger.open || mediaTrigger.open;
+  const open = autoOpen || manualOpen;
+
   const dismiss = useCallback(() => {
     textTrigger.dismiss();
     mediaTrigger.dismiss();
+    setManualOpen(false);
   }, [mediaTrigger, textTrigger]);
+
+  const openManually = useCallback(() => {
+    setManualOpen(true);
+  }, []);
+
+  useEffect(() => {
+    setManualOpen(false);
+  }, [articleId]);
 
   useEffect(() => {
     setTrustIndexOpen(open);
@@ -88,6 +101,7 @@ function useArticleTrustSurvey({
     videoRef,
     open,
     dismiss,
+    openManually,
     onAudioProgress: setMediaProgress,
     onVideoProgress,
   };
@@ -115,6 +129,7 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
     videoRef,
     open,
     dismiss,
+    openManually,
     onAudioProgress,
     onVideoProgress,
   } = useArticleTrustSurvey({
@@ -332,10 +347,10 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
             )}
           </div>
 
-          <RelatedArticlesSidebar
-            article={article}
-            className="lg:sticky lg:top-24 lg:self-start"
-          />
+          <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <RelatedArticlesSidebar article={article} />
+            <ArticleTrustFeedbackButton onClick={openManually} disabled={open} />
+          </div>
         </div>
       </article>
     </>

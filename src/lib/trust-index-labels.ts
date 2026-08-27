@@ -19,6 +19,38 @@ export const TRUST_DIMENSIONS = [
   },
 ] as const;
 
+export const PLATFORM_TRUST_DIMENSIONS = [
+  {
+    key: "accuracy",
+    label: "الدقة",
+    question: "بشكل عام، المعلومات التي تنشرها هذه المنصة دقيقة وموثوقة",
+  },
+  {
+    key: "credibility",
+    label: "المصداقية",
+    question: "أثق في هذه المنصة كمصدر إعلامي موثوق",
+  },
+  {
+    key: "objectivity",
+    label: "الموضوعية",
+    question: "تعرض المنصة القضايا المختلفة بحياد وتوازن دون تحيز",
+  },
+  {
+    key: "transparency",
+    label: "الشفافية",
+    question: "تُبيّن المنصة بوضوح مصادر معلوماتها وطريقة عملها",
+  },
+  {
+    key: "consistency",
+    label: "الاتساق",
+    question: "جودة المحتوى على المنصة ثابتة ولا تتفاوت بشكل كبير بمرور الوقت",
+  },
+] as const;
+
+export type TrustDimensionDefinition =
+  | (typeof TRUST_DIMENSIONS)[number]
+  | (typeof PLATFORM_TRUST_DIMENSIONS)[number];
+
 export const TRUST_BAND_LABELS: Record<TrustBand, string> = {
   low: "منخفض",
   medium: "متوسط",
@@ -94,9 +126,10 @@ export function trustMediaThresholdReached(progress: {
 }
 
 export function trustIndexDismissKey(articleId: number | string): string {
-  return `trust-index-dismissed:${articleId}`;
+  return `trust-index-dismissed:${String(articleId)}`;
 }
 
+/** Per-article auto-popup suppression for this browser tab/session. */
 export function isTrustIndexDismissed(articleId: number | string): boolean {
   if (typeof sessionStorage === "undefined") return false;
   return sessionStorage.getItem(trustIndexDismissKey(articleId)) === "1";

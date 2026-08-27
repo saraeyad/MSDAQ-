@@ -5,6 +5,7 @@ import CategoriesManagementPage from "@/features/admin/categories/CategoriesMana
 import AdminDashboardPage from "@/features/admin/dashboard/AdminDashboardPage";
 import LibraryPage from "@/features/newsroom/library/LibraryPage";
 import PlatformFeedbackPage from "@/features/platform-feedback/PlatformFeedbackPage";
+import ContentRatingsPage from "@/features/trust-index/ContentRatingsPage";
 import TrustIndexPlatformPage from "@/features/trust-index/TrustIndexPlatformPage";
 import RolesManagementPage from "@/features/admin/roles/RolesManagementPage";
 import RoleEditPage from "@/features/admin/roles/RoleEditPage";
@@ -180,6 +181,14 @@ export function AppRoutes() {
           element={
             <RequirePermission permission={PERMISSIONS.VIEW_TRUST_INDEX}>
               <TrustIndexPlatformPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path={ROUTES.NEWSROOM_CONTENT_RATINGS}
+          element={
+            <RequirePermission permission={PERMISSIONS.VIEW_TRUST_INDEX}>
+              <ContentRatingsPage />
             </RequirePermission>
           }
         />

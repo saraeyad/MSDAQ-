@@ -12,7 +12,7 @@ export function Toaster(props: ToasterProps) {
     <Sonner
       theme="light"
       dir="rtl"
-      className="misdaq-toaster"
+      className="sabbara-toaster"
       closeButton
       offset={16}
       gap={10}
@@ -20,15 +20,15 @@ export function Toaster(props: ToasterProps) {
       toastOptions={{
         unstyled: true,
         classNames: {
-          toast: "misdaq-toast",
-          title: "misdaq-toast__title",
-          description: "misdaq-toast__description",
-          icon: "misdaq-toast__icon",
-          success: "misdaq-toast--success",
-          error: "misdaq-toast--error",
-          warning: "misdaq-toast--warning",
-          info: "misdaq-toast--info",
-          closeButton: "misdaq-toast__close",
+          toast: "sabbara-toast",
+          title: "sabbara-toast__title",
+          description: "sabbara-toast__description",
+          icon: "sabbara-toast__icon",
+          success: "sabbara-toast--success",
+          error: "sabbara-toast--error",
+          warning: "sabbara-toast--warning",
+          info: "sabbara-toast--info",
+          closeButton: "sabbara-toast__close",
         },
       }}
       icons={{

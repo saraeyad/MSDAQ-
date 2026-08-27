@@ -99,5 +99,5 @@ export function PublicArticleCover({
 }
 
 export function articleCoverUrl(id: number, index = 0): string {
-  return `https://picsum.photos/seed/cdmc-${id}-${index}/1200/675`;
+  return `https://picsum.photos/seed/sabbara-${id}-${index}/1200/675`;
 }

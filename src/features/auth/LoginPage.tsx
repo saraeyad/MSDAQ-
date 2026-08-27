@@ -51,7 +51,7 @@ export default function LoginPage() {
           <BrandLogo size="lg" linkToHome={false} />
           <div>
             <h1 className="login-card__title">تسجيل الدخول</h1>
-            <p className="login-card__subtitle">منصة CDMC — للموظفين فقط</p>
+            <p className="login-card__subtitle">منصة صبارة بوست — للموظفين فقط</p>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -34,7 +34,7 @@ export default function ToolsOverviewPage() {
     <div className="container-page py-10">
       <h1 className="section-title">أدوات التحقق</h1>
       <p className="section-description">
-        تستخدم CDMC أدوات تحقق متقدمة داخلياً لضمان جودة المحتوى المنشور.
+        تستخدم صبارة بوست أدوات تحقق متقدمة داخلياً لضمان جودة المحتوى المنشور.
         هذه الأدوات متاحة لفريق التحرير فقط ولا تظهر للقراء.
       </p>
 

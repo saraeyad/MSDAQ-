@@ -186,63 +186,21 @@ export default function StaffArticleDetailPage() {
 
   return (
     <div className="staff-article-page">
-      <Link to={ROUTES.NEWSROOM_ARTICLES} className="staff-article-back">
-        <ArrowLeft className="size-4" aria-hidden />
-        العودة للمقالات
-      </Link>
+      <div className="staff-article-toolbar">
+        <Link to={ROUTES.NEWSROOM_ARTICLES} className="staff-article-back">
+          <ArrowLeft className="size-4" aria-hidden />
+          العودة للمقالات
+        </Link>
 
-      <header className="staff-article-hero">
-        <div className="staff-article-hero__main">
-          <div className="staff-article-hero__badges">
-            <StatusBadge status={article.status} />
-            <span className="staff-article-chip">
-              {mediaTypeLabel(article.media_type)}
-            </span>
-            {article.category?.name_ar && (
-              <span className="staff-article-chip staff-article-chip--muted">
-                {article.category.name_ar}
-              </span>
-            )}
-          </div>
-
-          <h1 className="staff-article-hero__title">{article.title}</h1>
-
-          <div className="staff-article-hero__meta">
-            <span className="staff-article-meta-item">
-              <User className="size-3.5" aria-hidden />
-              {article.author.name}
-            </span>
-            <span className="staff-article-meta-item">
-              <CalendarClock className="size-3.5" aria-hidden />
-              {new Date(article.updated_at).toLocaleString("ar")}
-            </span>
-          </div>
-
-          {(article.scheduled_for || article.published_at) && (
-            <div className="staff-article-hero__dates">
-              {article.scheduled_for && (
-                <span className="staff-article-date staff-article-date--scheduled">
-                  مجدول: {new Date(article.scheduled_for).toLocaleString("ar")}
-                </span>
-              )}
-              {article.published_at && (
-                <span className="staff-article-date staff-article-date--published">
-                  نُشر: {new Date(article.published_at).toLocaleString("ar")}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="staff-article-hero__actions">
+        <div className="staff-article-toolbar__actions">
           {canReschedule && article.status === "scheduled" && (
-            <Button variant="outline" onClick={() => setRescheduleOpen(true)}>
+            <Button variant="outline" size="sm" onClick={() => setRescheduleOpen(true)}>
               <CalendarClock className="size-4" />
               إعادة جدولة
             </Button>
           )}
           {canEdit && (
-            <Button asChild>
+            <Button asChild size="sm">
               <Link
                 to={`/newsroom/articles/${article.id}/edit?step=${editStep}`}
               >
@@ -254,6 +212,7 @@ export default function StaffArticleDetailPage() {
           {canDelete && (
             <Button
               variant="destructive"
+              size="sm"
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
             >
@@ -266,118 +225,189 @@ export default function StaffArticleDetailPage() {
             </Button>
           )}
         </div>
+      </div>
+
+      <header
+        className="staff-article-hero"
+        data-has-cover={coverUrl ? "true" : "false"}
+      >
+        {coverUrl ? (
+          <>
+            <img
+              src={coverUrl}
+              alt=""
+              className="staff-article-hero__banner-image"
+            />
+            <div className="staff-article-hero__banner-overlay" />
+          </>
+        ) : null}
+
+        <div className="staff-article-hero__panel">
+          <p className="staff-article-hero__kicker">عرض المقال</p>
+
+          <div className="staff-article-hero__badges">
+            <StatusBadge status={article.status} />
+            <span className="staff-article-chip">
+              {mediaTypeLabel(article.media_type)}
+            </span>
+            {article.category?.name_ar ? (
+              <span className="staff-article-chip staff-article-chip--muted">
+                {article.category.name_ar}
+              </span>
+            ) : null}
+          </div>
+
+          <h1 className="staff-article-hero__title">{article.title}</h1>
+
+          <div className="staff-article-hero__meta">
+            <span className="staff-article-meta-item">
+              <User className="size-3.5" aria-hidden />
+              {article.author.name}
+            </span>
+            <span className="staff-article-meta-item">
+              <CalendarClock className="size-3.5" aria-hidden />
+              آخر تحديث: {new Date(article.updated_at).toLocaleString("ar")}
+            </span>
+          </div>
+
+          {(article.scheduled_for || article.published_at) && (
+            <div className="staff-article-hero__dates">
+              {article.scheduled_for ? (
+                <span className="staff-article-date staff-article-date--scheduled">
+                  مجدول: {new Date(article.scheduled_for).toLocaleString("ar")}
+                </span>
+              ) : null}
+              {article.published_at ? (
+                <span className="staff-article-date staff-article-date--published">
+                  نُشر: {new Date(article.published_at).toLocaleString("ar")}
+                </span>
+              ) : null}
+            </div>
+          )}
+        </div>
       </header>
 
-      {article.description && (
+      {article.description ? (
         <div className="staff-article-lead">
           <p>{article.description}</p>
         </div>
-      )}
+      ) : null}
 
-      <SourceConsentBanner sources={article.sources} />
+      <div className="staff-article-layout">
+        <div className="staff-article-main">
+          <SourceConsentBanner sources={article.sources} />
 
-      {hasMedia && (
-        <SectionPanel icon={ImageIcon} title="الوسائط">
-          {coverUrl && (
-            <div className="staff-article-cover">
-              <img src={coverUrl} alt="" className="staff-article-cover__img" />
-            </div>
-          )}
+          {hasMedia ? (
+            <SectionPanel icon={ImageIcon} title="الوسائط">
+              {coverUrl ? (
+                <div className="staff-article-cover">
+                  <img
+                    src={coverUrl}
+                    alt=""
+                    className="staff-article-cover__img"
+                  />
+                </div>
+              ) : null}
 
-          {article.media_url && (
-            <a
-              href={article.media_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="staff-article-embed-link"
-              dir="ltr"
+              {article.media_url ? (
+                <a
+                  href={article.media_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="staff-article-embed-link"
+                  dir="ltr"
+                >
+                  <ExternalLink className="size-4 shrink-0" aria-hidden />
+                  <span className="truncate">{article.media_url}</span>
+                </a>
+              ) : null}
+
+              {article.video_status ? (
+                <p className="staff-article-media-note">
+                  حالة الفيديو: {article.video_status}
+                </p>
+              ) : null}
+
+              {videoUrl ? (
+                <video controls className="staff-article-video" src={videoUrl} />
+              ) : null}
+
+              {sourceAudioUrl ? (
+                <div className="staff-article-audio">
+                  <p className="staff-article-audio__label">الصوت المصدر</p>
+                  <PodcastAudioPlayer
+                    seed={`article-${article.id}-source`}
+                    url={sourceAudioUrl}
+                    coverUrl={coverUrl ?? undefined}
+                    title={article.title}
+                    subtitle="صوت المصدر"
+                  />
+                </div>
+              ) : null}
+
+              {generatedAudioUrl ? (
+                <div className="staff-article-audio">
+                  <p className="staff-article-audio__label">الصوت المُولَّد</p>
+                  <PodcastAudioPlayer
+                    seed={`article-${article.id}-generated`}
+                    url={generatedAudioUrl}
+                    coverUrl={coverUrl ?? undefined}
+                    title={article.title}
+                    subtitle="صوت مُولَّد"
+                  />
+                </div>
+              ) : null}
+            </SectionPanel>
+          ) : null}
+
+          {hasContent ? (
+            <SectionPanel icon={FileText} title="المحتوى">
+              <ContentPreview label="الفصحى" text={article.content.formal} />
+              <ContentPreview label="مبسّطة" text={article.content.simplified} />
+              <ContentPreview label="عامية" text={article.content.dialect} />
+            </SectionPanel>
+          ) : null}
+
+          {article.sources.length > 0 ? (
+            <SectionPanel
+              icon={ExternalLink}
+              title={`المصادر (${article.sources.length})`}
             >
-              <ExternalLink className="size-4 shrink-0" aria-hidden />
-              <span className="truncate">{article.media_url}</span>
-            </a>
-          )}
+              <ul className="staff-article-sources">
+                {article.sources.map((source) => (
+                  <li key={source.id} className="staff-article-source">
+                    <p className="staff-article-source__name">{source.source}</p>
+                    <p className="staff-article-source__type">
+                      {source.source_type}
+                    </p>
+                    {source.consent_status ? (
+                      <p className="staff-article-source__consent">
+                        الموافقة: {source.consent_status}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </SectionPanel>
+          ) : null}
 
-          {article.video_status && (
-            <p className="staff-article-media-note">
-              حالة الفيديو: {article.video_status}
-            </p>
-          )}
+          {canViewTrustIndex ? (
+            <SectionPanel
+              id={ARTICLE_TRUST_FEEDBACK_HASH}
+              icon={BarChart3}
+              title="مؤشر ثقة الجمهور"
+              className="staff-article-section--trust"
+            >
+              <ArticleTrustIndexSection articleId={article.id} />
+            </SectionPanel>
+          ) : null}
+        </div>
 
-          {videoUrl && (
-            <video
-              controls
-              className="staff-article-video"
-              src={videoUrl}
-            />
-          )}
-
-          {sourceAudioUrl && (
-            <div className="staff-article-audio">
-              <p className="staff-article-audio__label">الصوت المصدر</p>
-              <PodcastAudioPlayer
-                seed={`article-${article.id}-source`}
-                url={sourceAudioUrl}
-                coverUrl={coverUrl ?? undefined}
-                title={article.title}
-                subtitle="صوت المصدر"
-              />
-            </div>
-          )}
-
-          {generatedAudioUrl && (
-            <div className="staff-article-audio">
-              <p className="staff-article-audio__label">الصوت المُولَّد</p>
-              <PodcastAudioPlayer
-                seed={`article-${article.id}-generated`}
-                url={generatedAudioUrl}
-                coverUrl={coverUrl ?? undefined}
-                title={article.title}
-                subtitle="صوت مُولَّد"
-              />
-            </div>
-          )}
-        </SectionPanel>
-      )}
-
-      {hasContent && (
-        <SectionPanel icon={FileText} title="المحتوى">
-          <ContentPreview label="الفصحى" text={article.content.formal} />
-          <ContentPreview label="مبسّطة" text={article.content.simplified} />
-          <ContentPreview label="عامية" text={article.content.dialect} />
-        </SectionPanel>
-      )}
-
-      {article.sources.length > 0 && (
-        <SectionPanel icon={ExternalLink} title={`المصادر (${article.sources.length})`}>
-          <ul className="staff-article-sources">
-            {article.sources.map((source) => (
-              <li key={source.id} className="staff-article-source">
-                <p className="staff-article-source__name">{source.source}</p>
-                <p className="staff-article-source__type">{source.source_type}</p>
-                {source.consent_status && (
-                  <p className="staff-article-source__consent">
-                    الموافقة: {source.consent_status}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </SectionPanel>
-      )}
-
-      {canViewTrustIndex && (
-        <SectionPanel
-          id={ARTICLE_TRUST_FEEDBACK_HASH}
-          icon={BarChart3}
-          title="مؤشر ثقة الجمهور"
-          className="staff-article-section--trust"
-        >
-          <ArticleTrustIndexSection articleId={article.id} />
-        </SectionPanel>
-      )}
-
-      <div className="staff-article-gate">
-        <PublishGatePanel gate={gate} />
+        <aside className="staff-article-aside">
+          <div className="staff-article-gate">
+            <PublishGatePanel gate={gate} />
+          </div>
+        </aside>
       </div>
 
       <ConfirmDialog

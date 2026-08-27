@@ -24,7 +24,7 @@ export const STATIC_SECTIONS: StaticSectionConfig[] = [
     path: ROUTES.PUBLICATIONS,
     title: "إصدارات ودراسات",
     description:
-      "تقارير ودراسات منشورة — أبحاث CDMC حول المعلومات المضللة والإعلام.",
+      "تقارير ودراسات منشورة — أبحاث صبارة بوست حول المعلومات المضللة والإعلام.",
     badge: "دراسات",
     icon: FileText,
   },
@@ -40,7 +40,7 @@ export const STATIC_SECTIONS: StaticSectionConfig[] = [
     path: ROUTES.PUBLICATIONS_BOOKS,
     title: "كتب",
     description:
-      "إصدارات وكتب منشورة — مطبوعات CDMC وشركائنا في مجال التحقق والإعلام.",
+      "إصدارات وكتب منشورة — مطبوعات صبارة بوست وشركائنا في مجال التحقق والإعلام.",
     badge: "كتب",
     icon: BookOpen,
   },

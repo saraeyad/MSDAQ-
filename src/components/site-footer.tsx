@@ -40,8 +40,8 @@ export function SiteFooter() {
         <div className="lg:col-span-3">
           <BrandLogo linkToHome size="lg" onDark />
           <p className="mt-4 text-sm leading-relaxed text-white/70">
-            مركز التنمية المجتمعية والإعلام (CDMC) — منصة إعلامية موثوقة
-            تمكّن المجتمع من مواجهة المعلومات المضللة.
+            صبارة بوست — منصة إعلامية موثوقة تمكّن المجتمع من مواجهة
+            المعلومات المضللة.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             {SOCIAL_LINKS.map((social) => (
@@ -105,7 +105,7 @@ export function SiteFooter() {
             </p>
             <p className="flex items-center gap-2">
               <Mail className="size-4 shrink-0 text-primary" />
-              info@cdmc.ps
+              صبارة بوست
             </p>
             <p className="flex items-center gap-2">
               <Phone className="size-4 shrink-0 text-primary" />
@@ -118,7 +118,7 @@ export function SiteFooter() {
           <h4 className="font-headline text-base font-semibold">موقعنا</h4>
           <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
             <iframe
-              title="موقع CDMC على الخريطة"
+              title="موقع صبارة بوست على الخريطة"
               src={MAP_EMBED}
               className="h-52 w-full grayscale-[30%] contrast-[1.1] md:h-56"
               loading="lazy"
@@ -131,8 +131,8 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10">
         <div className="container-page flex flex-col items-center justify-between gap-2 py-4 text-center text-xs text-white/50 sm:flex-row sm:text-start">
-          <p>© {new Date().getFullYear()} CDMC — جميع الحقوق محفوظة</p>
-          <p>مركز التنمية المجتمعية والإعلام</p>
+          <p>© {new Date().getFullYear()} صبارة بوست — جميع الحقوق محفوظة</p>
+          <p>صبارة بوست</p>
         </div>
       </div>
     </footer>

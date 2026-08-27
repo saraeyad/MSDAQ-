@@ -21,7 +21,7 @@ export function HomeHero() {
           </h1>
 
           <p className="mt-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-            يجمع CDMC بين الإعلام والتكنولوجيا والتنمية المجتمعية لتوفير
+            يجمع صبارة بوست بين الإعلام والتكنولوجيا والتنمية المجتمعية لتوفير
             أدوات مجانية وتدريب لمكافحة المعلومات المضللة.
           </p>
 

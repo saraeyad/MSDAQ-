@@ -7,6 +7,7 @@ import {
   FileText,
   FolderOpen,
   FolderTree,
+  MessageSquareQuote,
   MessageSquareText,
   Newspaper,
   Shield,
@@ -14,7 +15,7 @@ import {
   Wrench,
 } from "lucide-react";
 
-export type StaffNavGroup = "newsroom" | "admin" | "system";
+export type StaffNavGroup = "newsroom" | "feedback" | "admin" | "system";
 
 export interface StaffNavItem {
   to: string;
@@ -33,6 +34,7 @@ export const STAFF_ORG_LABEL = "مركز التنمية و الاعلام الم
 
 export const STAFF_NAV_GROUPS: Record<StaffNavGroup, string> = {
   newsroom: "غرفة الأخبار",
+  feedback: "الثقة والملاحظات",
   admin: "الإدارة",
   system: "النظام",
 };
@@ -80,7 +82,15 @@ export const STAFF_NAV_ITEMS: StaffNavItem[] = [
     label: "مؤشر الثقة",
     pageTitle: "مؤشر ثقة الجمهور",
     icon: BarChart3,
-    group: "newsroom",
+    group: "feedback",
+    permission: PERMISSIONS.VIEW_TRUST_INDEX,
+  },
+  {
+    to: ROUTES.NEWSROOM_CONTENT_RATINGS,
+    label: "تقييمات المحتوى",
+    pageTitle: "تقييمات المحتوى",
+    icon: MessageSquareQuote,
+    group: "feedback",
     permission: PERMISSIONS.VIEW_TRUST_INDEX,
   },
   {
@@ -88,7 +98,7 @@ export const STAFF_NAV_ITEMS: StaffNavItem[] = [
     label: "ملاحظات المنصة",
     pageTitle: "ملاحظات المنصة",
     icon: MessageSquareText,
-    group: "newsroom",
+    group: "feedback",
     permission: PERMISSIONS.VIEW_PLATFORM_FEEDBACK,
   },
   {
@@ -126,11 +136,12 @@ export const STAFF_NAV_ITEMS: StaffNavItem[] = [
   },
 ];
 
-const GROUP_ORDER: StaffNavGroup[] = ["newsroom", "admin", "system"];
+const GROUP_ORDER: StaffNavGroup[] = ["newsroom", "feedback", "admin", "system"];
 
 export function groupStaffNavItems(items: StaffNavItem[]) {
   const groups: Record<StaffNavGroup, StaffNavItem[]> = {
     newsroom: [],
+    feedback: [],
     admin: [],
     system: [],
   };

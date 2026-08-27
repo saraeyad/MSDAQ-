@@ -1,5 +1,4 @@
-import { BrandLogo } from "@/components/brand-logo";
-import { NavGhazawiyaLink } from "@/features/public-site/components/nav-ghazawiya-link";
+import { SiteBrandLink } from "@/features/public-site/components/site-brand-link";
 import { SiteHeaderSearch } from "@/components/site-header-search";
 import { DesktopSiteNav, MobileSiteNav } from "@/components/site-header-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -21,9 +20,8 @@ export default function PublicLayout() {
       <div className="min-h-screen page-gradient">
         <header className="site-header ghazawiya-pattern">
         <div className="site-header__inner container-page flex min-h-[4.5rem] items-center gap-3 py-3 md:gap-4">
-          <div className="flex shrink-0 items-center gap-3 md:gap-4">
-            <BrandLogo size="lg" />
-            <NavGhazawiyaLink />
+          <div className="flex shrink-0 items-center">
+            <SiteBrandLink linkToHome />
           </div>
           <DesktopSiteNav />
           <div className="ms-auto flex shrink-0 items-center gap-2">

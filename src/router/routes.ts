@@ -27,6 +27,7 @@ export const ROUTES = {
   NEWSROOM_CALENDAR: "/newsroom/calendar",
   NEWSROOM_LIBRARY: "/newsroom/library",
   NEWSROOM_TRUST_INDEX: "/newsroom/trust-index",
+  NEWSROOM_CONTENT_RATINGS: "/newsroom/content-ratings",
   NEWSROOM_PLATFORM_FEEDBACK: "/newsroom/platform-feedback",
 
   ADMIN: "/admin",

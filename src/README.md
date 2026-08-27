@@ -1,4 +1,4 @@
-# MSDAQ frontend (`src/`)
+# صبارة بوست frontend (`src/`)
 
 Arabic-first newsroom + public site built with React 19, Vite, and React Router.
 

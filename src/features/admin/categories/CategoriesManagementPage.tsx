@@ -42,15 +42,15 @@ import type { Category } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
+  ChevronDown,
   Folder,
-  FolderPlus,
   FolderTree,
   Loader2,
   Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 function invalidateCategoryQueries(
@@ -109,6 +109,9 @@ export default function CategoriesManagementPage() {
     isChild: boolean;
   } | null>(null);
   const [page, setPage] = useState(1);
+  const [collapsedIds, setCollapsedIds] = useState<Set<number>>(
+    () => new Set(),
+  );
 
   const {
     data: categories = [],
@@ -124,13 +127,20 @@ export default function CategoriesManagementPage() {
     () => flattenCategoryRows(categories),
     [categories],
   );
+  const visibleRows = useMemo(
+    () =>
+      tableRows.filter(
+        (row) => !row.isChild || !collapsedIds.has(row.parentId ?? -1),
+      ),
+    [tableRows, collapsedIds],
+  );
   const totalCount = useMemo(() => countCategories(categories), [categories]);
   const {
     items: pagedRows,
     currentPage,
     lastPage,
     pageSize,
-  } = paginateList(tableRows, page);
+  } = paginateList(visibleRows, page);
   const topLevelCategories = categories;
 
   const createMutation = useMutation({
@@ -150,6 +160,11 @@ export default function CategoriesManagementPage() {
       if (variables.parent_id) {
         setSubCreateForm(emptyCreateForm());
         setSubcategoryParentId(null);
+        setCollapsedIds((current) => {
+          const next = new Set(current);
+          next.delete(variables.parent_id as number);
+          return next;
+        });
       } else {
         setCreateForm(emptyCreateForm());
         setShowCreate(false);
@@ -190,13 +205,32 @@ export default function CategoriesManagementPage() {
   const startEdit = (category: Category, isChild: boolean) => {
     setEditingId(category.id);
     setEditDraft(categoryToDraft(category, isChild));
-    setSubcategoryParentId(null);
-    setShowCreate(false);
+    closeSubCreate();
+    closeCreate();
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditDraft(null);
+  };
+
+  const toggleCollapsed = (categoryId: number) => {
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(categoryId)) next.delete(categoryId);
+      else next.add(categoryId);
+      return next;
+    });
+  };
+
+  const closeCreate = () => {
+    setShowCreate(false);
+    setCreateForm(emptyCreateForm());
+  };
+
+  const closeSubCreate = () => {
+    setSubcategoryParentId(null);
+    setSubCreateForm(emptyCreateForm());
   };
 
   const submitCreate = (parentId?: number) => {
@@ -214,8 +248,8 @@ export default function CategoriesManagementPage() {
   const subcategoryParent = subcategoryParentId
     ? categories.find((category) => category.id === subcategoryParentId)
     : null;
-
-  const columnCount = canManage ? 7 : 6;
+  const editingCategory =
+    tableRows.find((row) => row.category.id === editingId)?.category ?? null;
 
   if (isLoading) {
     return <AdminLoadingState variant="table" />;
@@ -240,98 +274,17 @@ export default function CategoriesManagementPage() {
           canManage ? (
             <Button
               onClick={() => {
-                setShowCreate((open) => !open);
-                setSubcategoryParentId(null);
+                setShowCreate(true);
+                closeSubCreate();
                 cancelEdit();
               }}
             >
-              {!showCreate ? <Plus className="size-4" /> : null}
-              {showCreate ? "إخفاء النموذج" : "تصنيف جديد"}
+              <Plus className="size-4" />
+              تصنيف جديد
             </Button>
           ) : null
         }
       />
-
-      {canManage && showCreate ? (
-        <AdminPanel
-          title="تصنيف رئيسي جديد"
-          icon={FolderPlus}
-          accent="primary"
-          footer={
-            <div className="flex gap-2">
-              <Button
-                onClick={() => submitCreate()}
-                disabled={
-                  createMutation.isPending ||
-                  !createForm.nameAr.trim() ||
-                  !createForm.nameEn.trim()
-                }
-              >
-                {createMutation.isPending && (
-                  <Loader2 className="size-4 animate-spin" />
-                )}
-                إنشاء التصنيف
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCreate(false);
-                  setCreateForm(emptyCreateForm());
-                }}
-              >
-                إلغاء
-              </Button>
-            </div>
-          }
-        >
-          <CategoryFormFields
-            values={createForm}
-            onChange={setCreateForm}
-            idPrefix="create"
-          />
-        </AdminPanel>
-      ) : null}
-
-      {canManage && subcategoryParent ? (
-        <AdminPanel
-          title={`تصنيف فرعي تحت «${subcategoryParent.name_ar}»`}
-          description="سيظهر هذا التصنيف متفرعاً من التصنيف الرئيسي في القائمة والموقع."
-          icon={FolderPlus}
-          accent="primary"
-          footer={
-            <div className="flex gap-2">
-              <Button
-                onClick={() => submitCreate(subcategoryParent.id)}
-                disabled={
-                  createMutation.isPending ||
-                  !subCreateForm.nameAr.trim() ||
-                  !subCreateForm.nameEn.trim()
-                }
-              >
-                {createMutation.isPending && (
-                  <Loader2 className="size-4 animate-spin" />
-                )}
-                إنشاء التصنيف الفرعي
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSubcategoryParentId(null);
-                  setSubCreateForm(emptyCreateForm());
-                }}
-              >
-                إلغاء
-              </Button>
-            </div>
-          }
-        >
-          <CategoryFormFields
-            values={subCreateForm}
-            onChange={setSubCreateForm}
-            idPrefix="sub-create"
-          />
-        </AdminPanel>
-      ) : null}
 
       {tableRows.length === 0 ? (
         <AdminEmptyState
@@ -357,7 +310,7 @@ export default function CategoriesManagementPage() {
             <AdminPagination
               currentPage={currentPage}
               lastPage={lastPage}
-              total={tableRows.length}
+              total={visibleRows.length}
               pageSize={pageSize}
               onPageChange={setPage}
               label="صفحات التصنيفات"
@@ -379,261 +332,132 @@ export default function CategoriesManagementPage() {
               </TableHeader>
               <TableBody>
                 {pagedRows.map(({ category, isChild }) => {
-                  const isEditing = editingId === category.id && !!editDraft;
-                  const isAddingSub = subcategoryParentId === category.id;
+                  const childCount = category.children?.length ?? 0;
+                  const canCollapse = !isChild && childCount > 0;
+                  const isCollapsed = collapsedIds.has(category.id);
 
                   return (
-                    <Fragment key={category.id}>
-                      <TableRow
-                        className={cn(
-                          isChild && "is-child",
-                          isEditing && "is-editing",
-                          isAddingSub && "is-adding-sub",
-                        )}
-                      >
-                        <TableCell>
-                          <span className="admin-categories-table__order">
-                            {category.sort_order}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div
+                    <TableRow
+                      key={category.id}
+                      className={cn(isChild && "is-child")}
+                    >
+                      <TableCell>
+                        <span className="admin-categories-table__order">
+                          {category.sort_order}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div
+                          className={cn(
+                            "admin-categories-table__name",
+                            isChild && "is-child",
+                          )}
+                        >
+                          {canCollapse ? (
+                            <button
+                              type="button"
+                              className={cn(
+                                "admin-categories-table__toggle",
+                                isCollapsed && "is-collapsed",
+                              )}
+                              aria-expanded={!isCollapsed}
+                              aria-label={
+                                isCollapsed
+                                  ? `عرض تصنيفات ${category.name_ar} الفرعية`
+                                  : `طي تصنيفات ${category.name_ar} الفرعية`
+                              }
+                              onClick={() => toggleCollapsed(category.id)}
+                            >
+                              <ChevronDown className="size-4" />
+                            </button>
+                          ) : (
+                            <span className="admin-categories-table__toggle-spacer" />
+                          )}
+                          <span
                             className={cn(
-                              "admin-categories-table__name",
+                              "admin-categories-table__name-icon",
                               isChild && "is-child",
                             )}
                           >
-                            <span
-                              className={cn(
-                                "admin-categories-table__name-icon",
-                                isChild && "is-child",
-                              )}
-                            >
-                              <Folder className={isChild ? "size-3.5" : "size-4"} />
-                            </span>
-                            <span className="admin-categories-table__name-text">
-                              {category.name_ar}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="admin-table-ltr">
-                          <span className="admin-categories-table__en">
-                            {category.name_en}
+                            <Folder className={isChild ? "size-3.5" : "size-4"} />
                           </span>
-                        </TableCell>
-                        <TableCell className="admin-table-ltr">
-                          <span className="admin-categories-table__slug" dir="ltr">
-                            {category.slug}
+                          <span className="admin-categories-table__name-text">
+                            {category.name_ar}
                           </span>
-                        </TableCell>
-                        <TableCell className="admin-categories-table__desc whitespace-normal">
-                          {category.description?.trim() || "—"}
-                        </TableCell>
+                        </div>
+                      </TableCell>
+                      <TableCell className="admin-table-ltr">
+                        <span className="admin-categories-table__en">
+                          {category.name_en}
+                        </span>
+                      </TableCell>
+                      <TableCell className="admin-table-ltr">
+                        <span className="admin-categories-table__slug" dir="ltr">
+                          {category.slug}
+                        </span>
+                      </TableCell>
+                      <TableCell className="admin-categories-table__desc whitespace-normal">
+                        {category.description?.trim() || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            "admin-categories-table__status",
+                            category.is_active
+                              ? "admin-categories-table__status--on"
+                              : "admin-categories-table__status--off",
+                          )}
+                        >
+                          {category.is_active ? (
+                            <Check className="size-3" />
+                          ) : null}
+                          {category.is_active ? "نعم" : "لا"}
+                        </span>
+                      </TableCell>
+                      {canManage ? (
                         <TableCell>
-                          <span
-                            className={cn(
-                              "admin-categories-table__status",
-                              category.is_active
-                                ? "admin-categories-table__status--on"
-                                : "admin-categories-table__status--off",
-                            )}
-                          >
-                            {category.is_active ? (
-                              <Check className="size-3" />
-                            ) : null}
-                            {category.is_active ? "نعم" : "لا"}
-                          </span>
-                        </TableCell>
-                        {canManage ? (
-                          <TableCell>
-                            <div className="admin-categories-table__actions">
+                          <div className="admin-categories-table__actions">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              aria-label={`تعديل ${category.name_ar}`}
+                              onClick={() => startEdit(category, isChild)}
+                            >
+                              <Pencil className="size-3.5" />
+                              تعديل
+                            </Button>
+                            {!isChild ? (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                aria-label={`تعديل ${category.name_ar}`}
-                                onClick={() => startEdit(category, isChild)}
+                                aria-label={`إضافة تصنيف فرعي تحت ${category.name_ar}`}
+                                onClick={() => {
+                                  setSubcategoryParentId(category.id);
+                                  setSubCreateForm(emptyCreateForm());
+                                  closeCreate();
+                                  cancelEdit();
+                                }}
                               >
-                                <Pencil className="size-3.5" />
-                                تعديل
+                                <Plus className="size-3.5" />
+                                فرعي
                               </Button>
-                              {!isChild ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  aria-label={`إضافة تصنيف فرعي تحت ${category.name_ar}`}
-                                  onClick={() => {
-                                    setSubcategoryParentId(category.id);
-                                    setSubCreateForm(emptyCreateForm());
-                                    setShowCreate(false);
-                                    cancelEdit();
-                                  }}
-                                >
-                                  <Plus className="size-3.5" />
-                                  فرعي
-                                </Button>
-                              ) : null}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8"
-                                aria-label={`حذف ${category.name_ar}`}
-                                onClick={() =>
-                                  setDeleteTarget({ category, isChild })
-                                }
-                                disabled={deleteMutation.isPending}
-                              >
-                                <Trash2 className="size-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        ) : null}
-                      </TableRow>
-                      {canManage && isEditing && editDraft ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={columnCount}
-                            className="bg-[#fafafa] whitespace-normal p-0"
-                          >
-                            <div className="admin-categories-edit">
-                              <p className="admin-categories-edit__title">
-                                تعديل «{category.name_ar}»
-                              </p>
-                              <div className="admin-categories-form">
-                                <div className="space-y-2">
-                                  <Label>الاسم بالعربية</Label>
-                                  <Input
-                                    value={editDraft.name_ar}
-                                    onChange={(e) =>
-                                      setEditDraft({
-                                        ...editDraft,
-                                        name_ar: e.target.value,
-                                      })
-                                    }
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>الاسم بالإنجليزية</Label>
-                                  <Input
-                                    value={editDraft.name_en}
-                                    onChange={(e) =>
-                                      setEditDraft({
-                                        ...editDraft,
-                                        name_en: e.target.value,
-                                      })
-                                    }
-                                    dir="ltr"
-                                  />
-                                </div>
-                                <div className="admin-categories-form__wide space-y-2">
-                                  <Label>Slug (ثابت)</Label>
-                                  <Input
-                                    value={category.slug}
-                                    disabled
-                                    dir="ltr"
-                                    className="admin-table-ltr"
-                                  />
-                                </div>
-                                <div className="admin-categories-form__wide space-y-2">
-                                  <Label>الوصف</Label>
-                                  <Textarea
-                                    value={editDraft.description}
-                                    onChange={(e) =>
-                                      setEditDraft({
-                                        ...editDraft,
-                                        description: e.target.value,
-                                      })
-                                    }
-                                    rows={2}
-                                  />
-                                </div>
-                                {editDraft.isChild ? (
-                                  <div className="admin-categories-form__wide space-y-2">
-                                    <Label>التصنيف الرئيسي</Label>
-                                    <Select
-                                      value={
-                                        editDraft.parent_id
-                                          ? String(editDraft.parent_id)
-                                          : ""
-                                      }
-                                      onValueChange={(value) =>
-                                        setEditDraft({
-                                          ...editDraft,
-                                          parent_id: Number(value),
-                                        })
-                                      }
-                                    >
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="اختر التصنيف الرئيسي" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {topLevelCategories.map((parent) => (
-                                          <SelectItem
-                                            key={parent.id}
-                                            value={String(parent.id)}
-                                          >
-                                            {parent.name_ar}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                ) : null}
-                                <div className="space-y-2">
-                                  <Label>ترتيب العرض</Label>
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    value={editDraft.sort_order}
-                                    onChange={(e) =>
-                                      setEditDraft({
-                                        ...editDraft,
-                                        sort_order: Number(e.target.value) || 0,
-                                      })
-                                    }
-                                  />
-                                </div>
-                                <label className="admin-categories-form__active">
-                                  <Checkbox
-                                    checked={editDraft.is_active}
-                                    onCheckedChange={(v) =>
-                                      setEditDraft({
-                                        ...editDraft,
-                                        is_active: v === true,
-                                      })
-                                    }
-                                  />
-                                  نشط (يظهر للجمهور)
-                                </label>
-                              </div>
-                              <div className="mt-4 flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() =>
-                                    updateMutation.mutate({
-                                      id: category.id,
-                                      data: editDraft,
-                                    })
-                                  }
-                                  disabled={updateMutation.isPending}
-                                >
-                                  {updateMutation.isPending && (
-                                    <Loader2 className="size-4 animate-spin" />
-                                  )}
-                                  حفظ
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={cancelEdit}
-                                >
-                                  إلغاء
-                                </Button>
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                            ) : null}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              aria-label={`حذف ${category.name_ar}`}
+                              onClick={() =>
+                                setDeleteTarget({ category, isChild })
+                              }
+                              disabled={deleteMutation.isPending}
+                            >
+                              <Trash2 className="size-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       ) : null}
-                    </Fragment>
+                    </TableRow>
                   );
                 })}
               </TableBody>
@@ -641,6 +465,229 @@ export default function CategoriesManagementPage() {
           </div>
         </AdminPanel>
       )}
+
+      <Dialog
+        open={showCreate}
+        onOpenChange={(open) => {
+          if (!open) closeCreate();
+        }}
+      >
+        <DialogContent className="admin-categories-dialog sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>تصنيف رئيسي جديد</DialogTitle>
+            <DialogDescription>
+              سيظهر هذا التصنيف كقسم رئيسي في القائمة والموقع.
+            </DialogDescription>
+          </DialogHeader>
+          <CategoryFormFields
+            values={createForm}
+            onChange={setCreateForm}
+            idPrefix="create"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={closeCreate}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={() => submitCreate()}
+              disabled={
+                createMutation.isPending ||
+                !createForm.nameAr.trim() ||
+                !createForm.nameEn.trim()
+              }
+            >
+              {createMutation.isPending && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              إنشاء التصنيف
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!subcategoryParent}
+        onOpenChange={(open) => {
+          if (!open) closeSubCreate();
+        }}
+      >
+        <DialogContent className="admin-categories-dialog sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              تصنيف فرعي تحت «{subcategoryParent?.name_ar}»
+            </DialogTitle>
+            <DialogDescription>
+              سيظهر هذا التصنيف متفرعاً من التصنيف الرئيسي في القائمة والموقع.
+            </DialogDescription>
+          </DialogHeader>
+          <CategoryFormFields
+            values={subCreateForm}
+            onChange={setSubCreateForm}
+            idPrefix="sub-create"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={closeSubCreate}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={() =>
+                subcategoryParent && submitCreate(subcategoryParent.id)
+              }
+              disabled={
+                createMutation.isPending ||
+                !subCreateForm.nameAr.trim() ||
+                !subCreateForm.nameEn.trim()
+              }
+            >
+              {createMutation.isPending && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              إنشاء التصنيف الفرعي
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!editingCategory && !!editDraft}
+        onOpenChange={(open) => {
+          if (!open) cancelEdit();
+        }}
+      >
+        <DialogContent className="admin-categories-dialog sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>تعديل «{editingCategory?.name_ar}»</DialogTitle>
+            <DialogDescription>
+              حدّث بيانات التصنيف كما تظهر في الموقع.
+            </DialogDescription>
+          </DialogHeader>
+          {editDraft ? (
+            <div className="admin-categories-form">
+              <div className="space-y-2">
+                <Label>الاسم بالعربية</Label>
+                <Input
+                  value={editDraft.name_ar}
+                  onChange={(e) =>
+                    setEditDraft({
+                      ...editDraft,
+                      name_ar: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>الاسم بالإنجليزية</Label>
+                <Input
+                  value={editDraft.name_en}
+                  onChange={(e) =>
+                    setEditDraft({
+                      ...editDraft,
+                      name_en: e.target.value,
+                    })
+                  }
+                  dir="ltr"
+                />
+              </div>
+              <div className="admin-categories-form__wide space-y-2">
+                <Label>Slug (ثابت)</Label>
+                <Input
+                  value={editingCategory?.slug ?? ""}
+                  disabled
+                  dir="ltr"
+                  className="admin-table-ltr"
+                />
+              </div>
+              <div className="admin-categories-form__wide space-y-2">
+                <Label>الوصف</Label>
+                <Textarea
+                  value={editDraft.description}
+                  onChange={(e) =>
+                    setEditDraft({
+                      ...editDraft,
+                      description: e.target.value,
+                    })
+                  }
+                  rows={2}
+                />
+              </div>
+              {editDraft.isChild ? (
+                <div className="admin-categories-form__wide space-y-2">
+                  <Label>التصنيف الرئيسي</Label>
+                  <Select
+                    value={
+                      editDraft.parent_id ? String(editDraft.parent_id) : ""
+                    }
+                    onValueChange={(value) =>
+                      setEditDraft({
+                        ...editDraft,
+                        parent_id: Number(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر التصنيف الرئيسي" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {topLevelCategories.map((parent) => (
+                        <SelectItem key={parent.id} value={String(parent.id)}>
+                          {parent.name_ar}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+              <div className="space-y-2">
+                <Label>ترتيب العرض</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editDraft.sort_order}
+                  onChange={(e) =>
+                    setEditDraft({
+                      ...editDraft,
+                      sort_order: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+              </div>
+              <label className="admin-categories-form__active">
+                <Checkbox
+                  checked={editDraft.is_active}
+                  onCheckedChange={(v) =>
+                    setEditDraft({
+                      ...editDraft,
+                      is_active: v === true,
+                    })
+                  }
+                />
+                نشط (يظهر للجمهور)
+              </label>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelEdit}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={() =>
+                editingId != null &&
+                editDraft &&
+                updateMutation.mutate({
+                  id: editingId,
+                  data: editDraft,
+                })
+              }
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              حفظ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={!!deleteTarget}

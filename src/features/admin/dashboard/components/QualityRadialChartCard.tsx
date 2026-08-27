@@ -1,9 +1,3 @@
-import {
-  PolarAngleAxis,
-  RadialBar,
-  RadialBarChart,
-  ResponsiveContainer,
-} from "recharts";
 import { DashboardChartCard } from "./DashboardChartCard";
 import { DASHBOARD_PALETTE } from "./chart-colors";
 import { formatScore } from "../utils";
@@ -28,29 +22,44 @@ function RadialGauge({
   color: string;
 }) {
   const percent = scoreToPercent(score);
-  const data = [{ name: label, value: percent, fill: color }];
+  const size = 118;
+  const stroke = 18;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference - (percent / 100) * circumference;
 
   return (
     <div className="admin-radial-gauge">
-      <ResponsiveContainer width="100%" height={118}>
-        <RadialBarChart
-          cx="50%"
-          cy="50%"
-          innerRadius="58%"
-          outerRadius="100%"
-          barSize={18}
-          data={data}
-          startAngle={90}
-          endAngle={-270}
-        >
-          <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-          <RadialBar
-            background={{ fill: "#f5f7fa" }}
-            dataKey="value"
-            cornerRadius={6}
+      <svg
+        className="admin-radial-gauge__svg"
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        aria-hidden
+      >
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#f5f7fa"
+          strokeWidth={stroke}
+        />
+        {percent > 0 ? (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
           />
-        </RadialBarChart>
-      </ResponsiveContainer>
+        ) : null}
+      </svg>
       <div className="admin-radial-gauge__label">
         <p className="admin-radial-gauge__value">{formatScore(score)}</p>
         <p className="admin-radial-gauge__name">{label}</p>

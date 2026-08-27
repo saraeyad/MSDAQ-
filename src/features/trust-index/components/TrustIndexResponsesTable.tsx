@@ -1,5 +1,9 @@
 import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { TrustResponseDimensionsCell } from "@/features/trust-index/components/TrustResponseDimensionsCell";
+import {
+  TRUST_DIMENSIONS,
+  type TrustDimensionDefinition,
+} from "@/lib/trust-index-labels";
 import { trustBandClass, trustBandLabel } from "@/lib/trust-index-labels";
 import type { TrustIndexResponseRow } from "@/types";
 
@@ -10,6 +14,7 @@ interface TrustIndexResponsesTableProps {
   total: number;
   pageSize: number;
   hasDateFilter?: boolean;
+  dimensions?: readonly TrustDimensionDefinition[];
   onPageChange: (page: number) => void;
 }
 
@@ -20,6 +25,7 @@ export function TrustIndexResponsesTable({
   total,
   pageSize,
   hasDateFilter = false,
+  dimensions = TRUST_DIMENSIONS,
   onPageChange,
 }: TrustIndexResponsesTableProps) {
   if (items.length === 0) {
@@ -54,7 +60,10 @@ export function TrustIndexResponsesTable({
                   </span>
                 </td>
                 <td className="trust-responses__dimensions">
-                  <TrustResponseDimensionsCell scores={row.scores} />
+                  <TrustResponseDimensionsCell
+                    scores={row.scores}
+                    dimensions={dimensions}
+                  />
                 </td>
                 <td>{row.comment?.trim() || "—"}</td>
               </tr>

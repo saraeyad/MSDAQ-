@@ -101,15 +101,16 @@ export function countCategories(
 export interface CategoryTableRow {
   category: Category;
   isChild: boolean;
+  parentId: number | null;
 }
 
 export function flattenCategoryRows(tree: Category[]): CategoryTableRow[] {
   const rows: CategoryTableRow[] = [];
 
   for (const parent of tree) {
-    rows.push({ category: parent, isChild: false });
+    rows.push({ category: parent, isChild: false, parentId: null });
     for (const child of parent.children ?? []) {
-      rows.push({ category: child, isChild: true });
+      rows.push({ category: child, isChild: true, parentId: parent.id });
     }
   }
 

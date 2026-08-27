@@ -46,9 +46,7 @@ export function BrandLogo({
   onDark = false,
 }: BrandLogoProps) {
   const src = compact ? BRAND_LOGO_ICON : BRAND_LOGO_FULL;
-  const alt = compact
-    ? "CDMC"
-    : "مركز التنمية المجتمعية والإعلام — CDMC";
+  const alt = "صبارة بوست";
 
   const img = (
     <img

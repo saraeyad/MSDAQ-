@@ -9,24 +9,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
-import { AdminFilterBar } from "@/features/admin/components/AdminFilterBar";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
-import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
 import { AdminPagination } from "@/features/admin/components/AdminPagination";
-import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { StatusBadge } from "@/features/admin/components/StatusBadge";
 import { RescheduleArticleDialog } from "@/features/newsroom/RescheduleArticleDialog";
+import { CategoryFlyoutFilter } from "@/features/newsroom/CategoryFlyoutFilter";
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { paginateList, TABLE_PAGE_SIZE } from "@/lib/table-pagination";
-import {
-  flattenCategoriesForSelect,
-  formatCategorySelectLabel,
-} from "@/lib/category-tree";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { formatStepProgress, inferArticleStep } from "@/lib/publish-gate";
-import { PERMISSIONS, ROUTES, staffArticleTrustFeedbackPath } from "@/router/routes";
+import { cn } from "@/lib/utils";
+import {
+  PERMISSIONS,
+  ROUTES,
+  staffArticleTrustFeedbackPath,
+} from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type { ArticleStatus, StaffArticle } from "@/types";
@@ -51,7 +50,7 @@ const STATUS_OPTIONS: { value: ArticleStatus | "all"; label: string }[] = [
   { value: "published", label: "منشور" },
 ];
 
-function StaffArticleRow({
+function StaffArticleCard({
   article,
   canEdit,
   canDelete,
@@ -72,44 +71,56 @@ function StaffArticleRow({
   const editStep = inferArticleStep(article);
 
   return (
-    <div className="newsroom-article-row">
-      {coverUrl ? (
-        <img src={coverUrl} alt="" className="newsroom-article-row__cover" />
-      ) : (
-        <div className="newsroom-article-row__cover-fallback">
-          {mediaTypeLabel(article.media_type)}
-        </div>
-      )}
+    <article className="newsroom-article-card">
+      <div className="newsroom-article-card__main">
+        {coverUrl ? (
+          <img
+            src={coverUrl}
+            alt=""
+            className="newsroom-article-card__cover"
+          />
+        ) : (
+          <div className="newsroom-article-card__cover-fallback">
+            {mediaTypeLabel(article.media_type)}
+          </div>
+        )}
 
-      <div className="min-w-0 flex-1">
-        <Link
-          to={`/newsroom/articles/${article.id}`}
-          className="newsroom-article-row__title"
-        >
-          {article.title}
-        </Link>
-        <div className="newsroom-article-row__meta">
-          <StatusBadge status={article.status} />
-          <span>{mediaTypeLabel(article.media_type)}</span>
-          {article.category?.name_ar ? (
-            <span>{article.category.name_ar}</span>
-          ) : null}
-          <span>{article.author.name}</span>
-          {article.status === "draft" ? (
-            <span>
-              {formatStepProgress(inferArticleStep(article), article.media_type)}
-            </span>
-          ) : null}
-          {article.status === "scheduled" && article.scheduled_for ? (
-            <span>
-              مجدول: {new Date(article.scheduled_for).toLocaleString("ar")}
-            </span>
-          ) : null}
-          <span>{new Date(article.updated_at).toLocaleDateString("ar")}</span>
+        <div className="newsroom-article-card__body">
+          <div className="newsroom-article-card__top">
+            {article.category?.name_ar ? (
+              <span className="newsroom-article-card__category">
+                {article.category.name_ar}
+              </span>
+            ) : null}
+            <StatusBadge status={article.status} />
+          </div>
+
+          <Link
+            to={`/newsroom/articles/${article.id}`}
+            className="newsroom-article-card__title"
+          >
+            {article.title}
+          </Link>
+
+          <div className="newsroom-article-card__meta">
+            <span>{mediaTypeLabel(article.media_type)}</span>
+            <span>{article.author.name}</span>
+            {article.status === "draft" ? (
+              <span className="newsroom-article-card__progress">
+                {formatStepProgress(inferArticleStep(article), article.media_type)}
+              </span>
+            ) : null}
+            {article.status === "scheduled" && article.scheduled_for ? (
+              <span>
+                مجدول: {new Date(article.scheduled_for).toLocaleString("ar")}
+              </span>
+            ) : null}
+            <span>{new Date(article.updated_at).toLocaleDateString("ar")}</span>
+          </div>
         </div>
       </div>
 
-      <div className="newsroom-article-row__actions">
+      <div className="newsroom-article-card__actions">
         <Button asChild variant="outline" size="sm">
           <Link to={`/newsroom/articles/${article.id}`}>
             <Eye className="size-3.5" />
@@ -131,7 +142,7 @@ function StaffArticleRow({
             asChild
             variant="outline"
             size="sm"
-            className="newsroom-article-row__feedback-btn"
+            className="newsroom-article-card__feedback-btn"
           >
             <Link to={staffArticleTrustFeedbackPath(article.id)}>
               <BarChart3 className="size-3.5" />
@@ -159,7 +170,7 @@ function StaffArticleRow({
           </Button>
         ) : null}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -180,15 +191,10 @@ export default function NewsroomArticlesPage() {
   const mine = params.get("mine") === "1";
   const page = Math.max(1, Number(params.get("page") ?? "1"));
 
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ["public-categories"],
     queryFn: () => PublicCategories_APIs.list(),
   });
-
-  const categoryOptions = useMemo(
-    () => flattenCategoriesForSelect(categories ?? []),
-    [categories],
-  );
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["staff-articles", status, category, mine, page, TABLE_PAGE_SIZE],
@@ -220,6 +226,14 @@ export default function NewsroomArticlesPage() {
     pageSize,
   } = paginateList(data?.items ?? [], page, data?.pagination);
 
+  const pageStats = useMemo(() => {
+    return {
+      published: articles.filter((item) => item.status === "published").length,
+      draft: articles.filter((item) => item.status === "draft").length,
+      scheduled: articles.filter((item) => item.status === "scheduled").length,
+    };
+  }, [articles]);
+
   const updateParams = (updates: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
     for (const [key, value] of Object.entries(updates)) {
@@ -234,71 +248,96 @@ export default function NewsroomArticlesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="مقالاتي"
-        description="إدارة المسودات والمقالات المجدولة والمنشورة"
-        actions={
-          <Button asChild>
+    <div className="newsroom-articles-page">
+      <header className="newsroom-articles-hero">
+        <div className="newsroom-articles-hero__intro">
+          <p className="newsroom-articles-hero__kicker">غرفة الأخبار</p>
+          <h1 className="newsroom-articles-hero__title">مقالاتي</h1>
+          <p className="newsroom-articles-hero__lead">
+            إدارة المسودات والمقالات المجدولة والمنشورة — تابع التقدم، عدّل،
+            وانشر من مكان واحد.
+          </p>
+          <Button asChild className="newsroom-articles-hero__cta">
             <Link to={ROUTES.NEWSROOM_ARTICLE_NEW}>
               <Plus className="size-4" />
               مقال جديد
             </Link>
           </Button>
-        }
-      />
+        </div>
 
-      <AdminFilterBar>
-        <Select
-          value={status || "all"}
-          onValueChange={(v) =>
-            updateParams({ status: v === "all" ? null : v, page: null })
-          }
-        >
-          <SelectTrigger className="w-full md:w-40">
-            <SelectValue placeholder="الحالة" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="newsroom-articles-hero__stats">
+          <div className="newsroom-articles-stat">
+            <span className="newsroom-articles-stat__value">{total}</span>
+            <span className="newsroom-articles-stat__label">إجمالي المقالات</span>
+          </div>
+          <div className="newsroom-articles-stat">
+            <span className="newsroom-articles-stat__value">
+              {pageStats.published}
+            </span>
+            <span className="newsroom-articles-stat__label">منشور</span>
+          </div>
+          <div className="newsroom-articles-stat">
+            <span className="newsroom-articles-stat__value">
+              {pageStats.draft + pageStats.scheduled}
+            </span>
+            <span className="newsroom-articles-stat__label">
+              مسودة / مجدول
+            </span>
+          </div>
+        </div>
+      </header>
 
-        <Select
-          value={category || "all"}
-          onValueChange={(v) =>
-            updateParams({ category: v === "all" ? null : v, page: null })
-          }
-        >
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="التصنيف" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">كل التصنيفات</SelectItem>
-            {categoryOptions.map((option) => (
-              <SelectItem key={option.id} value={String(option.id)}>
-                {formatCategorySelectLabel(option)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="newsroom-articles-toolbar">
+        <div className="newsroom-articles-filters">
+          <Select
+            value={status || "all"}
+            onValueChange={(value) =>
+              updateParams({ status: value === "all" ? null : value, page: null })
+            }
+          >
+            <SelectTrigger className="newsroom-articles-filter">
+              <SelectValue placeholder="الحالة" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <label className="flex cursor-pointer items-center gap-2 text-sm">
-          <Checkbox
-            checked={mine}
-            onCheckedChange={(checked) =>
+          <CategoryFlyoutFilter
+            categories={categories}
+            value={category}
+            className="newsroom-articles-filter newsroom-articles-filter--wide"
+            onChange={(nextCategory) =>
               updateParams({
-                mine: checked === true ? "1" : null,
+                category: nextCategory,
                 page: null,
               })
             }
           />
-          مقالاتي فقط
-        </label>
-      </AdminFilterBar>
+
+          <label
+            className={cn(
+              "newsroom-articles-mine",
+              mine && "newsroom-articles-mine--active",
+            )}
+          >
+            <Checkbox
+              checked={mine}
+              onCheckedChange={(checked) =>
+                updateParams({
+                  mine: checked === true ? "1" : null,
+                  page: null,
+                })
+              }
+            />
+            <span>مقالاتي فقط</span>
+          </label>
+        </div>
+      </div>
 
       {isLoading ? (
         <AdminLoadingState variant="table" />
@@ -323,34 +362,31 @@ export default function NewsroomArticlesPage() {
           }
         />
       ) : (
-        <AdminPanel
-          title="المقالات"
-          badge={total}
-          flush
-          footer={
-            <AdminPagination
-              currentPage={currentPage}
-              lastPage={lastPage}
-              total={total}
-              pageSize={pageSize}
-              onPageChange={setPage}
-              label="صفحات المقالات"
-            />
-          }
-        >
-          {articles.map((article) => (
-            <StaffArticleRow
-              key={article.id}
-              article={article}
-              canEdit={canEdit}
-              canDelete={canDelete}
-              canReschedule={canReschedule}
-              canViewTrustIndex={canViewTrustIndex}
-              onDelete={setDeleteTarget}
-              onReschedule={setRescheduleTarget}
-            />
-          ))}
-        </AdminPanel>
+        <>
+          <div className="newsroom-articles-list">
+            {articles.map((article) => (
+              <StaffArticleCard
+                key={article.id}
+                article={article}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                canReschedule={canReschedule}
+                canViewTrustIndex={canViewTrustIndex}
+                onDelete={setDeleteTarget}
+                onReschedule={setRescheduleTarget}
+              />
+            ))}
+          </div>
+
+          <AdminPagination
+            currentPage={currentPage}
+            lastPage={lastPage}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            label="صفحات المقالات"
+          />
+        </>
       )}
 
       <ConfirmDialog

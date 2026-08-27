@@ -8,7 +8,7 @@ export default function AboutPage() {
         badge="عن المركز"
         badgeAlign="start"
         title="من نحن"
-        description="مركز الإعلام المجتمعي (CDMC) منصة إعلامية موثوقة تمكّن المجتمع والصحفيين من مواجهة المعلومات المضللة."
+        description="صبارة بوست منصة إعلامية موثوقة تمكّن المجتمع والصحفيين من مواجهة المعلومات المضللة."
       />
 
       <CenterDefinitionSection />

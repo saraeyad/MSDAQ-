@@ -14,7 +14,7 @@ export function PlatformFeedbackFab() {
       type="button"
       className="platform-feedback-fab"
       onClick={openFeedback}
-      aria-label="شاركنا رأيك في منصة مِصداق"
+      aria-label="شاركنا رأيك في منصة صبارة بوست"
     >
       <OliveBranch className="platform-feedback-fab__branch" />
       <MessageSquareText className="platform-feedback-fab__icon" aria-hidden />

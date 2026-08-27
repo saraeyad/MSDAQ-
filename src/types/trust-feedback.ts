@@ -25,6 +25,7 @@ export interface TrustIndexSummary {
     credibility: TrustDimensionSummary;
     objectivity: TrustDimensionSummary;
     transparency: TrustDimensionSummary;
+    consistency?: TrustDimensionSummary;
   };
   band_distribution: {
     low: number;
@@ -41,6 +42,7 @@ export interface TrustIndexResponseRow {
     credibility: number;
     objectivity: number;
     transparency: number;
+    consistency?: number;
   };
   overall_score: number;
   trust_percentage: number;
@@ -60,19 +62,19 @@ export interface TrustIndexPlatformSummaryParams extends TrustIndexListParams {
 }
 
 export interface PlatformFeedbackSubmitPayload {
-  comment: string;
+  accuracy_score: number;
+  credibility_score: number;
+  objectivity_score: number;
+  transparency_score: number;
+  consistency_score: number;
+  comment?: string;
 }
 
 export interface PlatformFeedbackListParams {
   page?: number;
+  per_page?: number;
   start?: string;
   end?: string;
-}
-
-export interface PlatformFeedbackItem {
-  id: number;
-  created_at: string;
-  comment: string;
 }
 
 /** Backend default page size for trust-index responses and platform feedback. */

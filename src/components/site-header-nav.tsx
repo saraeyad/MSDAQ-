@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -26,7 +25,7 @@ import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Menu } from "lucide-react";
+import { ChevronDown, ChevronLeft, Menu } from "lucide-react";
 
 function isDropdownActive(paths: string[], pathname: string) {
   return paths.some(
@@ -38,11 +37,82 @@ function pathMatches(to: string, pathname: string) {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
+function NavParentFlyoutRow({
+  entry,
+  pathname,
+}: {
+  entry: PublicNavMenuLink;
+  pathname: string;
+}) {
+  const hasChildren = Boolean(entry.children?.length);
+  const parentActive = pathMatches(entry.to, pathname);
+  const branchActive = entry.children?.some((child) =>
+    pathMatches(child.to, pathname),
+  );
+
+  if (!hasChildren) {
+    return (
+      <DropdownMenuItem asChild>
+        <Link
+          to={entry.to}
+          className={cn(parentActive && "text-primary font-medium")}
+        >
+          {entry.label}
+        </Link>
+      </DropdownMenuItem>
+    );
+  }
+
+  return (
+    <div className="site-nav-parent-row">
+      <Link
+        to={entry.to}
+        className={cn(
+          "site-nav-parent-link site-nav-parent-link--has-children",
+          (parentActive || branchActive) && "site-nav-parent-link--active",
+        )}
+      >
+        <span className="site-nav-parent-link__label">{entry.label}</span>
+        <ChevronLeft
+          className="site-nav-parent-link__chevron"
+          aria-hidden
+        />
+      </Link>
+      <div
+        className="site-nav-flyout"
+        role="menu"
+        aria-label={`${entry.label} — تصنيفات فرعية`}
+      >
+        <p className="site-nav-flyout__heading">{entry.label}</p>
+        <ul className="site-nav-flyout__list">
+          {entry.children!.map((child) => {
+            const active = pathMatches(child.to, pathname);
+            return (
+              <li key={child.to}>
+                <Link
+                  to={child.to}
+                  role="menuitem"
+                  className={cn(
+                    "site-nav-flyout__link",
+                    active && "site-nav-flyout__link--active",
+                  )}
+                >
+                  <span className="site-nav-flyout__bullet" aria-hidden />
+                  <span className="site-nav-flyout__label">{child.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function NavDropdown({ item }: { item: PublicNavDropdownItem }) {
   const { pathname } = useLocation();
   const active = isDropdownActive(item.paths, pathname);
   const [open, setOpen] = useState(false);
-  const [expandedTo, setExpandedTo] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearCloseTimer = () => {
@@ -52,16 +122,8 @@ function NavDropdown({ item }: { item: PublicNavDropdownItem }) {
     }
   };
 
-  const syncExpandedFromPath = () => {
-    const current = item.items.find((entry) =>
-      entry.children?.some((child) => pathMatches(child.to, pathname)),
-    );
-    setExpandedTo(current?.to ?? null);
-  };
-
   const handleEnter = () => {
     clearCloseTimer();
-    if (!open) syncExpandedFromPath();
     setOpen(true);
   };
 
@@ -72,21 +134,8 @@ function NavDropdown({ item }: { item: PublicNavDropdownItem }) {
 
   useEffect(() => () => clearCloseTimer(), []);
 
-  const handleOpenChange = (next: boolean) => {
-    setOpen(next);
-    if (!next) {
-      setExpandedTo(null);
-      return;
-    }
-    const current = item.items.find(
-      (entry) =>
-        entry.children?.some((child) => pathMatches(child.to, pathname)),
-    );
-    setExpandedTo(current?.to ?? null);
-  };
-
   return (
-    <DropdownMenu open={open} onOpenChange={handleOpenChange} modal={false}>
+    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
@@ -101,66 +150,13 @@ function NavDropdown({ item }: { item: PublicNavDropdownItem }) {
       <DropdownMenuContent
         align="center"
         sideOffset={6}
-        className="min-w-44"
+        className="site-nav-dropdown min-w-44 overflow-visible"
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       >
-        {item.items.map((entry) => {
-          const hasChildren = Boolean(entry.children?.length);
-          const isExpanded = expandedTo === entry.to;
-
-          return (
-            <DropdownMenuGroup key={entry.to}>
-              {hasChildren ? (
-                <DropdownMenuItem
-                  className={cn(
-                    "site-nav-parent",
-                    pathMatches(entry.to, pathname) && "text-primary font-medium",
-                  )}
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    setExpandedTo(isExpanded ? null : entry.to);
-                  }}
-                >
-                  <span>{entry.label}</span>
-                  <ChevronDown
-                    className={cn(
-                      "site-nav-parent__chevron",
-                      isExpanded && "site-nav-parent__chevron--open",
-                    )}
-                    aria-hidden
-                  />
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem asChild>
-                  <Link
-                    to={entry.to}
-                    className={cn(
-                      pathname === entry.to && "text-primary font-medium",
-                    )}
-                  >
-                    {entry.label}
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              {hasChildren && isExpanded
-                ? entry.children!.map((child) => (
-                    <DropdownMenuItem key={child.to} asChild>
-                      <Link
-                        to={child.to}
-                        className={cn(
-                          "site-nav-submenu",
-                          pathname === child.to && "site-nav-submenu--active",
-                        )}
-                      >
-                        {child.label}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))
-                : null}
-            </DropdownMenuGroup>
-          );
-        })}
+        {item.items.map((entry) => (
+          <NavParentFlyoutRow key={entry.to} entry={entry} pathname={pathname} />
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
