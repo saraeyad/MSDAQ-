@@ -96,7 +96,7 @@ export default function PlatformFeedbackPage() {
         </div>
         <div className="platform-feedback-page__hero-body">
           <p className="platform-feedback-page__kicker">صندوق آراء الزوار</p>
-          <h2 className="platform-feedback-page__title">ملاحظات المنصة</h2>
+          <h2 className="platform-feedback-page__title">تقييمات المنصة</h2>
           <p className="platform-feedback-page__lead">
             تقييمات مجهولة لتجربة صبارة بوست ككل — ليست تقييمات المقالات.
           </p>

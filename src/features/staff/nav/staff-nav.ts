@@ -79,7 +79,7 @@ export const STAFF_NAV_ITEMS: StaffNavItem[] = [
   },
   {
     to: ROUTES.NEWSROOM_TRUST_INDEX,
-    label: "مؤشر الثقة",
+    label: "مؤشر الثقة الإجمالي",
     pageTitle: "مؤشر ثقة الجمهور",
     icon: BarChart3,
     group: "feedback",
@@ -95,8 +95,8 @@ export const STAFF_NAV_ITEMS: StaffNavItem[] = [
   },
   {
     to: ROUTES.NEWSROOM_PLATFORM_FEEDBACK,
-    label: "ملاحظات المنصة",
-    pageTitle: "ملاحظات المنصة",
+    label: "تقييمات المنصة",
+    pageTitle: "تقييمات المنصة",
     icon: MessageSquareText,
     group: "feedback",
     permission: PERMISSIONS.VIEW_PLATFORM_FEEDBACK,
