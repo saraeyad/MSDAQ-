@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { PublicArticleCover } from "@/components/cover-image";
+import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
 import { resolvePublicArticleAudioSource, publicMediaTypeLabel } from "@/lib/media-labels";
 import { publicArticleCoverUrl, resolveMediaUrl } from "@/lib/media-url";
 import {
@@ -220,7 +221,10 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
             </div>
 
             <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
-              {article.title}
+              <span className="inline-flex flex-wrap items-center gap-2.5">
+                {article.title}
+                <ArticleVerifiedBadge article={article} />
+              </span>
             </h1>
 
             {article.description &&

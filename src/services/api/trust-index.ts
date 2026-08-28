@@ -15,6 +15,7 @@ import type {
   TrustIndexSubmitPayload,
   TrustIndexSummary,
 } from "@/types";
+import { articleIdParam } from "@/lib/article-id";
 import API from "./api.repository";
 
 function buildDateParams(params: TrustIndexListParams = {}) {
@@ -121,7 +122,7 @@ async function fetchAllArticleResponses(
 
   while (page <= lastPage) {
     const response = await API.get<ApiResponse<unknown>>(
-      `/api/trust-index/articles/${articleId}/responses`,
+      `/api/trust-index/articles/${articleIdParam(articleId)}/responses`,
       {
         params: buildDateParams({
           ...params,
@@ -155,7 +156,7 @@ export const TrustIndex_APIs = {
     data: TrustIndexSubmitPayload,
   ): Promise<null> => {
     const response = await API.post<ApiResponse<null>>(
-      `/api/public/articles/${articleId}/trust-index`,
+      `/api/public/articles/${articleIdParam(articleId)}/trust-index`,
       data,
     );
     return getApiData(response);
@@ -166,7 +167,7 @@ export const TrustIndex_APIs = {
     params: TrustIndexListParams = {},
   ): Promise<TrustIndexSummary> => {
     const response = await API.get<ApiResponse<TrustIndexSummary>>(
-      `/api/trust-index/articles/${articleId}/summary`,
+      `/api/trust-index/articles/${articleIdParam(articleId)}/summary`,
       { params: buildDateParams(params) },
     );
     return getApiData(response);
@@ -184,7 +185,7 @@ export const TrustIndex_APIs = {
     params: Pick<TrustIndexListParams, "start" | "end"> = {},
   ): Promise<{ blob: Blob; filename: string }> => {
     const response = await API.get<Blob>(
-      `/api/trust-index/articles/${articleId}/export`,
+      `/api/trust-index/articles/${articleIdParam(articleId)}/export`,
       {
         params: buildDateParams(params),
         responseType: "blob",

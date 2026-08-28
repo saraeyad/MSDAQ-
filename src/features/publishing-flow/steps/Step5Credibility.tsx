@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
 
 interface Step5CredibilityProps {
-  articleId: number;
+  articleId: number | string;
   sources: ArticleSource[];
   onComplete: () => void;
   onBack?: () => void;

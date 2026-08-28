@@ -21,11 +21,16 @@ import type {
   TtsResult,
   VideoUploadResult,
 } from "@/types";
-import type { CreateSourcePayload } from "@/types";
+import type { CreateSourcePayload, UpdateSourcePayload } from "@/types";
+import { articleIdParam } from "@/lib/article-id";
 import type { AxiosRequestConfig } from "axios";
 import API from "./api.repository";
 
 type UploadProgressOptions = Pick<AxiosRequestConfig, "onUploadProgress">;
+
+function articleUrl(id: number | string, suffix = "") {
+  return `/api/articles/${articleIdParam(id)}${suffix}`;
+}
 
 export interface CreateArticlePayload {
   title: string;
@@ -34,6 +39,8 @@ export interface CreateArticlePayload {
   category_id: number;
   media_url?: string | null;
   sources: CreateSourcePayload[];
+  review_target?: number;
+  review_limit?: number;
 }
 
 export interface UpdateArticlePayload {
@@ -45,6 +52,9 @@ export interface UpdateArticlePayload {
   content_formal?: string;
   content_simplified?: string;
   content_dialect?: string;
+  sources?: UpdateSourcePayload[];
+  review_target?: number | null;
+  review_limit?: number | null;
 }
 
 export const ArticlesStaff_APIs = {
@@ -66,9 +76,7 @@ export const ArticlesStaff_APIs = {
   },
 
   getArticle: async (id: number | string): Promise<StaffArticle> => {
-    const response = await API.get<ApiResponse<StaffArticle>>(
-      `/api/articles/${id}`,
-    );
+    const response = await API.get<ApiResponse<StaffArticle>>(articleUrl(id));
     return getApiData(response);
   },
 
@@ -85,7 +93,7 @@ export const ArticlesStaff_APIs = {
     data: UpdateArticlePayload,
   ): Promise<StaffArticle> => {
     const response = await API.put<ApiResponse<StaffArticle>>(
-      `/api/articles/${id}`,
+      articleUrl(id),
       data,
     );
     return getApiData(response);
@@ -99,7 +107,7 @@ export const ArticlesStaff_APIs = {
     const formData = new FormData();
     formData.append("cover", file);
     const response = await API.postFormData<ApiResponse<{ cover_url: string }>>(
-      `/api/articles/${id}/cover`,
+      articleUrl(id, "/cover"),
       formData,
       options,
     );
@@ -108,7 +116,7 @@ export const ArticlesStaff_APIs = {
 
   deleteCover: async (id: number | string) => {
     const response = await API.delete<ApiResponse<null>>(
-      `/api/articles/${id}/cover`,
+      articleUrl(id, "/cover"),
     );
     return getApiData(response);
   },
@@ -124,13 +132,13 @@ export const ArticlesStaff_APIs = {
     }
     const response = await API.postFormData<
       ApiResponse<{ images: StaffArticle["images"] }>
-    >(`/api/articles/${id}/images`, formData, options);
+    >(`${articleUrl(id, "/images")}`, formData, options);
     return getApiData(response);
   },
 
   deleteBodyImage: async (id: number | string, mediaId: number) => {
     const response = await API.delete<ApiResponse<null>>(
-      `/api/articles/${id}/images/${mediaId}`,
+      `${articleUrl(id, "/images")}/${mediaId}`,
     );
     return getApiData(response);
   },
@@ -143,7 +151,7 @@ export const ArticlesStaff_APIs = {
     const formData = new FormData();
     formData.append("audio", file);
     const response = await API.postFormData<ApiResponse<{ audio_url: string }>>(
-      `/api/articles/${id}/source-audio`,
+      articleUrl(id, "/source-audio"),
       formData,
       options,
     );
@@ -152,7 +160,7 @@ export const ArticlesStaff_APIs = {
 
   deleteSourceAudio: async (id: number | string) => {
     const response = await API.delete<ApiResponse<null>>(
-      `/api/articles/${id}/source-audio`,
+      articleUrl(id, "/source-audio"),
     );
     return getApiData(response);
   },
@@ -165,7 +173,7 @@ export const ArticlesStaff_APIs = {
     const formData = new FormData();
     formData.append("video", file);
     const response = await API.postFormData<ApiResponse<VideoUploadResult>>(
-      `/api/articles/${id}/video`,
+      articleUrl(id, "/video"),
       formData,
       options,
     );
@@ -174,7 +182,7 @@ export const ArticlesStaff_APIs = {
 
   deleteVideo: async (id: number | string) => {
     const response = await API.delete<ApiResponse<null>>(
-      `/api/articles/${id}/video`,
+      articleUrl(id, "/video"),
     );
     return getApiData(response);
   },
@@ -188,7 +196,7 @@ export const ArticlesStaff_APIs = {
     const formData = new FormData();
     appendSttAudioField(formData, file);
     const response = await API.postFormData<ApiResponse<Transcript>>(
-      `/api/articles/${id}/speech-to-text`,
+      articleUrl(id, "/speech-to-text"),
       formData,
       { timeout: STT_REQUEST_TIMEOUT_MS, ...options },
     );
@@ -197,7 +205,7 @@ export const ArticlesStaff_APIs = {
 
   standardsCheck: async (id: number | string): Promise<StandardsCheckResult> => {
     const response = await API.post<ApiResponse<StandardsCheckResult>>(
-      `/api/articles/${id}/standards-check`,
+      articleUrl(id, "/standards-check"),
       {},
       { timeout: STANDARDS_REQUEST_TIMEOUT_MS },
     );
@@ -206,7 +214,7 @@ export const ArticlesStaff_APIs = {
 
   credibilityCheck: async (id: number | string): Promise<CredibilityCheckResult> => {
     const response = await API.post<ApiResponse<CredibilityCheckResult>>(
-      `/api/articles/${id}/credibility-check`,
+      articleUrl(id, "/credibility-check"),
       {},
     );
     return normalizeCredibilityResult(getApiData(response));
@@ -214,7 +222,7 @@ export const ArticlesStaff_APIs = {
 
   generateLocalization: async (id: number | string) => {
     const response = await API.post<ApiResponse<LocalizationResult>>(
-      `/api/articles/${id}/localization`,
+      articleUrl(id, "/localization"),
       {},
     );
     return getApiData(response);
@@ -226,7 +234,7 @@ export const ArticlesStaff_APIs = {
     data: { voice: string; style?: string },
   ): Promise<TtsResult> => {
     const response = await API.post<ApiResponse<TtsResult>>(
-      `/api/articles/${id}/text-to-speech`,
+      articleUrl(id, "/text-to-speech"),
       data,
       { timeout: TTS_REQUEST_TIMEOUT_MS },
     );
@@ -235,7 +243,7 @@ export const ArticlesStaff_APIs = {
 
   publish: async (id: number | string) => {
     const response = await API.post<ApiResponse<StaffArticle>>(
-      `/api/articles/${id}/publish`,
+      articleUrl(id, "/publish"),
       {},
     );
     return getApiData(response);
@@ -243,7 +251,7 @@ export const ArticlesStaff_APIs = {
 
   schedule: async (id: number | string, scheduled_for: string) => {
     const response = await API.post<ApiResponse<StaffArticle>>(
-      `/api/articles/${id}/publish`,
+      articleUrl(id, "/publish"),
       { scheduled_for },
     );
     return getApiData(response);
@@ -251,7 +259,7 @@ export const ArticlesStaff_APIs = {
 
   reschedule: async (id: number | string, scheduled_for: string) => {
     const response = await API.post<ApiResponse<StaffArticle>>(
-      `/api/articles/${id}/reschedule`,
+      articleUrl(id, "/reschedule"),
       { scheduled_for },
     );
     return getApiData(response);
@@ -259,16 +267,14 @@ export const ArticlesStaff_APIs = {
 
   revert: async (id: number | string) => {
     const response = await API.post<ApiResponse<StaffArticle>>(
-      `/api/articles/${id}/revert`,
+      articleUrl(id, "/revert"),
       {},
     );
     return getApiData(response);
   },
 
   deleteArticle: async (id: number | string) => {
-    const response = await API.delete<ApiResponse<null>>(
-      `/api/articles/${id}`,
-    );
+    const response = await API.delete<ApiResponse<null>>(articleUrl(id));
     return getApiData(response);
   },
 };

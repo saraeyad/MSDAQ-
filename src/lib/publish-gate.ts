@@ -1,5 +1,6 @@
 import type {
   ArticleSource,
+  ArticleVerification,
   DerivedPublishGate,
   PublishGateCheck,
   StaffArticle,
@@ -392,6 +393,13 @@ export function derivePublishGate(
     credibility_score,
     can_publish,
   };
+}
+
+export function articlePassedEditorialVerification(article: {
+  verification?: ArticleVerification | null;
+}): boolean {
+  return article.verification?.is_verified === true
+    || article.verification?.credibility_checked === true;
 }
 
 export function sourceDisplayName(source: ArticleSource): string {

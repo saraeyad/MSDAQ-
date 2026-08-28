@@ -1,7 +1,9 @@
 import { PageLoading } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { PublicArticleCover } from "@/components/cover-image";
+import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
 import { publicMediaTypeLabel } from "@/lib/media-labels";
+import { articlePath } from "@/router/routes";
 import { Articles_APIs } from "@/services/api/articles";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -74,7 +76,7 @@ export default function ArticlesListPage() {
             {articles.map((article) => (
               <Link
                 key={article.id}
-                to={`/articles/${article.id}`}
+                to={articlePath(article.id)}
                 className="content-card overflow-hidden"
               >
                 {article.cover_image || article.images?.length ? (
@@ -90,8 +92,9 @@ export default function ArticlesListPage() {
                         publicMediaTypeLabel(article.media_type)}
                     </span>
                   </div>
-                  <h2 className="mt-1 font-headline text-lg font-semibold">
+                  <h2 className="mt-1 inline-flex flex-wrap items-center gap-2 font-headline text-lg font-semibold">
                     {article.title}
+                    <ArticleVerifiedBadge article={article} compact />
                   </h2>
                   {article.description && (
                     <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">

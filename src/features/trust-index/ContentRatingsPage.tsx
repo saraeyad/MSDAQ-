@@ -6,6 +6,7 @@ import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { paginateList } from "@/lib/table-pagination";
+import { sameArticleId } from "@/lib/article-id";
 import {
   formatTrustPercentage,
   trustBandClass,
@@ -20,6 +21,7 @@ import { ExternalLink, FileText, MessageSquareQuote, Search } from "lucide-react
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { staffArticlePath } from "@/router/routes";
 
 const CONTENT_RATINGS_PAGE_SIZE = 7;
 
@@ -36,8 +38,8 @@ function useArticleSummaries(articles: StaffArticle[]) {
 function summaryByArticleId(
   articles: StaffArticle[],
   summaryQueries: ReturnType<typeof useArticleSummaries>,
-): Map<number, TrustIndexSummary | undefined> {
-  const map = new Map<number, TrustIndexSummary | undefined>();
+): Map<number | string, TrustIndexSummary | undefined> {
+  const map = new Map<number | string, TrustIndexSummary | undefined>();
   articles.forEach((article, index) => {
     map.set(article.id, summaryQueries[index]?.data);
   });
@@ -203,7 +205,7 @@ function ContentRatingsDetailPanel({
             {new Date(article.updated_at).toLocaleDateString("ar")}
           </p>
           <Link
-            to={`/newsroom/articles/${article.id}`}
+            to={staffArticlePath(article.id)}
             className="content-ratings-detail__article-link"
           >
             <span>فتح المقال في الغرفة</span>
@@ -289,7 +291,7 @@ function ContentRatingsDetailPanel({
 export default function ContentRatingsPage() {
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState("");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const page = Math.max(1, Number(params.get("page") ?? "1"));
 
   const { data, isLoading, isError, error } = useQuery({
@@ -338,14 +340,18 @@ export default function ContentRatingsPage() {
     }
     if (
       selectedId == null ||
-      !filteredArticles.some((article) => article.id === selectedId)
+      !filteredArticles.some((article) => sameArticleId(article.id, selectedId))
     ) {
       setSelectedId(filteredArticles[0].id);
     }
   }, [filteredArticles, selectedId]);
 
   const selectedArticle =
-    filteredArticles.find((article) => article.id === selectedId) ?? null;
+    selectedId == null
+      ? null
+      : (filteredArticles.find((article) =>
+          sameArticleId(article.id, selectedId),
+        ) ?? null);
   const selectedSummary = selectedArticle
     ? summaries.get(selectedArticle.id)
     : undefined;
@@ -466,7 +472,10 @@ export default function ContentRatingsPage() {
                       key={article.id}
                       article={article}
                       summary={summaries.get(article.id)}
-                      selected={article.id === selectedId}
+                      selected={
+                        selectedId != null &&
+                        sameArticleId(article.id, selectedId)
+                      }
                       onSelect={() => setSelectedId(article.id)}
                     />
                   ))}

@@ -16,7 +16,7 @@ import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { CalendarEvents_APIs } from "@/services/api/calendar-events";
 import { CalendarTasks_APIs } from "@/services/api/calendar-tasks";
-import { PERMISSIONS, ROUTES } from "@/router/routes";
+import { PERMISSIONS, staffArticlePath } from "@/router/routes";
 import type {
   CalendarEventRecord,
   CalendarFeedItem,
@@ -339,7 +339,7 @@ export function CalendarItemDetail({
                   : "مقال مجدول للنشر — للعرض فقط من التقويم"}
               </p>
               <Button asChild variant="outline" size="sm" className="gap-1 w-fit">
-                <Link to={`${ROUTES.NEWSROOM_ARTICLES}/${item.source_id}`}>
+                <Link to={staffArticlePath(item.source_id)}>
                   <ExternalLink className="size-3" />
                   فتح المقال
                 </Link>

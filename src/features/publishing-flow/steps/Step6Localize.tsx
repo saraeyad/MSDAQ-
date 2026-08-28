@@ -30,7 +30,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 interface Step6LocalizeProps {
-  articleId: number;
+  articleId: number | string;
   bodyFormal?: string | null;
   bodySimplified?: string | null;
   bodyDialect?: string | null;

@@ -9,6 +9,7 @@ import type {
   PublicCategoryDetail,
 } from "@/types";
 
+import { articleIdParam } from "@/lib/article-id";
 import { apiBaseUrl } from "@/lib/api-origin";
 
 export class PublicApiNotFoundError extends Error {
@@ -73,7 +74,9 @@ async function fetchPublicApiEnvelope<T>(
 export async function fetchPublicArticle(
   id: number | string,
 ): Promise<PublicArticle> {
-  return fetchPublicApi<PublicArticle>(`/api/public/articles/${id}`);
+  return fetchPublicApi<PublicArticle>(
+    `/api/public/articles/${articleIdParam(id)}`,
+  );
 }
 
 type PublicCategoryDetailPayload = {

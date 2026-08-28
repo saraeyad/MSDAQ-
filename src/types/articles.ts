@@ -12,6 +12,12 @@ export interface ArticleContent {
   dialect: string | null;
 }
 
+export interface ArticleVerification {
+  standards_passed: boolean;
+  credibility_checked: boolean;
+  is_verified: boolean;
+}
+
 export interface ArticleGate {
   trust_score: number | null;
   fusha_passed: boolean | null;
@@ -28,7 +34,7 @@ export interface ArticleImage {
 
 export interface ArticleSource {
   id: number;
-  article_id: number;
+  article_id: number | string;
   source_type: SourceType;
   source: string;
   is_verified: boolean;
@@ -48,6 +54,10 @@ export interface CreateSourcePayload {
   quote?: string;
 }
 
+export interface UpdateSourcePayload extends CreateSourcePayload {
+  id?: number;
+}
+
 export interface PublicArticleCategory {
   id: number;
   slug: string;
@@ -56,7 +66,8 @@ export interface PublicArticleCategory {
 }
 
 export interface StaffArticle {
-  id: number;
+  /** Sqid string in production (e.g. "AeWxagPl"); numeric in some envs. */
+  id: number | string;
   title: string;
   description: string | null;
   media_type: StaffMediaType;
@@ -77,6 +88,9 @@ export interface StaffArticle {
   video: string | null;
   video_poster: string | null;
   video_status: VideoStatus;
+  review_target?: number | null;
+  review_limit?: number | null;
+  verification?: ArticleVerification;
   created_at: string;
   updated_at: string;
 }
@@ -178,7 +192,8 @@ export interface StaffArticlesListResult {
 }
 
 export interface PublicArticle {
-  id: number;
+  /** Sqid string in production; numeric in some envs. */
+  id: number | string;
   title: string;
   description: string | null;
   media_type: PublicMediaType;
@@ -195,6 +210,8 @@ export interface PublicArticle {
   video_poster?: string | null;
   published_at: string;
   seo?: ArticleSeo;
+  gate?: ArticleGate;
+  verification?: ArticleVerification;
 }
 
 export interface PublishGateCheck {

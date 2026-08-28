@@ -71,7 +71,7 @@ export interface GeneratedAudio {
 
 export interface Transcript {
   id: number;
-  article_id: number | null;
+  article_id: number | string | null;
   name: string | null;
   original_filename: string;
   file_size: number;
@@ -131,7 +131,7 @@ export interface TtsVoice {
 }
 
 export interface TtsResult {
-  article_id: number;
+  article_id: number | string;
   audio_url: string;
 }
 
@@ -142,7 +142,7 @@ export interface VideoUploadResult {
 
 export interface TranscriptJob {
   id: number;
-  article_id: number | null;
+  article_id: number | string | null;
   original_filename: string;
   file_size: number;
   status: "processing" | "completed" | "failed";

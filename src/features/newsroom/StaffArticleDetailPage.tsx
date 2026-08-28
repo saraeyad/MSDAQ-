@@ -1,3 +1,4 @@
+import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { StatusBadge } from "@/features/admin/components/StatusBadge";
 import { PublishGatePanel } from "@/features/publishing-flow/components/PublishGatePanel";
@@ -16,6 +17,7 @@ import {
   ARTICLE_TRUST_FEEDBACK_HASH,
   PERMISSIONS,
   ROUTES,
+  staffArticleEditPath,
 } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -202,7 +204,7 @@ export default function StaffArticleDetailPage() {
           {canEdit && (
             <Button asChild size="sm">
               <Link
-                to={`/newsroom/articles/${article.id}/edit?step=${editStep}`}
+                to={staffArticleEditPath(article.id, editStep)}
               >
                 <PenLine className="size-4" />
                 تحرير في مسار النشر
@@ -255,6 +257,7 @@ export default function StaffArticleDetailPage() {
                 {article.category.name_ar}
               </span>
             ) : null}
+            <ArticleVerifiedBadge article={article} />
           </div>
 
           <h1 className="staff-article-hero__title">{article.title}</h1>
@@ -280,6 +283,21 @@ export default function StaffArticleDetailPage() {
               {article.published_at ? (
                 <span className="staff-article-date staff-article-date--published">
                   نُشر: {new Date(article.published_at).toLocaleString("ar")}
+                </span>
+              ) : null}
+            </div>
+          )}
+
+          {(article.review_target != null || article.review_limit != null) && (
+            <div className="staff-article-hero__thresholds">
+              {article.review_target != null ? (
+                <span className="staff-article-chip staff-article-chip--muted">
+                  هدف التقييم: {article.review_target.toLocaleString("ar")}
+                </span>
+              ) : null}
+              {article.review_limit != null ? (
+                <span className="staff-article-chip staff-article-chip--muted">
+                  حد الاستجابات: {article.review_limit.toLocaleString("ar")}
                 </span>
               ) : null}
             </div>

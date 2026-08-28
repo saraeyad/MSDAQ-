@@ -25,7 +25,7 @@ const STT_LABEL =
   getToolBySlug("speech-to-text")?.label ?? "تحويل الصوت إلى نص";
 
 interface Step3BodyProps {
-  articleId: number;
+  articleId: number | string;
   initialBody?: string | null;
   images?: ArticleImage[];
   onComplete: () => void;

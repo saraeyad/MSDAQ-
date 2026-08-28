@@ -1,6 +1,7 @@
 import { PublicArticleCover } from "@/components/cover-image";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { cn } from "@/lib/utils";
+import { articlePath } from "@/router/routes";
 import type { PublicArticle } from "@/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -69,7 +70,7 @@ export function NewsSlider({
       onMouseLeave={() => setPaused(false)}
     >
       <Link
-        to={`/articles/${current.id}`}
+        to={articlePath(current.id)}
         className={cn("relative block w-full", slideHeight)}
       >
         <PublicArticleCover

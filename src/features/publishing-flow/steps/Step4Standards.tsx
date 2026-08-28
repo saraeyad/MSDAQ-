@@ -16,7 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface Step4StandardsProps {
-  articleId: number;
+  articleId: number | string;
   title?: string;
   contentFormal?: string | null;
   onComplete: () => void;

@@ -8,6 +8,7 @@ import type {
   PublicArticlesListResult,
 } from "@/types";
 import type { ApiResponse } from "@/types";
+import { articleIdParam } from "@/lib/article-id";
 import API from "./api.repository";
 
 export interface ArticlesQuery {
@@ -33,7 +34,7 @@ export const Articles_APIs = {
 
   get: async (id: number | string): Promise<PublicArticle> => {
     const response = await API.get<ApiResponse<PublicArticle>>(
-      `/api/public/articles/${id}`,
+      `/api/public/articles/${articleIdParam(id)}`,
     );
     return getApiData(response);
   },

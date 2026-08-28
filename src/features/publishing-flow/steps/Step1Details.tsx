@@ -18,7 +18,6 @@ import {
 } from "@/lib/category-tree";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
-import { sourceDisplayName } from "@/lib/publish-gate";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type {
@@ -27,10 +26,12 @@ import type {
   SourceType,
   StaffArticle,
   StaffMediaType,
+  UpdateSourcePayload,
 } from "@/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FileText,
+  Gauge,
   Layers,
   Link2,
   Loader2,
@@ -46,14 +47,18 @@ const MEDIA_TYPES: { value: StaffMediaType; label: string }[] = [
   { value: "video", label: "فيديو" },
 ];
 
-const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
-  url: "رابط",
-  document: "مستند",
-  person: "شخص",
-  anonymous: "مجهول",
+const EMPTY_SOURCE: SourceDraft = {
+  type: "url",
+  label: "",
+  url: "",
+  name: "",
+  phone: "",
+  email: "",
+  quote: "",
 };
 
 interface SourceDraft {
+  id?: number;
   type: SourceType;
   label: string;
   url: string;
@@ -65,7 +70,7 @@ interface SourceDraft {
 
 interface Step1DetailsProps {
   article?: StaffArticle;
-  onCreated?: (id: number, mediaType: StaffMediaType) => void;
+  onCreated?: (id: number | string, mediaType: StaffMediaType) => void;
   onComplete?: () => void;
 }
 
@@ -74,6 +79,129 @@ function consentLabel(status?: ArticleSource["consent_status"]) {
   if (status === "rejected") return "مرفوض";
   if (status === "approved") return "موافق";
   return null;
+}
+
+function sourceDraftFromArticle(source: ArticleSource): SourceDraft {
+  if (source.source_type === "url") {
+    return {
+      id: source.id,
+      type: "url",
+      label: "",
+      url: source.source,
+      name: "",
+      phone: "",
+      email: "",
+      quote: "",
+    };
+  }
+  if (source.source_type === "person") {
+    return {
+      id: source.id,
+      type: "person",
+      label: "",
+      url: "",
+      name: source.source,
+      phone: "",
+      email: "",
+      quote: "",
+    };
+  }
+  return {
+    id: source.id,
+    type: source.source_type,
+    label: source.source,
+    url: "",
+    name: "",
+    phone: "",
+    email: "",
+    quote: "",
+  };
+}
+
+function initialSources(article?: StaffArticle): SourceDraft[] {
+  if (article?.sources.length) {
+    return article.sources.map(sourceDraftFromArticle);
+  }
+  return [{ ...EMPTY_SOURCE }];
+}
+
+function parseOptionalThreshold(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 1) return undefined;
+  return Math.round(parsed);
+}
+
+function validateThresholds(target?: number, limit?: number) {
+  if (target != null && limit != null && limit < target) {
+    throw new Error("حد الاستجابات يجب أن يكون أكبر من أو يساوي هدف التقييم");
+  }
+}
+
+function buildSourcePayload(s: SourceDraft): CreateSourcePayload {
+  const base: CreateSourcePayload = { type: s.type };
+  if (s.type === "url") {
+    return { ...base, label: s.label.trim() || undefined, url: s.url.trim() };
+  }
+  if (s.type === "person") {
+    return {
+      ...base,
+      name: s.name.trim(),
+      email: s.email.trim(),
+      phone: s.phone.trim() || undefined,
+      quote: s.quote.trim(),
+    };
+  }
+  if (s.type === "document" || s.type === "anonymous") {
+    return { ...base, label: s.label.trim() || undefined };
+  }
+  return base;
+}
+
+function buildUpdateSourcePayload(s: SourceDraft): UpdateSourcePayload {
+  if (s.id == null) {
+    return buildSourcePayload(s);
+  }
+
+  if (s.type === "person") {
+    const email = s.email.trim();
+    const quote = s.quote.trim();
+    if (!email && !quote) {
+      return {
+        id: s.id,
+        type: "person",
+        name: s.name.trim(),
+        ...(s.phone.trim() ? { phone: s.phone.trim() } : {}),
+      };
+    }
+    return { ...buildSourcePayload(s), id: s.id };
+  }
+
+  return { ...buildSourcePayload(s), id: s.id };
+}
+
+function isSourceValid(s: SourceDraft, isEdit: boolean) {
+  if (s.type === "url") return !!s.url.trim();
+  if (s.type === "person") {
+    if (!s.name.trim()) return false;
+    if (!isEdit || s.id == null) {
+      return !!s.email.trim() && !!s.quote.trim();
+    }
+    const hasEmail = !!s.email.trim();
+    const hasQuote = !!s.quote.trim();
+    if (hasEmail || hasQuote) return hasEmail && hasQuote;
+    return true;
+  }
+  return true;
+}
+
+function personConsentWillResend(s: SourceDraft) {
+  return (
+    s.type === "person" &&
+    s.id != null &&
+    (!!s.email.trim() || !!s.quote.trim())
+  );
 }
 
 export function Step1Details({
@@ -93,19 +221,28 @@ export function Step1Details({
     article?.category?.id ? String(article.category.id) : "",
   );
   const [mediaUrl, setMediaUrl] = useState(article?.media_url ?? "");
-  const [sources, setSources] = useState<SourceDraft[]>([
-    {
-      type: "url",
-      label: "",
-      url: "",
-      name: "",
-      phone: "",
-      email: "",
-      quote: "",
-    },
-  ]);
+  const [reviewTarget, setReviewTarget] = useState(
+    article?.review_target != null ? String(article.review_target) : "",
+  );
+  const [reviewLimit, setReviewLimit] = useState(
+    article?.review_limit != null ? String(article.review_limit) : "",
+  );
+  const [sources, setSources] = useState<SourceDraft[]>(() =>
+    initialSources(article),
+  );
+  const [sourcesDirty, setSourcesDirty] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const consentBySourceId = useMemo(() => {
+    const map = new Map<number, ArticleSource["consent_status"]>();
+    for (const source of article?.sources ?? []) {
+      if (source.consent_status) {
+        map.set(source.id, source.consent_status);
+      }
+    }
+    return map;
+  }, [article?.sources]);
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["public-categories"],
@@ -117,54 +254,49 @@ export function Step1Details({
     [categories],
   );
 
-  const addSource = () =>
-    setSources((s) => [
-      ...s,
-      {
-        type: "url",
-        label: "",
-        url: "",
-        name: "",
-        phone: "",
-        email: "",
-        quote: "",
-      },
-    ]);
+  const markSourcesDirty = () => setSourcesDirty(true);
 
-  const removeSource = (i: number) =>
-    setSources((s) => s.filter((_, idx) => idx !== i));
-
-  const updateSource = (i: number, field: keyof SourceDraft, value: string) =>
-    setSources((s) =>
-      s.map((src, idx) => (idx === i ? { ...src, [field]: value } : src)),
-    );
-
-  const buildSourcePayload = (s: SourceDraft): CreateSourcePayload => {
-    const base: CreateSourcePayload = { type: s.type };
-    if (s.type === "url") {
-      return { ...base, label: s.label || undefined, url: s.url };
-    }
-    if (s.type === "person") {
-      return {
-        ...base,
-        name: s.name,
-        email: s.email,
-        phone: s.phone || undefined,
-        quote: s.quote,
-      };
-    }
-    if (s.type === "document" || s.type === "anonymous") {
-      return { ...base, label: s.label || undefined };
-    }
-    return base;
+  const addSource = () => {
+    markSourcesDirty();
+    setSources((current) => [...current, { ...EMPTY_SOURCE }]);
   };
 
-  const isSourceValid = (s: SourceDraft) => {
-    if (s.type === "url") return !!s.url.trim();
-    if (s.type === "person") {
-      return !!s.name.trim() && !!s.email.trim() && !!s.quote.trim();
-    }
-    return !!s.label.trim();
+  const removeSource = (index: number) => {
+    markSourcesDirty();
+    setSources((current) => current.filter((_, idx) => idx !== index));
+  };
+
+  const updateSource = (
+    index: number,
+    field: keyof SourceDraft,
+    value: string,
+  ) => {
+    markSourcesDirty();
+    setSources((current) =>
+      current.map((source, idx) =>
+        idx === index ? { ...source, [field]: value } : source,
+      ),
+    );
+  };
+
+  const thresholdPayloadForCreate = () => {
+    const target = parseOptionalThreshold(reviewTarget);
+    const limit = parseOptionalThreshold(reviewLimit);
+    validateThresholds(target, limit);
+    return {
+      ...(target != null ? { review_target: target } : {}),
+      ...(limit != null ? { review_limit: limit } : {}),
+    };
+  };
+
+  const thresholdPayloadForUpdate = () => {
+    const target = parseOptionalThreshold(reviewTarget);
+    const limit = parseOptionalThreshold(reviewLimit);
+    validateThresholds(target, limit);
+    return {
+      review_target: reviewTarget.trim() ? (target ?? null) : null,
+      review_limit: reviewLimit.trim() ? (limit ?? null) : null,
+    };
   };
 
   const handleSubmit = async () => {
@@ -178,13 +310,28 @@ export function Step1Details({
       const trimmedDescription = description.trim();
 
       if (isEdit && article) {
-        await ArticlesStaff_APIs.updateArticle(article.id, {
+        const payload = {
           title,
           description: trimmedDescription || null,
           category_id: Number(categoryId),
           media_url:
             mediaType !== "text" && mediaUrl.trim() ? mediaUrl.trim() : null,
-        });
+          ...thresholdPayloadForUpdate(),
+        };
+
+        if (sourcesDirty) {
+          const validSources = sources.filter((source) =>
+            isSourceValid(source, true),
+          );
+          if (validSources.length === 0) {
+            throw new Error("أضف مصدراً واحداً على الأقل");
+          }
+          Object.assign(payload, {
+            sources: validSources.map(buildUpdateSourcePayload),
+          });
+        }
+
+        await ArticlesStaff_APIs.updateArticle(article.id, payload);
         await queryClient.invalidateQueries({
           queryKey: ["staff-article", String(article.id)],
         });
@@ -194,7 +341,7 @@ export function Step1Details({
       }
 
       const validSources = sources
-        .filter(isSourceValid)
+        .filter((source) => isSourceValid(source, false))
         .map(buildSourcePayload);
       if (validSources.length === 0) {
         throw new Error("أضف مصدراً واحداً على الأقل");
@@ -208,6 +355,7 @@ export function Step1Details({
         media_url:
           mediaType !== "text" && mediaUrl.trim() ? mediaUrl.trim() : undefined,
         sources: validSources,
+        ...thresholdPayloadForCreate(),
       });
       toast.success("تم إنشاء المسودة");
       onCreated?.(created.id, created.media_type);
@@ -218,13 +366,16 @@ export function Step1Details({
     }
   };
 
-  const canSubmit =
-    !!title.trim() &&
-    !!categoryId &&
-    (isEdit || sources.some(isSourceValid));
+  const sourcesValid =
+    !sourcesDirty || sources.some((source) => isSourceValid(source, isEdit));
+
+  const canSubmit = !!title.trim() && !!categoryId && sourcesValid;
+
+  const consentResendWarning =
+    sourcesDirty && sources.some(personConsentWillResend);
 
   return (
-    <div className="publish-step">
+    <div className="publish-step publish-step--details">
       <FormSection
         icon={FileText}
         title="المعلومات الأساسية"
@@ -322,40 +473,90 @@ export function Step1Details({
       </FormSection>
 
       <FormSection
+        className="publish-form-section--trust"
+        icon={Gauge}
+        title="مؤشر ثقة الجمهور"
+        description="اختياري — يتحكم في إشعار المؤلف وتوقف الاستطلاع العام"
+      >
+        <div className="publish-threshold-grid">
+          <div className="publish-threshold-card">
+            <p className="publish-threshold-card__kicker">إشعار المؤلف</p>
+            <FieldGroup label="هدف التقييم">
+              <div className="publish-threshold-input">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={reviewTarget}
+                  onChange={(e) => setReviewTarget(e.target.value)}
+                  placeholder="مثال: 30"
+                  className="publish-input publish-input--threshold"
+                  aria-describedby="review-target-hint"
+                />
+                <span className="publish-threshold-input__suffix">استجابة</span>
+              </div>
+              <p id="review-target-hint" className="publish-field__hint">
+                عند الوصول لهذا العدد يُرسل للمؤلف ملف Excel بالنتائج (مرة
+                واحدة لكل قيمة).
+              </p>
+            </FieldGroup>
+          </div>
+
+          <div className="publish-threshold-card">
+            <p className="publish-threshold-card__kicker">إيقاف الاستطلاع</p>
+            <FieldGroup label="حد الاستجابات">
+              <div className="publish-threshold-input">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={reviewLimit}
+                  onChange={(e) => setReviewLimit(e.target.value)}
+                  placeholder="مثال: 100"
+                  className="publish-input publish-input--threshold"
+                  aria-describedby="review-limit-hint"
+                />
+                <span className="publish-threshold-input__suffix">استجابة</span>
+              </div>
+              <p id="review-limit-hint" className="publish-field__hint">
+                بعد هذا العدد يتوقف استقبال تقييمات القرّاء على المقال.
+              </p>
+            </FieldGroup>
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection
         icon={Link2}
         title="المصادر"
         description={
           isEdit
-            ? "المصادر المسجّلة عند الإنشاء"
+            ? "تعديل القائمة يستبدل المصادر بالكامل — اتركها دون تغيير إن أردت حفظ العنوان فقط"
             : "أضف مصدراً واحداً على الأقل — مصادر الأشخاص تتطلب موافقة بالبريد"
         }
       >
-        {isEdit && article ? (
-          <div className="space-y-2">
-            {article.sources.map((source) => {
-              const consent = consentLabel(source.consent_status);
-              return (
-                <div key={source.id} className="publish-source-readonly">
-                  <span className="font-medium">{sourceDisplayName(source)}</span>
-                  <span className="text-muted-foreground">
-                    {SOURCE_TYPE_LABELS[source.source_type as SourceType] ??
-                      source.source_type}
-                    {consent ? ` · ${consent}` : ""}
-                  </span>
-                </div>
-              );
-            })}
-            <p className="text-xs text-muted-foreground">
-              لتعديل المصادر تواصل مع المشرف.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {sources.map((source, i) => (
-              <div key={i} className="publish-source-card">
+        {consentResendWarning ? (
+          <p className="publish-consent-warn">
+            تغيير البريد أو الاقتباس لمصدر شخصي يرسل طلب موافقة جديداً ويلغي
+            الرابط السابق.
+          </p>
+        ) : null}
+
+        <div className="space-y-3">
+          {sources.map((source, i) => {
+            const consent =
+              source.id != null
+                ? consentLabel(consentBySourceId.get(source.id))
+                : null;
+
+            return (
+              <div key={source.id ?? `new-${i}`} className="publish-source-card">
                 <div className="publish-source-card__header">
                   <span className="publish-source-card__index">
                     مصدر {i + 1}
+                    {consent ? (
+                      <span className="text-muted-foreground"> · {consent}</span>
+                    ) : null}
                   </span>
                   <div className="flex items-center gap-2">
                     <Select
@@ -419,7 +620,11 @@ export function Step1Details({
                         className="publish-input"
                       />
                       <Input
-                        placeholder="البريد الإلكتروني (موافقة المصدر)"
+                        placeholder={
+                          source.id
+                            ? "البريد الإلكتروني — اتركه فارغاً إن لم تُغيّر الموافقة"
+                            : "البريد الإلكتروني (موافقة المصدر)"
+                        }
                         value={source.email}
                         onChange={(e) =>
                           updateSource(i, "email", e.target.value)
@@ -438,7 +643,11 @@ export function Step1Details({
                         className="publish-input"
                       />
                       <Textarea
-                        placeholder="الاقتباس المنسوب للمصدر"
+                        placeholder={
+                          source.id
+                            ? "الاقتباس — اتركه فارغاً إن لم تُغيّر الموافقة"
+                            : "الاقتباس المنسوب للمصدر"
+                        }
                         value={source.quote}
                         onChange={(e) =>
                           updateSource(i, "quote", e.target.value)
@@ -452,7 +661,7 @@ export function Step1Details({
                   {(source.type === "document" ||
                     source.type === "anonymous") && (
                     <Input
-                      placeholder="التسمية"
+                      placeholder="التسمية (اختياري)"
                       value={source.label}
                       onChange={(e) =>
                         updateSource(i, "label", e.target.value)
@@ -462,20 +671,20 @@ export function Step1Details({
                   )}
                 </div>
               </div>
-            ))}
+            );
+          })}
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addSource}
-              className="publish-add-source"
-            >
-              <Plus className="size-4" />
-              إضافة مصدر
-            </Button>
-          </div>
-        )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addSource}
+            className="publish-add-source"
+          >
+            <Plus className="size-4" />
+            إضافة مصدر
+          </Button>
+        </div>
       </FormSection>
 
       {error ? (

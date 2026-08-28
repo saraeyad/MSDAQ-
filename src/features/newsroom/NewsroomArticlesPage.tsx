@@ -1,3 +1,4 @@
+import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +25,8 @@ import { cn } from "@/lib/utils";
 import {
   PERMISSIONS,
   ROUTES,
+  staffArticleEditPath,
+  staffArticlePath,
   staffArticleTrustFeedbackPath,
 } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
@@ -93,10 +96,11 @@ function StaffArticleCard({
               </span>
             ) : null}
             <StatusBadge status={article.status} />
+            <ArticleVerifiedBadge article={article} />
           </div>
 
           <Link
-            to={`/newsroom/articles/${article.id}`}
+            to={staffArticlePath(article.id)}
             className="newsroom-article-card__title"
           >
             {article.title}
@@ -122,7 +126,7 @@ function StaffArticleCard({
 
       <div className="newsroom-article-card__actions">
         <Button asChild variant="outline" size="sm">
-          <Link to={`/newsroom/articles/${article.id}`}>
+          <Link to={staffArticlePath(article.id)}>
             <Eye className="size-3.5" />
             عرض
           </Link>
@@ -152,7 +156,7 @@ function StaffArticleCard({
         ) : null}
         {canEdit ? (
           <Button asChild variant="outline" size="sm">
-            <Link to={`/newsroom/articles/${article.id}/edit?step=${editStep}`}>
+            <Link to={staffArticleEditPath(article.id, editStep)}>
               <PenLine className="size-3.5" />
               تحرير
             </Link>
@@ -209,7 +213,7 @@ export default function NewsroomArticlesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => ArticlesStaff_APIs.deleteArticle(id),
+    mutationFn: (id: number | string) => ArticlesStaff_APIs.deleteArticle(id),
     onSuccess: () => {
       toast.success("تم حذف المقال");
       setDeleteTarget(null);

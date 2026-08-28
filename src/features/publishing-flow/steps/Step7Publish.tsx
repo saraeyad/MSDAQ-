@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { ROUTES } from "@/router/routes";
 
 interface Step7PublishProps {
-  articleId: number;
+  articleId: number | string;
   onBack?: () => void;
 }
 

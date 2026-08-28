@@ -10,6 +10,7 @@ import {
 import {
   renderJsonLdScript,
 } from "@/lib/seo/render-head";
+import { decodeArticleIdParam } from "@/lib/article-id";
 import {
   fetchPublicArticle,
   fetchPublicCategory,
@@ -35,11 +36,12 @@ export interface SsrPageResult {
   status: number;
 }
 
-const ARTICLE_ROUTE = /^\/articles\/(\d+)\/?$/;
+const ARTICLE_ROUTE = /^\/articles\/([^/]+)\/?$/;
 const CATEGORY_ROUTE = /^\/categories\/([^/]+)\/?$/;
 
 function createSsrQueryClient(options: {
   article?: PublicArticle;
+  articleUrlId?: string;
   categoryData?: PublicCategoryDetail;
   slug?: string;
   page?: number;
@@ -55,6 +57,12 @@ function createSsrQueryClient(options: {
       ["public-article", String(options.article.id)],
       options.article,
     );
+    if (options.articleUrlId) {
+      client.setQueryData(
+        ["public-article", options.articleUrlId],
+        options.article,
+      );
+    }
   }
 
   if (options.categoryData && options.slug) {
@@ -114,12 +122,12 @@ export async function handleSsrRequest(
 
   const articleMatch = pathname.match(ARTICLE_ROUTE);
   if (articleMatch) {
-    const id = articleMatch[1]!;
+    const id = decodeArticleIdParam(articleMatch[1]!);
     const article = await fetchPublicArticle(id);
     const jsonLd = buildArticleJsonLd(article, origin);
     const jsonLdScript = renderJsonLdScript(jsonLd);
 
-    const queryClient = createSsrQueryClient({ article });
+    const queryClient = createSsrQueryClient({ article, articleUrlId: id });
     const rendered = renderPageTree(pathname, queryClient, origin);
 
     return {

@@ -1,7 +1,9 @@
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { PublicArticleCover } from "@/components/cover-image";
+import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
 import { mediaTypeLabel, resolvePublicArticleAudioSource } from "@/lib/media-labels";
 import { cn } from "@/lib/utils";
+import { articlePath } from "@/router/routes";
 import type { PublicArticle, PublicMediaType } from "@/types";
 import { ArrowLeft, FileText, Mic, Video } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -32,7 +34,7 @@ export function HomeArticleCard({
   const isAudio = article.media_type === "audio";
   const audioSource = resolvePublicArticleAudioSource(article);
   const hasCover = Boolean(article.cover_image || article.images?.length);
-  const articleHref = `/articles/${article.id}`;
+  const articleHref = articlePath(article.id);
 
   return (
     <article
@@ -88,7 +90,10 @@ export function HomeArticleCard({
               featured ? "text-xl md:text-2xl" : "text-base md:text-lg",
             )}
           >
-            {article.title}
+            <span className="inline-flex flex-wrap items-center gap-2">
+              {article.title}
+              <ArticleVerifiedBadge article={article} />
+            </span>
           </h3>
 
           {article.description && (

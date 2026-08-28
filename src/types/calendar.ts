@@ -30,7 +30,7 @@ export interface ArticleFeedMeta {
 export interface CalendarFeedItem {
   type: CalendarItemType;
   id: string;
-  source_id: number;
+  source_id: number | string;
   title: string;
   start_at: string;
   end_at: string | null;

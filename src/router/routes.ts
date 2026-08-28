@@ -1,3 +1,5 @@
+import { articleIdParam } from "@/lib/article-id";
+
 export const ROUTES = {
   HOME: "/",
   ARTICLES: "/articles",
@@ -46,12 +48,21 @@ export function categoryPath(slug: string): string {
 
 /** Public article detail URL (Collection 02 · Public). */
 export function articlePath(id: number | string): string {
-  return `/articles/${id}`;
+  return `/articles/${articleIdParam(id)}`;
 }
 
 /** Staff newsroom article detail URL. */
 export function staffArticlePath(id: number | string): string {
-  return `/newsroom/articles/${id}`;
+  return `/newsroom/articles/${articleIdParam(id)}`;
+}
+
+/** Staff newsroom article editor URL. */
+export function staffArticleEditPath(
+  id: number | string,
+  step?: number,
+): string {
+  const path = `${staffArticlePath(id)}/edit`;
+  return step != null ? `${path}?step=${step}` : path;
 }
 
 export const ARTICLE_TRUST_FEEDBACK_HASH = "article-trust-feedback";

@@ -15,6 +15,7 @@ import {
   isStepVisible,
   stepsForMediaType,
 } from "@/lib/publish-gate";
+import { staffArticleEditPath } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, PenLine } from "lucide-react";
@@ -72,8 +73,8 @@ export default function PublishingFlow() {
     void setStep(getPreviousStep(currentStep, mediaType));
   };
 
-  const handleCreated = (articleId: number) => {
-    navigate(`/newsroom/articles/${articleId}/edit?step=2`, { replace: true });
+  const handleCreated = (articleId: number | string) => {
+    navigate(staffArticleEditPath(articleId, 2), { replace: true });
   };
 
   if (!isNew && isLoading) {

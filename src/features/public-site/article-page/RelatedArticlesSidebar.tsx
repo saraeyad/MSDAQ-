@@ -1,6 +1,8 @@
 import { PublicArticleCover } from "@/components/cover-image";
 import { publicMediaTypeLabel } from "@/lib/media-labels";
+import { sameArticleId } from "@/lib/article-id";
 import { cn } from "@/lib/utils";
+import { articlePath } from "@/router/routes";
 import { Articles_APIs } from "@/services/api/articles";
 import type { PublicArticle } from "@/types";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +20,9 @@ async function fetchRelatedArticles(
       category: article.category.id,
       page: 1,
     });
-    const related = byCategory.items.filter((item) => item.id !== excludeId);
+    const related = byCategory.items.filter(
+      (item) => !sameArticleId(item.id, excludeId),
+    );
     if (related.length > 0) {
       return related.slice(0, RELATED_LIMIT);
     }
@@ -26,7 +30,7 @@ async function fetchRelatedArticles(
 
   const latest = await Articles_APIs.list({ latest: true });
   return latest.items
-    .filter((item) => item.id !== excludeId)
+    .filter((item) => !sameArticleId(item.id, excludeId))
     .slice(0, RELATED_LIMIT);
 }
 
@@ -62,7 +66,7 @@ export function RelatedArticlesSidebar({
           {related.map((item) => (
             <li key={item.id}>
               <Link
-                to={`/articles/${item.id}`}
+                to={articlePath(item.id)}
                 className="group flex gap-3 rounded-xl border border-border/70 bg-card p-3 transition-colors hover:border-primary/30 hover:bg-accent/40"
               >
                 <PublicArticleCover

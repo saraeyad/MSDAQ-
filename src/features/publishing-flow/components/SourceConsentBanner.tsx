@@ -27,7 +27,7 @@ export function SourceConsentBanner({ sources }: SourceConsentBannerProps) {
       <CardContent className="space-y-2 p-4">
         <div className="flex items-center gap-2 font-semibold">
           <Shield className="size-4 text-warning" />
-          موافقة المصادر (واتساب)
+          موافقة المصادر (البريد الإلكتروني)
         </div>
         {pending.length > 0 && (
           <p className="text-sm text-muted-foreground">
