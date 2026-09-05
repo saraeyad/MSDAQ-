@@ -28,9 +28,9 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="staff-shell__main">
         <StaffShellTopbar items={visibleLinks} />
-        <main className="admin-shell-main flex-1 py-4 md:py-6">
+        <main className="admin-shell-main py-4 md:py-6">
           <div className="container-page">
             <RouteErrorBoundary>
               <Outlet />

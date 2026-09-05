@@ -505,12 +505,14 @@
   }
 
   .admin-shell-main {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
     background: radial-gradient(
       141.42% 141.42% at 0% 0%,
       rgba(249, 140, 52, 0.1) 0%,
       rgba(249, 140, 52, 0) 60%
     );
-    min-height: 100%;
   }
 
   .admin-table-ltr {
@@ -850,22 +852,31 @@
 
   .staff-shell {
     display: flex;
-    min-height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
     background: var(--background);
   }
 
   .staff-shell__aside {
     display: none;
-    position: sticky;
-    top: 0;
     width: 18rem;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
     flex-shrink: 0;
     flex-direction: column;
     overflow: hidden;
     border: 1px solid #eceef1;
     background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
-    padding: 0.75rem;
+  }
+
+  .staff-shell__main {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   @media (min-width: 768px) {
