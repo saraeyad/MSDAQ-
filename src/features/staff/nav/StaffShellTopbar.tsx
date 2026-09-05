@@ -10,7 +10,7 @@ import {
 import { StaffHomeLink } from "@/features/staff/nav/StaffHomeLink";
 import { StaffNavLinks } from "@/features/staff/nav/StaffNavLinks";
 import { StaffUserMenu } from "@/features/staff/nav/StaffUserMenu";
-import { STAFF_ORG_LABEL, type StaffNavItem } from "@/features/staff/nav/staff-nav";
+import type { StaffNavItem } from "@/features/staff/nav/staff-nav";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 
@@ -31,11 +31,9 @@ export function StaffShellTopbar({ items }: { items: StaffNavItem[] }) {
           </Button>
         </SheetTrigger>
         <SheetContent side="right" className="w-72 p-0">
-          <SheetHeader className="border-b border-border p-4 text-start">
-            <BrandLogo size="md" linkToHome={false} className="mb-2" />
-            <SheetTitle className="font-headline text-sm leading-snug">
-              {STAFF_ORG_LABEL}
-            </SheetTitle>
+          <SheetHeader className="staff-shell__brand text-start">
+            <BrandLogo fill linkToHome={false} />
+            <SheetTitle className="sr-only">القائمة</SheetTitle>
           </SheetHeader>
           <div className="staff-shell__mobile-nav">
             <StaffNavLinks

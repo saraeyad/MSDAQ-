@@ -3,7 +3,10 @@ import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { useSiteOrigin } from "@/context/site-origin";
-import { findCategoryBySlug } from "@/lib/category-tree";
+import {
+  findCategoryByFilterKey,
+  findParentCategory,
+} from "@/lib/category-tree";
 import {
   buildCategoryJsonLd,
   buildCategorySeoHead,
@@ -34,20 +37,14 @@ export default function CategoryPage({
   }, [slug]);
 
   const cachedCategory = useMemo(
-    () => findCategoryBySlug(categories, slug ?? ""),
+    () => findCategoryByFilterKey(categories, slug ?? ""),
     [categories, slug],
   );
 
-  const parentCategory = useMemo(() => {
-    if (!slug) return undefined;
-    for (const parent of categories) {
-      if (parent.slug === slug) return parent;
-      if (parent.children?.some((child) => child.slug === slug)) {
-        return parent;
-      }
-    }
-    return undefined;
-  }, [categories, slug]);
+  const parentCategory = useMemo(
+    () => findParentCategory(categories, slug ?? ""),
+    [categories, slug],
+  );
 
   const subcategoryLinks = useMemo(() => {
     if (!parentCategory?.children?.length) return [];

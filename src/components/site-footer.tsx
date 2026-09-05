@@ -1,7 +1,7 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { usePlatformFeedback } from "@/context/platform-feedback";
 import {
-  buildPublicFooterLinks,
+  buildPublicFooterSections,
   STATIC_FOOTER_LINKS,
 } from "@/features/public-site/categories/public-nav";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
@@ -30,9 +30,10 @@ const MAP_EMBED =
 export function SiteFooter() {
   const { data: categories } = usePublicCategories();
   const { openFeedback } = usePlatformFeedback();
-  const quickLinks =    categories && categories.length > 0
-      ? buildPublicFooterLinks(categories)
-      : STATIC_FOOTER_LINKS;
+  const sections =
+    categories && categories.length > 0
+      ? buildPublicFooterSections(categories)
+      : [];
 
   return (
     <footer className="mt-16 bg-[#1a1a1a] text-white">
@@ -59,20 +60,46 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="lg:col-span-2">
-          <h4 className="font-headline text-base font-semibold">روابط سريعة</h4>
-          <ul className="mt-4 space-y-2.5">
-            {quickLinks.map((link) => (
-              <li key={link.to + link.label}>
-                <Link
-                  to={link.to}
-                  className="text-sm text-white/70 transition-colors hover:text-primary"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <div className="lg:col-span-4">
+          <h4 className="font-headline text-base font-semibold">الأقسام</h4>
+          {sections.length > 0 ? (
+            <div className="site-footer-sections">
+              {sections.map((section) => (
+                <div key={section.to} className="site-footer-section">
+                  <Link to={section.to} className="site-footer-section__title">
+                    {section.label}
+                  </Link>
+                  {section.children.length > 0 ? (
+                    <p className="site-footer-section__children">
+                      {section.children.map((child, index) => (
+                        <span key={child.to}>
+                          {index > 0 ? (
+                            <span className="site-footer-section__dot" aria-hidden>
+                              ·
+                            </span>
+                          ) : null}
+                          <Link to={child.to}>{child.label}</Link>
+                        </span>
+                      ))}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ul className="mt-4 space-y-2.5">
+              {STATIC_FOOTER_LINKS.map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-sm text-white/70 transition-colors hover:text-primary"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="lg:col-span-2">
@@ -114,7 +141,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-3">
           <h4 className="font-headline text-base font-semibold">موقعنا</h4>
           <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
             <iframe

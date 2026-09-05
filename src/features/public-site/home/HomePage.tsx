@@ -1,7 +1,5 @@
 import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
 import { HomeHero } from "@/features/public-site/home/HomeHero";
-import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
-import { PartnersStrip } from "@/features/public-site/partners/PartnersStrip";
 import { NewsSlider } from "@/features/public-site/components/news-slider";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { buildParentSlugMap } from "@/lib/category-tree";
@@ -79,7 +77,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="pb-16">
+    <div>
       <HomeHero />
 
       <section className="w-full">
@@ -175,10 +173,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      <PartnersStrip />
-
-      <HomeToolsSection />
     </div>
   );
 }

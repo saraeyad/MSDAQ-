@@ -18,8 +18,8 @@ import {
 } from "@/lib/category-tree";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
+import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
-import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type {
   ArticleSource,
   CreateSourcePayload,
@@ -244,10 +244,7 @@ export function Step1Details({
     return map;
   }, [article?.sources]);
 
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["public-categories"],
-    queryFn: () => PublicCategories_APIs.list(),
-  });
+  const { data: categories, isLoading: categoriesLoading } = usePublicCategories();
 
   const categoryOptions = useMemo(
     () => flattenCategoriesForSelect(categories ?? []),

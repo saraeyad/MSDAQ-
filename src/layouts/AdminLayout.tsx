@@ -3,10 +3,7 @@ import { RouteErrorBoundary } from "@/components/route-error-boundary";
 import { useAuth } from "@/context/auth";
 import { StaffNavLinks } from "@/features/staff/nav/StaffNavLinks";
 import { StaffShellTopbar } from "@/features/staff/nav/StaffShellTopbar";
-import {
-  STAFF_ORG_LABEL,
-  getVisibleStaffNav,
-} from "@/features/staff/nav/staff-nav";
+import { getVisibleStaffNav } from "@/features/staff/nav/staff-nav";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { useMemo } from "react";
 import { Outlet } from "react-router-dom";
@@ -24,8 +21,7 @@ export default function AdminLayout() {
     <div className="staff-shell">
       <aside className="staff-shell__aside">
         <div className="staff-shell__brand">
-          <BrandLogo size="lg" linkToHome={false} />
-          <p className="staff-shell__brand-label">{STAFF_ORG_LABEL}</p>
+          <BrandLogo fill linkToHome={false} />
         </div>
         <div className="staff-shell__nav">
           <StaffNavLinks items={visibleLinks} />

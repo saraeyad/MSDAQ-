@@ -16,7 +16,13 @@ import { StatusBadge } from "@/features/admin/components/StatusBadge";
 import { RescheduleArticleDialog } from "@/features/newsroom/RescheduleArticleDialog";
 import { CategoryFlyoutFilter } from "@/features/newsroom/CategoryFlyoutFilter";
 import { usePermission } from "@/hooks/usePermission";
+import { usePublicCategories } from "@/hooks/usePublicCategories";
+import { useAuth } from "@/context/auth";
 import { getApiErrorMessage } from "@/lib/api-data";
+import {
+  collectCategoryFilterKeys,
+  findCategoryByFilterKey,
+} from "@/lib/category-tree";
 import { paginateList, TABLE_PAGE_SIZE } from "@/lib/table-pagination";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl } from "@/lib/media-url";
@@ -30,7 +36,6 @@ import {
   staffArticleTrustFeedbackPath,
 } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
-import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type { ArticleStatus, StaffArticle } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -180,6 +185,7 @@ function StaffArticleCard({
 
 export default function NewsroomArticlesPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
   const canReschedule = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
@@ -195,22 +201,69 @@ export default function NewsroomArticlesPage() {
   const mine = params.get("mine") === "1";
   const page = Math.max(1, Number(params.get("page") ?? "1"));
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["public-categories"],
-    queryFn: () => PublicCategories_APIs.list(),
-  });
+  const { data: categories = [] } = usePublicCategories();
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["staff-articles", status, category, mine, page, TABLE_PAGE_SIZE],
-    queryFn: () =>
-      ArticlesStaff_APIs.list({
+    queryKey: ["staff-articles", status, category, mine],
+    queryFn: async () => {
+      const numericCategory = Number(category);
+      const filters = {
         status: status ? (status as ArticleStatus) : undefined,
-        category: category ? Number(category) : undefined,
+        category:
+          category &&
+          Number.isFinite(numericCategory) &&
+          String(numericCategory) === category
+            ? numericCategory
+            : undefined,
         mine,
-        page,
-        per_page: TABLE_PAGE_SIZE,
-      }),
+        per_page: 100,
+      };
+      const first = await ArticlesStaff_APIs.list({ ...filters, page: 1 });
+      const lastPage = first.pagination?.last_page ?? 1;
+      if (lastPage <= 1) return first;
+
+      const rest = await Promise.all(
+        Array.from({ length: lastPage - 1 }, (_, index) =>
+          ArticlesStaff_APIs.list({ ...filters, page: index + 2 }),
+        ),
+      );
+
+      return {
+        items: [first, ...rest].flatMap((page) => page.items),
+      };
+    },
   });
+
+  const filteredArticles = useMemo(() => {
+    let items = data?.items ?? [];
+
+    if (status) {
+      items = items.filter((article) => article.status === status);
+    }
+
+    if (mine && user) {
+      items = items.filter((article) => article.author.id === user.id);
+    }
+
+    if (category) {
+      const selected = findCategoryByFilterKey(categories, category);
+      const allowed = new Set(
+        selected
+          ? collectCategoryFilterKeys(selected)
+          : [category],
+      );
+      items = items.filter((article) => {
+        const id = article.category?.id;
+        const slug = article.category?.slug;
+        return (
+          (id != null && allowed.has(String(id))) ||
+          (slug != null && allowed.has(slug))
+        );
+      });
+    }
+
+    return items;
+  }, [categories, category, data?.items, mine, status, user]);
 
   const deleteMutation = useMutation({
     mutationFn: (id: number | string) => ArticlesStaff_APIs.deleteArticle(id),
@@ -228,7 +281,7 @@ export default function NewsroomArticlesPage() {
     currentPage,
     lastPage,
     pageSize,
-  } = paginateList(data?.items ?? [], page, data?.pagination);
+  } = paginateList(filteredArticles, page);
 
   const pageStats = useMemo(() => {
     return {

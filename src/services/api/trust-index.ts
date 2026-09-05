@@ -28,9 +28,15 @@ function buildDateParams(params: TrustIndexListParams = {}) {
 }
 
 function buildPlatformParams(params: TrustIndexPlatformSummaryParams = {}) {
-  const query = buildDateParams(params) as Record<string, string | number | number[]>;
-  if (params.categories?.length) {
-    query["categories[]"] = params.categories;
+  const query = buildDateParams(params) as Record<
+    string,
+    string | number | number[]
+  >;
+  const categoryIds = (params.categories ?? []).filter((id) =>
+    Number.isInteger(id),
+  );
+  if (categoryIds.length) {
+    query["categories[]"] = categoryIds;
   }
   return query;
 }

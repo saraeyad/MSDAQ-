@@ -30,8 +30,6 @@ export interface StaffNavItem {
   superAdminOnly?: boolean;
 }
 
-export const STAFF_ORG_LABEL = "مركز التنمية و الاعلام المجتمعي";
-
 export const STAFF_NAV_GROUPS: Record<StaffNavGroup, string> = {
   newsroom: "غرفة الأخبار",
   feedback: "الثقة والملاحظات",

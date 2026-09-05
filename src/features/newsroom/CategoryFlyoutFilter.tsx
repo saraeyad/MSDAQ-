@@ -4,6 +4,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { categoryFilterKey, categoryFilterLabel } from "@/lib/category-tree";
 import { cn } from "@/lib/utils";
 import type { PublicCategory } from "@/types";
 import { ChevronDown, ChevronLeft } from "lucide-react";
@@ -20,9 +21,10 @@ function CategoryFilterFlyoutRow({
 }) {
   const children = category.children ?? [];
   const hasChildren = children.length > 0;
-  const parentSelected = String(category.id) === value;
+  const parentKey = categoryFilterKey(category);
+  const parentSelected = parentKey === value;
   const branchSelected = children.some(
-    (child) => String(child.id) === value,
+    (child) => categoryFilterKey(child) === value,
   );
 
   if (!hasChildren) {
@@ -31,7 +33,7 @@ function CategoryFilterFlyoutRow({
         className={cn(parentSelected && "text-primary font-medium")}
         onSelect={(event) => {
           event.preventDefault();
-          onSelect(String(category.id));
+          onSelect(parentKey);
         }}
       >
         {category.name_ar}
@@ -47,7 +49,7 @@ function CategoryFilterFlyoutRow({
           "site-nav-parent-link site-nav-parent-link--has-children",
           (parentSelected || branchSelected) && "site-nav-parent-link--active",
         )}
-        onClick={() => onSelect(String(category.id))}
+        onClick={() => onSelect(parentKey)}
       >
         <span className="site-nav-parent-link__label">{category.name_ar}</span>
         <ChevronLeft className="site-nav-parent-link__chevron" aria-hidden />
@@ -60,9 +62,10 @@ function CategoryFilterFlyoutRow({
         <p className="site-nav-flyout__heading">{category.name_ar}</p>
         <ul className="site-nav-flyout__list">
           {children.map((child) => {
-            const active = String(child.id) === value;
+            const childKey = categoryFilterKey(child);
+            const active = childKey === value;
             return (
-              <li key={child.id}>
+              <li key={childKey}>
                 <button
                   type="button"
                   role="menuitem"
@@ -70,7 +73,7 @@ function CategoryFilterFlyoutRow({
                     "site-nav-flyout__link",
                     active && "site-nav-flyout__link--active",
                   )}
-                  onClick={() => onSelect(String(child.id))}
+                  onClick={() => onSelect(childKey)}
                 >
                   <span className="site-nav-flyout__bullet" aria-hidden />
                   <span className="site-nav-flyout__label">{child.name_ar}</span>
@@ -97,18 +100,10 @@ export function CategoryFlyoutFilter({
 }) {
   const [open, setOpen] = useState(false);
 
-  const selectedLabel = useMemo(() => {
-    if (!value) return "كل التصنيفات";
-
-    for (const parent of categories) {
-      if (String(parent.id) === value) return parent.name_ar;
-      for (const child of parent.children ?? []) {
-        if (String(child.id) === value) return child.name_ar;
-      }
-    }
-
-    return "كل التصنيفات";
-  }, [categories, value]);
+  const selectedLabel = useMemo(
+    () => categoryFilterLabel(categories, value),
+    [categories, value],
+  );
 
   const handleSelect = (categoryId: string | null) => {
     onChange(categoryId);
@@ -139,7 +134,7 @@ export function CategoryFlyoutFilter({
         </DropdownMenuItem>
         {categories.map((category) => (
           <CategoryFilterFlyoutRow
-            key={category.id}
+            key={categoryFilterKey(category)}
             category={category}
             value={value}
             onSelect={handleSelect}

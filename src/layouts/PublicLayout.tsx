@@ -2,6 +2,7 @@ import { SiteBrandLink } from "@/features/public-site/components/site-brand-link
 import { SiteHeaderSearch } from "@/components/site-header-search";
 import { DesktopSiteNav, MobileSiteNav } from "@/components/site-header-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { PartnersStrip } from "@/features/public-site/partners/PartnersStrip";
 import { PlatformFeedbackProvider } from "@/context/platform-feedback";
 import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/PlatformFeedbackFab";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useAuth } from "@/context/auth";
 import { ROUTES } from "@/router/routes";
 import { LogIn } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
+import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
 
 export default function PublicLayout() {
   const { token } = useAuth();
@@ -19,28 +21,29 @@ export default function PublicLayout() {
     <PlatformFeedbackProvider>
       <div className="min-h-screen page-gradient">
         <header className="site-header ghazawiya-pattern">
-        <div className="site-header__inner container-page flex min-h-[4.5rem] items-center gap-3 py-3 md:gap-4">
-          <div className="flex shrink-0 items-center">
-            <SiteBrandLink linkToHome />
+          <div className="site-header__inner container-page flex min-h-[4.5rem] items-center gap-3 py-3 md:gap-4">
+            <div className="flex shrink-0 items-center">
+              <SiteBrandLink linkToHome />
+            </div>
+            <DesktopSiteNav />
+            <div className="ms-auto flex shrink-0 items-center gap-2">
+              <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
+              <Button asChild size="sm" className="hidden gap-2 lg:inline-flex">
+                <Link to={authHref}>
+                  {!token ? <LogIn className="size-4" /> : null}
+                  {authLabel}
+                </Link>
+              </Button>
+              <MobileSiteNav authHref={authHref} authLabel={authLabel} />
+            </div>
           </div>
-          <DesktopSiteNav />
-          <div className="ms-auto flex shrink-0 items-center gap-2">
-            <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
-            <Button asChild size="sm" className="hidden gap-2 lg:inline-flex">
-              <Link to={authHref}>
-                {!token ? <LogIn className="size-4" /> : null}
-                {authLabel}
-              </Link>
-            </Button>
-            <MobileSiteNav authHref={authHref} authLabel={authLabel} />
-          </div>
-        </div>
-      </header>
+        </header>
 
         <main>
           <Outlet />
         </main>
-
+        <HomeToolsSection />
+        <PartnersStrip />
         <SiteFooter />
         <PlatformFeedbackFab />
       </div>

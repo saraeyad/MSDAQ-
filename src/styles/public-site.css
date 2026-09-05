@@ -79,6 +79,51 @@
     z-index: 1;
   }
 
+  .site-footer-sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1.25rem;
+    margin-top: 1rem;
+  }
+
+  .site-footer-section__title {
+    display: inline-block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    transition: color 0.15s ease;
+  }
+
+  .site-footer-section__title:hover {
+    color: var(--primary, #f98c34);
+  }
+
+  .site-footer-section__children {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 0.15rem;
+    row-gap: 0.15rem;
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  .site-footer-section__children a {
+    color: inherit;
+    transition: color 0.15s ease;
+  }
+
+  .site-footer-section__children a:hover {
+    color: var(--primary, #f98c34);
+  }
+
+  .site-footer-section__dot {
+    margin-inline: 0.2rem;
+    color: rgba(255, 255, 255, 0.35);
+  }
+
   .partners-strip {
     width: 100%;
     min-height: 290px;

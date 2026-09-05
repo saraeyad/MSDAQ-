@@ -109,7 +109,7 @@ export default function CategoriesManagementPage() {
     isChild: boolean;
   } | null>(null);
   const [page, setPage] = useState(1);
-  const [collapsedIds, setCollapsedIds] = useState<Set<number>>(
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(
     () => new Set(),
   );
 
@@ -130,9 +130,9 @@ export default function CategoriesManagementPage() {
   const visibleRows = useMemo(
     () =>
       tableRows.filter(
-        (row) => !row.isChild || !collapsedIds.has(row.parentId ?? -1),
+        (row) => !row.isChild || expandedIds.has(row.parentId ?? -1),
       ),
-    [tableRows, collapsedIds],
+    [tableRows, expandedIds],
   );
   const totalCount = useMemo(() => countCategories(categories), [categories]);
   const {
@@ -160,9 +160,9 @@ export default function CategoriesManagementPage() {
       if (variables.parent_id) {
         setSubCreateForm(emptyCreateForm());
         setSubcategoryParentId(null);
-        setCollapsedIds((current) => {
+        setExpandedIds((current) => {
           const next = new Set(current);
-          next.delete(variables.parent_id as number);
+          next.add(variables.parent_id as number);
           return next;
         });
       } else {
@@ -215,7 +215,7 @@ export default function CategoriesManagementPage() {
   };
 
   const toggleCollapsed = (categoryId: number) => {
-    setCollapsedIds((current) => {
+    setExpandedIds((current) => {
       const next = new Set(current);
       if (next.has(categoryId)) next.delete(categoryId);
       else next.add(categoryId);
@@ -334,7 +334,7 @@ export default function CategoriesManagementPage() {
                 {pagedRows.map(({ category, isChild }) => {
                   const childCount = category.children?.length ?? 0;
                   const canCollapse = !isChild && childCount > 0;
-                  const isCollapsed = collapsedIds.has(category.id);
+                  const isCollapsed = !expandedIds.has(category.id);
 
                   return (
                     <TableRow

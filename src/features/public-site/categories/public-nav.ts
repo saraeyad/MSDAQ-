@@ -126,28 +126,41 @@ export function isPublicNavLinkActive(
   return pathname === item.to || pathname.startsWith(`${item.to}/`);
 }
 
-export function buildPublicFooterLinks(categories: PublicCategory[]) {
-  const categoryLinks: { to: string; label: string }[] = [];
+export type PublicFooterSection = {
+  to: string;
+  label: string;
+  children: { to: string; label: string }[];
+};
 
-  for (const category of categories) {
-    categoryLinks.push({
-      to: categoryPath(category.slug),
-      label: category.name_ar,
-    });
+function rootPublicCategories(categories: PublicCategory[]): PublicCategory[] {
+  const nestedIds = new Set<number>();
 
-    for (const child of category.children ?? []) {
-      categoryLinks.push({
-        to: categoryPath(child.slug),
-        label: `\u2003${child.name_ar}`,
-      });
+  const walk = (nodes: PublicCategory[]) => {
+    for (const node of nodes) {
+      for (const child of node.children ?? []) {
+        nestedIds.add(child.id);
+        walk(child.children ?? []);
+      }
     }
-  }
+  };
 
-  return [
-    STATIC_FOOTER_LINKS[0],
-    ...categoryLinks,
-    ...STATIC_FOOTER_LINKS.slice(1),
-  ];
+  walk(categories);
+  const roots = categories.filter((category) => !nestedIds.has(category.id));
+  return roots.length > 0 ? roots : categories;
+}
+
+/** Top-level sections only — children stay grouped under the parent. */
+export function buildPublicFooterSections(
+  categories: PublicCategory[],
+): PublicFooterSection[] {
+  return rootPublicCategories(categories).map((category) => ({
+    to: categoryPath(category.slug),
+    label: category.name_ar,
+    children: (category.children ?? []).map((child) => ({
+      to: categoryPath(child.slug),
+      label: child.name_ar,
+    })),
+  }));
 }
 
 export { STATIC_FOOTER_LINKS };

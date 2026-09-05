@@ -180,7 +180,7 @@ export interface PublicArticlesListResult {
 
 export interface StaffArticlesListParams {
   status?: ArticleStatus;
-  category?: number;
+  category?: number | string;
   mine?: boolean;
   page?: number;
   per_page?: number;
