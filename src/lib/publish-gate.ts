@@ -1,6 +1,7 @@
+import { resolvePlayableVideoUrl } from "@/lib/media-url";
 import type {
   ArticleSource,
-  ArticleVerification,
+  ArticleStatus,
   DerivedPublishGate,
   PublishGateCheck,
   StaffArticle,
@@ -108,10 +109,19 @@ function hasAudioAsset(
 }
 
 function hasVideoReady(
-  article: Pick<StaffArticle, "media_url" | "video" | "video_status">,
+  article: Pick<
+    StaffArticle,
+    "media_url" | "video" | "video_status" | "cover_image" | "video_poster"
+  >,
 ): boolean {
   if (article.media_url?.trim()) return true;
-  return article.video_status === "ready" && !!article.video?.trim();
+  return (
+    article.video_status === "ready" &&
+    !!resolvePlayableVideoUrl(article.video, {
+      coverImage: article.cover_image,
+      videoPoster: article.video_poster,
+    })
+  );
 }
 
 function articleSources(sources: ArticleSource[] | undefined): ArticleSource[] {
@@ -396,10 +406,11 @@ export function derivePublishGate(
 }
 
 export function articlePassedEditorialVerification(article: {
-  verification?: ArticleVerification | null;
+  status?: ArticleStatus;
+  published_at?: string | null;
 }): boolean {
-  return article.verification?.is_verified === true
-    || article.verification?.credibility_checked === true;
+  if (article.status) return article.status === "published";
+  return Boolean(article.published_at);
 }
 
 export function sourceDisplayName(source: ArticleSource): string {

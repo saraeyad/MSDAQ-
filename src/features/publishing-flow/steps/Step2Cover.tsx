@@ -15,7 +15,11 @@ import {
   AI_DETECTION_PROCESSING_STEPS,
   REVERSE_IMAGE_PROCESSING_STEPS,
 } from "@/lib/tool-processing-steps";
-import { absoluteMediaUrlForApi, resolveMediaUrl } from "@/lib/media-url";
+import {
+  absoluteMediaUrlForApi,
+  resolveMediaUrl,
+  resolvePlayableVideoUrl,
+} from "@/lib/media-url";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { ImageVerification_APIs } from "@/services/api/tools";
 import type {
@@ -48,7 +52,11 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
   );
   const [mediaUrl, setMediaUrl] = useState(article.media_url ?? "");
   const [videoPreview, setVideoPreview] = useState(
-    resolveMediaUrl(article.video) ?? "",
+    () =>
+      resolvePlayableVideoUrl(article.video, {
+        coverImage: article.cover_image,
+        videoPoster: article.video_poster,
+      }) ?? "",
   );
   const [videoStatus, setVideoStatus] = useState(article.video_status);
   const audioUpload = useFileUploadProgress();
@@ -71,6 +79,36 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
   const articleId = article.id;
   const mediaType = article.media_type;
 
+  const videoRejectOptions = {
+    coverImage: article.cover_image,
+    videoPoster: article.video_poster,
+  };
+
+  const applyVideoFromArticle = (updated: StaffArticle) => {
+    const playable = resolvePlayableVideoUrl(updated.video, videoRejectOptions);
+
+    if (playable) {
+      setVideoPreview(playable);
+      setVideoStatus(updated.video_status);
+      return;
+    }
+
+    if (!updated.video?.trim()) {
+      setVideoPreview("");
+      setVideoStatus(updated.video_status);
+      return;
+    }
+
+    if (updated.video_status === "ready") {
+      setVideoPreview("");
+      setVideoStatus("failed");
+      return;
+    }
+
+    setVideoPreview("");
+    setVideoStatus(updated.video_status);
+  };
+
   useEffect(() => {
     const url = absoluteMediaUrlForApi(article.cover_image);
     if (url) setPublicCoverUrl(url);
@@ -82,6 +120,17 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
       );
     }
   }, [article.cover_image]);
+
+  useEffect(() => {
+    setMediaUrl(article.media_url ?? "");
+    applyVideoFromArticle(article);
+  }, [
+    article.video,
+    article.video_status,
+    article.cover_image,
+    article.video_poster,
+    article.media_url,
+  ]);
 
   const refreshArticle = async () => {
     await queryClient.invalidateQueries({
@@ -97,13 +146,18 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     const interval = window.setInterval(async () => {
       try {
         const updated = await ArticlesStaff_APIs.getArticle(articleId);
-        setVideoStatus(updated.video_status);
-        setVideoPreview(resolveMediaUrl(updated.video) ?? "");
+        applyVideoFromArticle(updated);
         if (updated.video_status === "ready" || updated.video_status === "failed") {
           window.clearInterval(interval);
-          if (updated.video_status === "ready") {
+          const playable = resolvePlayableVideoUrl(updated.video, {
+            coverImage: updated.cover_image,
+            videoPoster: updated.video_poster,
+          });
+          if (playable) {
             toast.success("الفيديو جاهز");
-          } else {
+          } else if (updated.video_status === "ready" && updated.video?.trim()) {
+            toast.error("تعذّر تشغيل الفيديو — الرابط ليس ملف فيديو صالحاً");
+          } else if (updated.video_status === "failed") {
             toast.error("فشل معالجة الفيديو");
           }
         }
@@ -298,14 +352,13 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     }
   };
 
-  const localArticle: StaffArticle = {
-    ...article,
-    cover_image: preview || article.cover_image,
-    source_audio: audioPreview || article.source_audio,
-    media_url: mediaUrl || article.media_url,
-    video: videoPreview || article.video,
-    video_status: videoStatus,
-  };
+  const playableVideoUrl = resolvePlayableVideoUrl(videoPreview, videoRejectOptions);
+  const hasStoredVideo =
+    !!playableVideoUrl ||
+    !!article.video?.trim() ||
+    videoStatus === "processing";
+  const videoReadyButBroken =
+    videoStatus === "ready" && !!article.video?.trim() && !playableVideoUrl;
 
   const coverSection = (
     <CoverUploadSection
@@ -451,11 +504,24 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
                 </div>
               </div>
             )}
-            {videoPreview && videoStatus === "ready" && (
+            {videoReadyButBroken ? (
+              <div className="publish-flow-loader" role="alert">
+                <div className="publish-flow-loader__copy">
+                  <p className="publish-flow-loader__title">
+                    تعذّر تشغيل الفيديو
+                  </p>
+                  <p className="publish-flow-loader__hint">
+                    السيرفر أعاد رابط صورة بدل ملف فيديو — أعد رفع الفيديو أو
+                    استخدم رابط YouTube.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+            {playableVideoUrl && videoStatus === "ready" && (
               <video
                 controls
                 className="max-h-80 w-full rounded-xl"
-                src={videoPreview}
+                src={playableVideoUrl}
                 poster={resolveMediaUrl(article.video_poster) ?? undefined}
               />
             )}
@@ -475,7 +541,7 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
               >
                 رفع ملف فيديو
               </Button>
-              {videoPreview && (
+              {hasStoredVideo && (
                 <Button variant="outline" onClick={deleteVideo}>
                   <Trash2 className="size-4" />
                   حذف الفيديو

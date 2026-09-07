@@ -24,6 +24,12 @@ const SOCIAL_LINKS = [
   { href: "https://linkedin.com", label: "لينكدإن" },
 ];
 
+const CONTACT = {
+  email: "cdmc@cdmcgaza.ps",
+  phone: "00970592432020",
+  address: "غزة – شارع النصر",
+} as const;
+
 const MAP_EMBED =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d108716.77!2d34.3!3d31.5!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1500492432b8c4b1%3A0x7c0e0e0e0e0e0e0e!2sGaza%20City!5e0!3m2!1sen!2sps!4v1700000000000!5m2!1sen!2sps";
 
@@ -41,8 +47,8 @@ export function SiteFooter() {
         <div className="lg:col-span-3">
           <BrandLogo linkToHome size="lg" onDark />
           <p className="mt-4 text-sm leading-relaxed text-white/70">
-            صبارة بوست — منصة إعلامية موثوقة تمكّن المجتمع من مواجهة
-            المعلومات المضللة.
+            صبارة بوست — منصة إعلامية موثوقة تمكّن المجتمع من مواجهة المعلومات
+            المضللة.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             {SOCIAL_LINKS.map((social) => (
@@ -74,7 +80,10 @@ export function SiteFooter() {
                       {section.children.map((child, index) => (
                         <span key={child.to}>
                           {index > 0 ? (
-                            <span className="site-footer-section__dot" aria-hidden>
+                            <span
+                              className="site-footer-section__dot"
+                              aria-hidden
+                            >
                               ·
                             </span>
                           ) : null}
@@ -132,11 +141,11 @@ export function SiteFooter() {
             </p>
             <p className="flex items-center gap-2">
               <Mail className="size-4 shrink-0 text-primary" />
-              صبارة بوست
+              {CONTACT.email}
             </p>
             <p className="flex items-center gap-2">
               <Phone className="size-4 shrink-0 text-primary" />
-              +970 000 000 000
+              {CONTACT.phone}
             </p>
           </div>
         </div>

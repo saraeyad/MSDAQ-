@@ -18,7 +18,7 @@ export default function TrustIndexPlatformPage() {
   const defaultRange = getDefaultDateRange();
   const [draftDates, setDraftDates] = useState(defaultRange);
   const [appliedDates, setAppliedDates] = useState(defaultRange);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const hasActiveFilter = !isAllDatesRange(appliedDates);
 
@@ -29,19 +29,27 @@ export default function TrustIndexPlatformPage() {
   const categories = categoriesQuery.data ?? [];
 
   const categoryParams = useMemo(() => {
-    if (!selectedCategory) return undefined;
-    const selected = findCategoryByFilterKey(categories, selectedCategory);
-    if (!selected) return undefined;
-    const ids = collectCategoryIntegerIds(selected);
-    return ids.length ? ids : undefined;
-  }, [categories, selectedCategory]);
+    if (!selectedCategories.length) return undefined;
+
+    const ids = new Set<number>();
+    for (const key of selectedCategories) {
+      const selected = findCategoryByFilterKey(categories, key);
+      if (!selected) continue;
+      for (const id of collectCategoryIntegerIds(selected)) {
+        ids.add(id);
+      }
+    }
+
+    const list = [...ids];
+    return list.length ? list : undefined;
+  }, [categories, selectedCategories]);
 
   const summaryQuery = useQuery({
     queryKey: [
       "trust-index-platform-summary",
       appliedDates.start,
       appliedDates.end,
-      selectedCategory,
+      selectedCategories,
     ],
     queryFn: () =>
       TrustIndex_APIs.platformSummary({
@@ -77,9 +85,10 @@ export default function TrustIndexPlatformPage() {
           title="الملخص"
           headerActions={
             <TrustCategoryFilter
+              variant="header"
               categories={categories}
-              value={selectedCategory}
-              onChange={(next) => setSelectedCategory(next ?? "")}
+              value={selectedCategories}
+              onChange={setSelectedCategories}
               disabled={summaryQuery.isFetching}
             />
           }

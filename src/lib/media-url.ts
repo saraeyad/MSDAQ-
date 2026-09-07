@@ -146,3 +146,134 @@ export function publicArticleCoverUrl(article: {
   const first = article.images?.[0];
   return resolveMediaUrl(first?.full ?? first?.thumb ?? null);
 }
+
+const IMAGE_EXTENSION = /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?.*)?$/i;
+const VIDEO_EXTENSION =
+  /\.(mp4|webm|ogg|ogv|mov|m4v|avi|mkv|m3u8?|mpd)(\?.*)?$/i;
+const EMBED_HOST =
+  /(?:youtube\.com|youtu\.be|vimeo\.com|soundcloud\.com|dailymotion\.com)/i;
+
+function youtubeVideoId(url: string): string | null {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  const withProtocol = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  const fromQuery = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+  if (fromQuery?.[1]) return fromQuery[1];
+
+  const fromShort = trimmed.match(
+    /(?:youtu\.be\/|youtube\.com\/(?:embed|shorts|live|v)\/)([a-zA-Z0-9_-]{11})/i,
+  );
+  if (fromShort?.[1]) return fromShort[1];
+
+  try {
+    const parsed = new URL(withProtocol);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    const isYoutube = host === "youtu.be" || host.endsWith("youtube.com");
+    if (!isYoutube) return null;
+
+    if (host === "youtu.be") {
+      const id = parsed.pathname.split("/").filter(Boolean)[0] ?? "";
+      return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : id || null;
+    }
+
+    const fromParam = parsed.searchParams.get("v");
+    if (fromParam) return fromParam;
+
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const marker = parts.findIndex((part) =>
+      ["embed", "shorts", "live", "v"].includes(part),
+    );
+    if (marker >= 0 && parts[marker + 1]) return parts[marker + 1];
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+/** YouTube watch/share URL → embeddable iframe src, or null. */
+export function youtubeEmbedUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null;
+  const id = youtubeVideoId(url);
+  if (!id) return null;
+  return `https://www.youtube.com/embed/${id}`;
+}
+
+function normalizeMediaPath(url: string): string {
+  try {
+    const parsed = new URL(url, "http://local");
+    return parsed.pathname.toLowerCase();
+  } catch {
+    return url.toLowerCase().split("?")[0] ?? url.toLowerCase();
+  }
+}
+
+/** True when the URL points at an image, not a video file. */
+export function isImageMediaUrl(url: string | null | undefined): boolean {
+  if (!url?.trim()) return false;
+  const trimmed = url.trim();
+  if (trimmed.startsWith("data:image")) return true;
+  return IMAGE_EXTENSION.test(trimmed);
+}
+
+export interface PlayableVideoOptions {
+  /** Raw or resolved URLs that must not be treated as video (cover, poster, etc.). */
+  rejectUrls?: Array<string | null | undefined>;
+}
+
+/**
+ * Whether a URL is safe to pass to `<video src>`.
+ * Rejects image paths, embed pages, and URLs that match cover/poster fields.
+ */
+export function isPlayableVideoUrl(
+  url: string | null | undefined,
+  options?: PlayableVideoOptions,
+): boolean {
+  if (!url?.trim()) return false;
+  const trimmed = url.trim();
+
+  if (trimmed.startsWith("blob:")) return true;
+  if (isImageMediaUrl(trimmed)) return false;
+  if (EMBED_HOST.test(trimmed)) return false;
+
+  const path = normalizeMediaPath(trimmed);
+  for (const reject of options?.rejectUrls ?? []) {
+    if (!reject?.trim()) continue;
+    const resolvedReject = resolveMediaUrl(reject);
+    if (resolvedReject && normalizeMediaPath(resolvedReject) === path) {
+      return false;
+    }
+    if (normalizeMediaPath(reject) === path) return false;
+  }
+
+  if (VIDEO_EXTENSION.test(trimmed)) return true;
+  if (/\/videos?\//i.test(trimmed) && !/\/cover/i.test(trimmed)) return true;
+
+  return false;
+}
+
+/** Resolve and validate a stored video URL for HTML5 playback. */
+export function resolvePlayableVideoUrl(
+  videoUrl: string | null | undefined,
+  options?: PlayableVideoOptions & {
+    coverImage?: string | null;
+    videoPoster?: string | null;
+  },
+): string | null {
+  const resolved = resolveMediaUrl(videoUrl);
+  if (!resolved) return null;
+
+  const rejectUrls = [
+    ...(options?.rejectUrls ?? []),
+    videoUrl,
+    options?.coverImage,
+    options?.videoPoster,
+  ];
+
+  if (!isPlayableVideoUrl(resolved, { rejectUrls })) return null;
+  return resolved;
+}

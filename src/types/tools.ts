@@ -76,7 +76,9 @@ export interface Transcript {
   original_filename: string;
   file_size: number;
   status: "processing" | "completed" | "failed";
-  transcript: string | null;
+  /** Omitted by API while status is processing. */
+  transcript?: string | null;
+  error_message?: string | null;
   is_saved: boolean;
   saved_at: string | null;
   saved_by?: string | null;
@@ -84,6 +86,12 @@ export interface Transcript {
   created_by?: Pick<User, "id" | "name"> | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface TranscriptStatus {
+  id: number;
+  status: "processing" | "completed" | "failed";
+  error_message?: string | null;
 }
 
 export interface SmartEditorResult {

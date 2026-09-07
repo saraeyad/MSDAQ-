@@ -1,4 +1,3 @@
-import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +26,7 @@ import { paginateList, TABLE_PAGE_SIZE } from "@/lib/table-pagination";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl } from "@/lib/media-url";
 import { formatStepProgress, inferArticleStep } from "@/lib/publish-gate";
+import { articleReviewThresholds } from "@/lib/trust-index-labels";
 import { cn } from "@/lib/utils";
 import {
   PERMISSIONS,
@@ -77,6 +77,8 @@ function StaffArticleCard({
 }) {
   const coverUrl = resolveMediaUrl(article.cover_image);
   const editStep = inferArticleStep(article);
+  const { target: reviewTarget, max: reviewMax } =
+    articleReviewThresholds(article);
 
   return (
     <article className="newsroom-article-card">
@@ -101,7 +103,6 @@ function StaffArticleCard({
               </span>
             ) : null}
             <StatusBadge status={article.status} />
-            <ArticleVerifiedBadge article={article} />
           </div>
 
           <Link
@@ -125,6 +126,22 @@ function StaffArticleCard({
               </span>
             ) : null}
             <span>{new Date(article.updated_at).toLocaleDateString("ar")}</span>
+            {reviewTarget != null || reviewMax != null ? (
+              <span className="newsroom-article-card__reviews">
+                <span
+                  className="newsroom-article-card__review-pill"
+                  data-empty={reviewTarget == null ? "true" : "false"}
+                >
+                  هدف {reviewTarget != null ? reviewTarget.toLocaleString("ar") : "—"}
+                </span>
+                <span
+                  className="newsroom-article-card__review-pill newsroom-article-card__review-pill--max"
+                  data-empty={reviewMax == null ? "true" : "false"}
+                >
+                  حد {reviewMax != null ? reviewMax.toLocaleString("ar") : "—"}
+                </span>
+              </span>
+            ) : null}
           </div>
         </div>
       </div>

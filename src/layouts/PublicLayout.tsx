@@ -7,15 +7,28 @@ import { PlatformFeedbackProvider } from "@/context/platform-feedback";
 import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/PlatformFeedbackFab";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
-import { ROUTES } from "@/router/routes";
+import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { LogIn } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
 import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
 
 export default function PublicLayout() {
-  const { token } = useAuth();
-  const authHref = token ? ROUTES.NEWSROOM : ROUTES.LOGIN;
-  const authLabel = token ? "مساحة العمل" : "تسجيل الدخول";
+  const { token, hasAnyPermission } = useAuth();
+  const canOpenWorkspace = hasAnyPermission([
+    PERMISSIONS.VIEW_ARTICLES,
+    PERMISSIONS.VIEW_ADMIN_DASHBOARD,
+    PERMISSIONS.ACCESS_TOOLS,
+  ]);
+  const authHref = token
+    ? canOpenWorkspace
+      ? ROUTES.NEWSROOM
+      : undefined
+    : ROUTES.LOGIN;
+  const authLabel = token
+    ? canOpenWorkspace
+      ? "مساحة العمل"
+      : undefined
+    : "تسجيل الدخول";
 
   return (
     <PlatformFeedbackProvider>
@@ -28,12 +41,14 @@ export default function PublicLayout() {
             <DesktopSiteNav />
             <div className="ms-auto flex shrink-0 items-center gap-2">
               <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
-              <Button asChild size="sm" className="hidden gap-2 lg:inline-flex">
-                <Link to={authHref}>
-                  {!token ? <LogIn className="size-4" /> : null}
-                  {authLabel}
-                </Link>
-              </Button>
+              {authHref && authLabel ? (
+                <Button asChild size="sm" className="hidden gap-2 lg:inline-flex">
+                  <Link to={authHref}>
+                    {!token ? <LogIn className="size-4" /> : null}
+                    {authLabel}
+                  </Link>
+                </Button>
+              ) : null}
               <MobileSiteNav authHref={authHref} authLabel={authLabel} />
             </div>
           </div>

@@ -11,6 +11,7 @@ import { StarRatingInput } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api-data";
 import {
+  isPublicFeedbackClosed,
   isPublicFeedbackNotFound,
   isPublicFeedbackRateLimited,
 } from "@/lib/public-feedback-errors";
@@ -26,6 +27,7 @@ interface TrustIndexDialogProps {
   articleId: number | string;
   open: boolean;
   onDismiss: () => void;
+  onSubmitted?: () => void;
 }
 
 const INITIAL_SCORES: TrustIndexSubmitPayload = {
@@ -40,6 +42,7 @@ export function TrustIndexDialog({
   articleId,
   open,
   onDismiss,
+  onSubmitted,
 }: TrustIndexDialogProps) {
   const [scores, setScores] = useState(INITIAL_SCORES);
 
@@ -57,6 +60,7 @@ export function TrustIndexDialog({
     },
     onSuccess: () => {
       toast.success("شكراً — تم تسجيل تقييمك");
+      onSubmitted?.();
       onDismiss();
       setScores(INITIAL_SCORES);
     },
@@ -67,6 +71,12 @@ export function TrustIndexDialog({
       }
       if (isPublicFeedbackNotFound(error)) {
         toast.error("هذا المقال لم يعد متاحاً");
+        onDismiss();
+        return;
+      }
+      if (isPublicFeedbackClosed(error)) {
+        toast.error("اكتمل عدد التقييمات لهذا المقال");
+        onSubmitted?.();
         onDismiss();
         return;
       }

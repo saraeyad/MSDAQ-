@@ -1,4 +1,5 @@
 import { SmartEditorToolbar } from "@/features/tools/smart-editor/SmartEditorToolbar";
+import { TranscriptProcessingInline } from "@/features/tools/components/TranscriptProcessingInline";
 import { Button } from "@/components/ui/button";
 import { FileUploadProgressCard } from "@/components/ui/file-upload-progress";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
@@ -6,19 +7,18 @@ import { StepActionsRow } from "@/features/publishing-flow/components/StepAction
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
-import { ToolProcessingDialog } from "@/features/tools/components/ToolProcessingDialog";
+import { useTranscriptStatusPoll } from "@/hooks/useTranscriptStatusPoll";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { resolveMediaUrl } from "@/lib/media-url";
+import { sttInflightArticleKey } from "@/lib/transcript-status-poll";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
-import { Transcripts_APIs } from "@/services/api/transcripts";
 import type { ArticleImage } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Mic, PenLine, Upload } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { getToolBySlug } from "@/features/tools/tool-config";
-import { STT_PROCESSING_STEPS } from "@/lib/tts-limits";
 import { STT_ACCEPT_ATTR, validateSttAudioFile } from "@/lib/voice-audio";
 
 const STT_LABEL =
@@ -44,51 +44,36 @@ export function Step3Body({
   const [bodyImages, setBodyImages] = useState(images);
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const audioUpload = useFileUploadProgress();
-  const [transcriptJobId, setTranscriptJobId] = useState<number | null>(null);
   const [pendingTranscript, setPendingTranscript] = useState<string | null>(
     null,
   );
   const imageRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!transcriptJobId) return;
+  const handlePollCompleted = useCallback((transcript: { transcript?: string | null }) => {
+    const text = transcript.transcript?.trim();
+    if (text) {
+      setPendingTranscript(text);
+      toast.success("اكتمل التفريغ — يمكنك إدراج النص في المقال");
+    }
+  }, []);
 
-    let cancelled = false;
-    const poll = async () => {
-      try {
-        const job = await Transcripts_APIs.get(transcriptJobId);
-        if (cancelled) return;
+  const handlePollFailed = useCallback((errorMessage: string | null) => {
+    toast.error(errorMessage?.trim() || "فشل التفريغ");
+  }, []);
 
-        if (job.status === "completed" && job.transcript?.trim()) {
-          setPendingTranscript(job.transcript.trim());
-          setTranscriptJobId(null);
-          toast.success("اكتمل التفريغ — يمكنك إدراج النص في المقال");
-          return;
-        }
+  const sttPoll = useTranscriptStatusPoll({
+    storageKey: sttInflightArticleKey(articleId),
+    onCompleted: handlePollCompleted,
+    onFailed: handlePollFailed,
+  });
 
-        if (job.status === "failed") {
-          setTranscriptJobId(null);
-          toast.error("فشل التفريغ");
-          return;
-        }
-      } catch {
-        if (!cancelled) {
-          setTranscriptJobId(null);
-          toast.error("تعذّر متابعة حالة التفريغ");
-        }
-      }
-    };
-
-    void poll();
-    const interval = window.setInterval(poll, 4000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [transcriptJobId]);
+  const isSttBusy =
+    uploadingAudio ||
+    audioUpload.progress?.status === "uploading" ||
+    sttPoll.isProcessing;
 
   const handleSave = async () => {
     setSaving(true);
@@ -130,9 +115,11 @@ export function Step3Body({
       return;
     }
 
+    sttPoll.resetPoll();
     setPendingTranscript(null);
-    setTranscribing(true);
+    setUploadingAudio(true);
     audioUpload.start(file);
+
     try {
       const result = await ArticlesStaff_APIs.speechToText(articleId, file, {
         onUploadProgress: audioUpload.onUploadProgress,
@@ -140,25 +127,17 @@ export function Step3Body({
       audioUpload.complete();
       window.setTimeout(audioUpload.reset, 1200);
 
-      if (result.status === "completed" && result.transcript?.trim()) {
-        setPendingTranscript(result.transcript.trim());
-        toast.success("اكتمل التفريغ — يمكنك إدراج النص في المقال");
-        return;
-      }
-
       if (result.status === "processing") {
-        setTranscriptJobId(result.id);
         toast.success("بدأ التفريغ — سيتم عرض النص عند الانتهاء");
-        return;
       }
 
-      toast.error("فشل التفريغ");
+      sttPoll.trackTranscript(result);
     } catch (err) {
       const message = getApiErrorMessage(err);
       audioUpload.fail(message);
       toast.error(message);
     } finally {
-      setTranscribing(false);
+      setUploadingAudio(false);
       if (audioRef.current) audioRef.current.value = "";
     }
   };
@@ -186,18 +165,6 @@ export function Step3Body({
 
   return (
     <div className="space-y-4">
-      <ToolProcessingDialog
-        open={
-          !!transcriptJobId ||
-          (transcribing &&
-            (!audioUpload.progress || audioUpload.progress.progress >= 99))
-        }
-        title="جاري تفريغ الصوت"
-        steps={STT_PROCESSING_STEPS}
-        description="قد يستغرق التفريغ عدة دقائق حسب طول التسجيل — يُرجى الانتظار وعدم إغلاق الصفحة."
-        className="publish-flow-processing"
-      />
-
       <div className="publish-step-intro">
         <p className="publish-step-intro__lead">
           اختر كيف تريد إعداد محتوى المقال:
@@ -249,13 +216,23 @@ export function Step3Body({
             errorMessage={audioUpload.progress.error}
           />
         ) : null}
+
+        {sttPoll.uiState.kind !== "idle" && (
+          <TranscriptProcessingInline
+            state={sttPoll.uiState}
+            onRecheck={() => void sttPoll.manualRecheck()}
+            rechecking={sttPoll.rechecking}
+          />
+        )}
+
         <Button
           variant="outline"
           size="sm"
           onClick={() => audioRef.current?.click()}
-          disabled={transcribing || !!transcriptJobId}
+          disabled={isSttBusy}
         >
-          {transcriptJobId ? "جاري التفريغ..." : STT_LABEL}
+          {isSttBusy && <Loader2 className="size-4 animate-spin" />}
+          {sttPoll.isProcessing ? "جاري التفريغ..." : STT_LABEL}
         </Button>
       </div>
 

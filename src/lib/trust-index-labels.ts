@@ -125,6 +125,48 @@ export function trustMediaThresholdReached(progress: {
   return false;
 }
 
+function firstFiniteNumber(
+  ...values: Array<number | string | null | undefined>
+): number | null {
+  for (const value of values) {
+    if (value == null || value === "") continue;
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+export function articleReviewThresholds(article: {
+  review_target?: number | null;
+  reviewTarget?: number | null;
+  target?: number | null;
+  review_limit?: number | null;
+  reviewLimit?: number | null;
+  maxReviewsCount?: number | null;
+  max_reviews_count?: number | null;
+}): { target: number | null; max: number | null } {
+  return {
+    target: firstFiniteNumber(
+      article.review_target,
+      article.reviewTarget,
+      article.target,
+    ),
+    max: firstFiniteNumber(
+      article.maxReviewsCount,
+      article.max_reviews_count,
+      article.reviewLimit,
+      article.review_limit,
+    ),
+  };
+}
+
+export function articleAcceptsPublicReviews(article: {
+  hasReachedLimit?: boolean | null;
+  has_reached_review_limit?: boolean | null;
+}): boolean {
+  return article.hasReachedLimit !== true && article.has_reached_review_limit !== true;
+}
+
 export function trustIndexDismissKey(articleId: number | string): string {
   return `trust-index-dismissed:${String(articleId)}`;
 }

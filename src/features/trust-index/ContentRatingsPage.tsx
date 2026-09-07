@@ -12,6 +12,7 @@ import {
   trustBandClass,
   trustBandLabel,
   TRUST_DIMENSIONS,
+  articleReviewThresholds,
 } from "@/lib/trust-index-labels";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { TrustIndex_APIs } from "@/services/api/trust-index";
@@ -120,6 +121,8 @@ function ContentRatingsSidebarItem({
 }) {
   const coverUrl = resolveMediaUrl(article.cover_image);
   const count = summary?.count ?? 0;
+  const { target: reviewTarget, max: reviewMax } =
+    articleReviewThresholds(article);
 
   return (
     <button
@@ -147,7 +150,16 @@ function ContentRatingsSidebarItem({
         ) : null}
         <span className="content-ratings-sidebar__title">{article.title}</span>
         <span className="content-ratings-sidebar__meta">
-          {count > 0 ? `${count} استجابة` : "بلا استجابات"}
+          {count > 0
+            ? reviewMax != null
+              ? `${count.toLocaleString("ar")} / ${reviewMax.toLocaleString("ar")} استجابة`
+              : `${count.toLocaleString("ar")} استجابة`
+            : reviewMax != null
+              ? `0 / ${reviewMax.toLocaleString("ar")} استجابة`
+              : "بلا استجابات"}
+          {reviewTarget != null
+            ? ` · هدف ${reviewTarget.toLocaleString("ar")}`
+            : null}
           {" · "}
           {new Date(article.updated_at).toLocaleDateString("ar")}
         </span>
@@ -172,6 +184,8 @@ function ContentRatingsDetailPanel({
   summaryLoading: boolean;
 }) {
   const coverUrl = resolveMediaUrl(article.cover_image);
+  const { target: reviewTarget, max: reviewMax } =
+    articleReviewThresholds(article);
 
   return (
     <div className="content-ratings-detail">
@@ -197,6 +211,16 @@ function ContentRatingsDetailPanel({
             <span className="content-ratings-detail__chip">
               {mediaTypeLabel(article.media_type)}
             </span>
+            {reviewTarget != null ? (
+              <span className="content-ratings-detail__chip content-ratings-detail__chip--target">
+                هدف التقييم: {reviewTarget.toLocaleString("ar")}
+              </span>
+            ) : null}
+            {reviewMax != null ? (
+              <span className="content-ratings-detail__chip content-ratings-detail__chip--max">
+                حد الاستجابات: {reviewMax.toLocaleString("ar")}
+              </span>
+            ) : null}
           </div>
           <h2 className="content-ratings-detail__title">{article.title}</h2>
           <p className="content-ratings-detail__byline">
@@ -237,7 +261,9 @@ function ContentRatingsDetailPanel({
             <p className="content-ratings-detail__summary-count">
               {summaryLoading
                 ? "جاري التحميل…"
-                : `${summary?.count ?? 0} استجابة من القرّاء`}
+                : reviewMax != null
+                  ? `${(summary?.count ?? 0).toLocaleString("ar")} / ${reviewMax.toLocaleString("ar")} استجابة من القرّاء`
+                  : `${summary?.count ?? 0} استجابة من القرّاء`}
             </p>
           </div>
         </div>

@@ -149,6 +149,15 @@ function isPositiveIntegerId(id: unknown): boolean {
   return false;
 }
 
+export function resolveCategoryIntegerId(
+  tree: CategoryFilterNode[],
+  key: string,
+): number | null {
+  const node = findCategoryByFilterKey(tree, key);
+  if (!node || !isPositiveIntegerId(node.id)) return null;
+  return Number(node.id);
+}
+
 /** Trust-index APIs validate `categories.*` as integers. */
 export function collectCategoryIntegerIds(category: CategoryFilterNode): number[] {
   const ids = new Set<number>();

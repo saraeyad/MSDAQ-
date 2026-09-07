@@ -1,10 +1,13 @@
 import { articlePassedEditorialVerification } from "@/lib/publish-gate";
 import { cn } from "@/lib/utils";
-import type { ArticleVerification } from "@/types";
+import type { ArticleStatus } from "@/types";
 import { useId } from "react";
 
 interface ArticleVerifiedBadgeProps {
-  article: { verification?: ArticleVerification | null };
+  article: {
+    status?: ArticleStatus;
+    published_at?: string | null;
+  };
   className?: string;
   compact?: boolean;
 }
@@ -70,7 +73,7 @@ export function ArticleVerifiedBadge({
         compact && "article-verified-badge--compact",
         className,
       )}
-      title="تم فحص المصداقية"
+      title="مقال منشور"
     >
       <VerifiedSeal className="article-verified-badge__icon" />
       {compact ? (

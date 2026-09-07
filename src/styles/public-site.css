@@ -1009,7 +1009,9 @@
     color: #b45309;
   }
 
-  .site-nav-parent-row:hover > .site-nav-parent-link .site-nav-parent-link__chevron {
+  .site-nav-parent-row:hover
+    > .site-nav-parent-link
+    .site-nav-parent-link__chevron {
     opacity: 0.9;
     color: #b45309;
     transform: translateX(-2px);

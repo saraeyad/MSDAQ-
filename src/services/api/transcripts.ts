@@ -4,6 +4,7 @@ import type {
   PaginatedListResult,
   PaginatedResponse,
   Transcript,
+  TranscriptStatus,
 } from "@/types";
 import API from "./api.repository";
 
@@ -18,6 +19,13 @@ export const Transcripts_APIs = {
   get: async (id: number | string): Promise<Transcript> => {
     const response = await API.get<ApiResponse<Transcript>>(
       `/api/transcripts/${id}`,
+    );
+    return getApiData(response);
+  },
+
+  getStatus: async (id: number | string): Promise<TranscriptStatus> => {
+    const response = await API.get<ApiResponse<TranscriptStatus>>(
+      `/api/transcripts/${id}/status`,
     );
     return getApiData(response);
   },

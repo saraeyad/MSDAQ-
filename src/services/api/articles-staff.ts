@@ -4,7 +4,6 @@ import { normalizeStandardsResult } from "@/lib/standards-normalize";
 import { appendSttAudioField } from "@/lib/voice-audio";
 import {
   STANDARDS_REQUEST_TIMEOUT_MS,
-  STT_REQUEST_TIMEOUT_MS,
   TTS_REQUEST_TIMEOUT_MS,
 } from "@/lib/tts-limits";
 import type {
@@ -198,7 +197,7 @@ export const ArticlesStaff_APIs = {
     const response = await API.postFormData<ApiResponse<Transcript>>(
       articleUrl(id, "/speech-to-text"),
       formData,
-      { timeout: STT_REQUEST_TIMEOUT_MS, ...options },
+      options,
     );
     return getApiData(response);
   },

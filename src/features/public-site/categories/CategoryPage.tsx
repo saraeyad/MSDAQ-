@@ -98,7 +98,6 @@ export default function CategoryPage({
       {jsonLd ? <JsonLd data={jsonLd} /> : null}
 
       <CategoryFeedView
-        badge={categoryName ?? ""}
         title={categoryName ?? ""}
         headerLoading={headerLoading}
         description={category?.description}

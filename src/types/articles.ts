@@ -89,7 +89,12 @@ export interface StaffArticle {
   video_poster: string | null;
   video_status: VideoStatus;
   review_target?: number | null;
+  reviewTarget?: number | null;
+  target?: number | null;
   review_limit?: number | null;
+  reviewLimit?: number | null;
+  maxReviewsCount?: number | null;
+  hasReachedLimit?: boolean;
   verification?: ArticleVerification;
   created_at: string;
   updated_at: string;
@@ -212,6 +217,10 @@ export interface PublicArticle {
   seo?: ArticleSeo;
   gate?: ArticleGate;
   verification?: ArticleVerification;
+  /** True when public review submissions have hit `review_limit`. */
+  hasReachedLimit?: boolean;
+  /** Legacy snake_case alias some responses still send. */
+  has_reached_review_limit?: boolean;
 }
 
 export interface PublishGateCheck {

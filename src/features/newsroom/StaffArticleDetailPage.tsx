@@ -1,4 +1,3 @@
-import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { StatusBadge } from "@/features/admin/components/StatusBadge";
 import { PublishGatePanel } from "@/features/publishing-flow/components/PublishGatePanel";
@@ -10,8 +9,9 @@ import { RescheduleArticleDialog } from "@/features/newsroom/RescheduleArticleDi
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
-import { resolveMediaUrl } from "@/lib/media-url";
+import { resolveMediaUrl, resolvePlayableVideoUrl } from "@/lib/media-url";
 import { derivePublishGate, inferArticleStep } from "@/lib/publish-gate";
+import { articleAcceptsPublicReviews, articleReviewThresholds } from "@/lib/trust-index-labels";
 import { cn } from "@/lib/utils";
 import {
   ARTICLE_TRUST_FEEDBACK_HASH,
@@ -171,13 +171,16 @@ export default function StaffArticleDetailPage() {
   const gate = derivePublishGate(article);
   const editStep = inferArticleStep(article);
   const coverUrl = resolveMediaUrl(article.cover_image);
-  const videoUrl = resolveMediaUrl(article.video);
+  const playableVideoUrl = resolvePlayableVideoUrl(article.video, {
+    coverImage: article.cover_image,
+    videoPoster: article.video_poster,
+  });
   const sourceAudioUrl = resolveMediaUrl(article.source_audio);
   const generatedAudioUrl = resolveMediaUrl(article.generated_audio);
   const hasMedia =
     coverUrl ||
     article.media_url ||
-    videoUrl ||
+    playableVideoUrl ||
     sourceAudioUrl ||
     generatedAudioUrl ||
     article.video_status;
@@ -185,6 +188,11 @@ export default function StaffArticleDetailPage() {
     article.content.formal?.trim() ||
     article.content.simplified?.trim() ||
     article.content.dialect?.trim();
+  const { target: reviewTarget, max: reviewMax } =
+    articleReviewThresholds(article);
+  const acceptingReviews = articleAcceptsPublicReviews(article);
+  const formatThreshold = (value: number | null) =>
+    value != null ? value.toLocaleString("ar") : "غير محدد";
 
   return (
     <div className="staff-article-page">
@@ -257,7 +265,6 @@ export default function StaffArticleDetailPage() {
                 {article.category.name_ar}
               </span>
             ) : null}
-            <ArticleVerifiedBadge article={article} />
           </div>
 
           <h1 className="staff-article-hero__title">{article.title}</h1>
@@ -288,20 +295,6 @@ export default function StaffArticleDetailPage() {
             </div>
           )}
 
-          {(article.review_target != null || article.review_limit != null) && (
-            <div className="staff-article-hero__thresholds">
-              {article.review_target != null ? (
-                <span className="staff-article-chip staff-article-chip--muted">
-                  هدف التقييم: {article.review_target.toLocaleString("ar")}
-                </span>
-              ) : null}
-              {article.review_limit != null ? (
-                <span className="staff-article-chip staff-article-chip--muted">
-                  حد الاستجابات: {article.review_limit.toLocaleString("ar")}
-                </span>
-              ) : null}
-            </div>
-          )}
         </div>
       </header>
 
@@ -346,8 +339,17 @@ export default function StaffArticleDetailPage() {
                 </p>
               ) : null}
 
-              {videoUrl ? (
-                <video controls className="staff-article-video" src={videoUrl} />
+              {playableVideoUrl ? (
+                <video
+                  controls
+                  className="staff-article-video"
+                  src={playableVideoUrl}
+                />
+              ) : article.video?.trim() &&
+                article.video_status === "ready" ? (
+                <p className="staff-article-media-note" role="alert">
+                  تعذّر تشغيل الفيديو — الرابط المخزّن ليس ملف فيديو صالحاً.
+                </p>
               ) : null}
 
               {sourceAudioUrl ? (
@@ -422,6 +424,47 @@ export default function StaffArticleDetailPage() {
         </div>
 
         <aside className="staff-article-aside">
+          <div
+            className="staff-article-review-limits"
+            data-closed={acceptingReviews ? "false" : "true"}
+          >
+            <div className="staff-article-review-limits__head">
+              <p className="staff-article-review-limits__kicker">تقييم القرّاء</p>
+              <span
+                className={
+                  acceptingReviews
+                    ? "staff-article-review-limits__status staff-article-review-limits__status--open"
+                    : "staff-article-review-limits__status"
+                }
+              >
+                {acceptingReviews ? "مفتوح" : "مكتمل"}
+              </span>
+            </div>
+            <div className="staff-article-review-limits__grid">
+              <div
+                className="staff-article-review-limits__metric"
+                data-empty={reviewTarget == null ? "true" : "false"}
+              >
+                <span className="staff-article-review-limits__value">
+                  {formatThreshold(reviewTarget)}
+                </span>
+                <span className="staff-article-review-limits__label">
+                  هدف التقييم
+                </span>
+              </div>
+              <div
+                className="staff-article-review-limits__metric staff-article-review-limits__metric--max"
+                data-empty={reviewMax == null ? "true" : "false"}
+              >
+                <span className="staff-article-review-limits__value">
+                  {formatThreshold(reviewMax)}
+                </span>
+                <span className="staff-article-review-limits__label">
+                  حد الاستجابات
+                </span>
+              </div>
+            </div>
+          </div>
           <div className="staff-article-gate">
             <PublishGatePanel gate={gate} />
           </div>

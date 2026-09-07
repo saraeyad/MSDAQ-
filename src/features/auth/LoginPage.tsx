@@ -6,11 +6,24 @@ import { useAuth } from "@/context/auth";
 import { getApiData, getApiErrorMessage } from "@/lib/api-data";
 import { Auth_APIs } from "@/services/api/auth";
 import { normalizeAuthUser } from "@/context/types";
-import { PERMISSIONS, ROUTES } from "@/router/routes";
+import { ROUTES } from "@/router/routes";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+
+function safeInternalPath(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const path = decodeURIComponent(value);
+    if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) {
+      return null;
+    }
+    return path;
+  } catch {
+    return null;
+  }
+}
 
 export default function LoginPage() {
   const { saveAuth } = useAuth();
@@ -28,14 +41,8 @@ export default function LoginPage() {
       const { token, user } = getApiData(response);
       saveAuth(token, normalizeAuthUser(user));
 
-      const redirect = searchParams.get("redirect");
-      const hasAdmin = user.permissions?.includes(
-        PERMISSIONS.VIEW_ADMIN_DASHBOARD,
-      );
-      const defaultRoute = hasAdmin ? ROUTES.ADMIN : ROUTES.NEWSROOM;
-      navigate(redirect ? decodeURIComponent(redirect) : defaultRoute, {
-        replace: true,
-      });
+      const redirect = safeInternalPath(searchParams.get("redirect"));
+      navigate(redirect ?? ROUTES.HOME, { replace: true });
       toast.success(response.data.message || "مرحباً بك");
     } catch (err) {
       toast.error(getApiErrorMessage(err));
@@ -51,7 +58,7 @@ export default function LoginPage() {
           <BrandLogo size="lg" linkToHome={false} />
           <div>
             <h1 className="login-card__title">تسجيل الدخول</h1>
-            <p className="login-card__subtitle">منصة صبارة بوست — للموظفين فقط</p>
+            <p className="login-card__subtitle">منصة صبارة بوست</p>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">

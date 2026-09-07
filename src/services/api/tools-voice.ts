@@ -1,6 +1,6 @@
 import { getApiData, parsePaginatedListResponse } from "@/lib/api-data";
 import { appendSttAudioField } from "@/lib/voice-audio";
-import { TTS_REQUEST_TIMEOUT_MS, STT_REQUEST_TIMEOUT_MS } from "@/lib/tts-limits";
+import { TTS_REQUEST_TIMEOUT_MS } from "@/lib/tts-limits";
 import type {
   ApiResponse,
   GeneratedAudio,
@@ -38,7 +38,7 @@ export const ToolsVoice_APIs = {
     const response = await API.postFormData<ApiResponse<Transcript>>(
       "/api/tools/speech-to-text",
       formData,
-      { timeout: STT_REQUEST_TIMEOUT_MS, ...options },
+      options,
     );
     return getApiData(response);
   },

@@ -6,16 +6,16 @@ import { FileUploadProgressCard } from "@/components/ui/file-upload-progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
+import { useTranscriptStatusPoll } from "@/hooks/useTranscriptStatusPoll";
 import { Textarea } from "@/components/ui/textarea";
+import { TranscriptProcessingInline } from "@/features/tools/components/TranscriptProcessingInline";
 import { VoiceDraftNotice } from "@/features/tools/components/VoiceDraftNotice";
-import {
-  runWithToolProcessing,
-  ToolProcessingDialog,
-} from "@/features/tools/components/ToolProcessingDialog";
 import { useAuth } from "@/context/auth";
 import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import { getApiErrorMessage } from "@/lib/api-data";
-import { STT_PROCESSING_STEPS } from "@/lib/tts-limits";
+import {
+  STT_INFLIGHT_STANDALONE_KEY,
+} from "@/lib/transcript-status-poll";
 import {
   STT_ACCEPT_ATTR,
   validateSttAudioFile,
@@ -30,7 +30,7 @@ import { Transcripts_APIs } from "@/services/api/transcripts";
 import { ToolsVoice_APIs } from "@/services/api/tools";
 import type { Transcript } from "@/types";
 import { Loader2, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ToolPageShell } from "./ToolPageShell";
@@ -43,11 +43,58 @@ export function SpeechToTextToolPage() {
   const [ownedDraftId, setOwnedDraftId] = useState<number | null>(null);
   const [transcript, setTranscript] = useState("");
   const [name, setName] = useState("");
-  const [transcribing, setTranscribing] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileUpload = useFileUploadProgress();
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+
+  const handlePollCompleted = useCallback((completed: Transcript) => {
+    setDraft(completed);
+    setOwnedDraftId(completed.id);
+    setTranscript(completed.transcript?.trim() ?? "");
+    toast.success("تم التفريغ — راجع النص ثم احفظه بالاسم");
+  }, []);
+
+  const handlePollProcessing = useCallback((transcriptId: number) => {
+    setDraft((prev) =>
+      prev?.id === transcriptId
+        ? prev
+        : {
+            id: transcriptId,
+            article_id: null,
+            name: null,
+            original_filename: "",
+            file_size: 0,
+            status: "processing",
+            is_saved: false,
+            saved_at: null,
+            created_at: "",
+            updated_at: "",
+          },
+    );
+    setOwnedDraftId(transcriptId);
+  }, []);
+
+  const handlePollFailed = useCallback((errorMessage: string | null) => {
+    setDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: "failed",
+            error_message: errorMessage,
+          }
+        : prev,
+    );
+    toast.error(errorMessage?.trim() || "فشل التفريغ");
+  }, []);
+
+  const sttPoll = useTranscriptStatusPoll({
+    storageKey: STT_INFLIGHT_STANDALONE_KEY,
+    onCompleted: handlePollCompleted,
+    onFailed: handlePollFailed,
+    onProcessing: handlePollProcessing,
+  });
 
   const isSessionOwner =
     draft != null &&
@@ -59,42 +106,10 @@ export function SpeechToTextToolPage() {
     ? canDeleteVoiceAsset(draft, user, isSuperAdmin, isSessionOwner)
     : false;
 
-  const isProcessing = transcribing || draft?.status === "processing";
-
-  useEffect(() => {
-    if (!draft || draft.status !== "processing") return;
-
-    let cancelled = false;
-    const poll = async () => {
-      try {
-        const job = await Transcripts_APIs.get(draft.id);
-        if (cancelled) return;
-
-        setDraft(job);
-
-        if (job.status === "completed") {
-          setTranscript(job.transcript?.trim() ?? "");
-          toast.success("اكتمل التفريغ");
-          return;
-        }
-
-        if (job.status === "failed") {
-          toast.error("فشل التفريغ");
-        }
-      } catch {
-        if (!cancelled) {
-          toast.error("تعذّر متابعة حالة التفريغ");
-        }
-      }
-    };
-
-    void poll();
-    const interval = window.setInterval(poll, 4000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [draft?.id, draft?.status]);
+  const isUploadBusy = uploading || fileUpload.progress?.status === "uploading";
+  const isPollActive = sttPoll.uiState.kind === "processing";
+  const isProcessing = isUploadBusy || isPollActive;
+  const draftReady = draft?.status === "completed";
 
   const handleFile = (selected: File | null) => {
     if (!selected) {
@@ -107,6 +122,7 @@ export function SpeechToTextToolPage() {
       toast.error(validationError);
       return;
     }
+    sttPoll.resetPoll();
     setFile(selected);
     setDraft(null);
     setOwnedDraftId(null);
@@ -125,37 +141,37 @@ export function SpeechToTextToolPage() {
       return;
     }
 
+    sttPoll.resetPoll();
     setDraft(null);
     setOwnedDraftId(null);
     setTranscript("");
     setName("");
     fileUpload.start(file);
+    setUploading(true);
+
     try {
-      await runWithToolProcessing(setTranscribing, async () => {
-        const data = await ToolsVoice_APIs.speechToText(file, {
-          onUploadProgress: fileUpload.onUploadProgress,
-        });
-        fileUpload.complete();
-        setDraft(data);
-        setOwnedDraftId(data.id);
-        if (data.status === "completed") {
-          setTranscript(data.transcript?.trim() ?? "");
-          toast.success("تم التفريغ — راجع النص ثم احفظه بالاسم");
-        } else if (data.status === "processing") {
-          toast.success("بدأ التفريغ — سيتم عرض النص عند الانتهاء");
-        } else {
-          toast.error("فشل التفريغ");
-        }
+      const data = await ToolsVoice_APIs.speechToText(file, {
+        onUploadProgress: fileUpload.onUploadProgress,
       });
+      fileUpload.complete();
+      setDraft(data);
+      setOwnedDraftId(data.id);
+      sttPoll.trackTranscript(data);
+
+      if (data.status === "processing") {
+        toast.success("بدأ التفريغ — سيتم عرض النص عند الانتهاء");
+      }
     } catch (err) {
       const message = getApiErrorMessage(err);
       fileUpload.fail(message);
       toast.error(message);
+    } finally {
+      setUploading(false);
     }
   };
 
   const save = async () => {
-    if (!draft || !canSave) return;
+    if (!draft || !canSave || !draftReady) return;
     if (!name.trim()) {
       toast.error("أدخل اسماً للنص");
       return;
@@ -180,6 +196,7 @@ export function SpeechToTextToolPage() {
     setDiscarding(true);
     try {
       await Transcripts_APIs.delete(draft.id);
+      sttPoll.resetPoll();
       setDraft(null);
       setOwnedDraftId(null);
       setTranscript("");
@@ -194,19 +211,12 @@ export function SpeechToTextToolPage() {
   };
 
   const savedMeta = draft?.is_saved ? formatVoiceAssetSavedMeta(draft) : null;
+  const showInlineStatus =
+    sttPoll.uiState.kind !== "idle" &&
+    (sttPoll.uiState.kind !== "completed" || !draft);
 
   return (
     <ToolPageShell title="تحويل الصوت إلى نص">
-      <ToolProcessingDialog
-        open={
-          isProcessing &&
-          (!fileUpload.progress || fileUpload.progress.progress >= 99)
-        }
-        title="جاري تفريغ الصوت"
-        steps={STT_PROCESSING_STEPS}
-        description="قد يستغرق التفريغ عدة دقائق حسب طول التسجيل — يُرجى الانتظار وعدم إغلاق الصفحة."
-      />
-
       <VoiceDraftNotice generateLabel="تفريغ" saveLabel="حفظ في المكتبة" />
 
       <Card>
@@ -237,7 +247,16 @@ export function SpeechToTextToolPage() {
             )}
           </div>
 
+          {showInlineStatus && (
+            <TranscriptProcessingInline
+              state={sttPoll.uiState}
+              onRecheck={() => void sttPoll.manualRecheck()}
+              rechecking={sttPoll.rechecking}
+            />
+          )}
+
           <Button onClick={transcribe} disabled={isProcessing || !file}>
+            {isUploadBusy && <Loader2 className="size-4 animate-spin" />}
             تفريغ (إنشاء مسودة)
           </Button>
         </CardContent>
@@ -257,10 +276,10 @@ export function SpeechToTextToolPage() {
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
               rows={10}
-              disabled={isProcessing || draft.status === "failed"}
+              disabled={!draftReady}
             />
 
-            {!draft.is_saved && draft.status === "completed" && canSave && (
+            {!draft.is_saved && draftReady && canSave && (
               <>
                 <Input
                   placeholder="اسم النص في المكتبة"

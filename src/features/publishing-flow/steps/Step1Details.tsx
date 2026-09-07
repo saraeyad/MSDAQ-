@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
+import { PublishCategoryPicker } from "@/features/publishing-flow/components/PublishCategoryPicker";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,14 +13,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { FieldGroup } from "@/features/publishing-flow/steps/Step1Details/FieldGroup";
 import { FormSection } from "@/features/publishing-flow/steps/Step1Details/FormSection";
-import {
-  flattenCategoriesForSelect,
-  formatCategorySelectLabel,
-} from "@/lib/category-tree";
 import { getApiErrorMessage } from "@/lib/api-data";
+import { resolveCategoryIntegerId } from "@/lib/category-tree";
 import { mediaTypeLabel } from "@/lib/media-labels";
-import { usePublicCategories } from "@/hooks/usePublicCategories";
+import { articleReviewThresholds } from "@/lib/trust-index-labels";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
+import { Categories_APIs } from "@/services/api/categories";
 import type {
   ArticleSource,
   CreateSourcePayload,
@@ -221,11 +220,12 @@ export function Step1Details({
     article?.category?.id ? String(article.category.id) : "",
   );
   const [mediaUrl, setMediaUrl] = useState(article?.media_url ?? "");
+  const initialThresholds = articleReviewThresholds(article ?? {});
   const [reviewTarget, setReviewTarget] = useState(
-    article?.review_target != null ? String(article.review_target) : "",
+    initialThresholds.target != null ? String(initialThresholds.target) : "",
   );
   const [reviewLimit, setReviewLimit] = useState(
-    article?.review_limit != null ? String(article.review_limit) : "",
+    initialThresholds.max != null ? String(initialThresholds.max) : "",
   );
   const [sources, setSources] = useState<SourceDraft[]>(() =>
     initialSources(article),
@@ -244,12 +244,10 @@ export function Step1Details({
     return map;
   }, [article?.sources]);
 
-  const { data: categories, isLoading: categoriesLoading } = usePublicCategories();
-
-  const categoryOptions = useMemo(
-    () => flattenCategoriesForSelect(categories ?? []),
-    [categories],
-  );
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
+    queryKey: ["staff-categories"],
+    queryFn: () => Categories_APIs.list(),
+  });
 
   const markSourcesDirty = () => setSourcesDirty(true);
 
@@ -304,13 +302,21 @@ export function Step1Details({
         throw new Error("اختر التصنيف");
       }
 
+      const resolvedCategoryId = resolveCategoryIntegerId(
+        categories ?? [],
+        categoryId,
+      );
+      if (resolvedCategoryId == null) {
+        throw new Error("اختر التصنيف");
+      }
+
       const trimmedDescription = description.trim();
 
       if (isEdit && article) {
         const payload = {
           title,
           description: trimmedDescription || null,
-          category_id: Number(categoryId),
+          category_id: resolvedCategoryId,
           media_url:
             mediaType !== "text" && mediaUrl.trim() ? mediaUrl.trim() : null,
           ...thresholdPayloadForUpdate(),
@@ -348,7 +354,7 @@ export function Step1Details({
         title,
         description: trimmedDescription || null,
         media_type: mediaType,
-        category_id: Number(categoryId),
+        category_id: resolvedCategoryId,
         media_url:
           mediaType !== "text" && mediaUrl.trim() ? mediaUrl.trim() : undefined,
         sources: validSources,
@@ -431,22 +437,13 @@ export function Step1Details({
             )}
           </FieldGroup>
           <FieldGroup label="التصنيف" required>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger className="publish-input w-full">
-                <SelectValue
-                  placeholder={
-                    categoriesLoading ? "جاري التحميل..." : "اختر التصنيف"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {categoryOptions.map((option) => (
-                  <SelectItem key={option.id} value={String(option.id)}>
-                    {formatCategorySelectLabel(option)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <PublishCategoryPicker
+              categories={categories ?? []}
+              value={categoryId}
+              onChange={setCategoryId}
+              loading={categoriesLoading}
+              disabled={loading}
+            />
           </FieldGroup>
           {mediaType !== "text" && (
             <FieldGroup
