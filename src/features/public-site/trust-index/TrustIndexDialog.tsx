@@ -1,12 +1,5 @@
+import { OliveBranch } from "@/components/ghazawiya/olive-branch";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { StarRatingInput } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api-data";
@@ -19,8 +12,9 @@ import { TRUST_DIMENSIONS } from "@/lib/trust-index-labels";
 import { TrustIndex_APIs } from "@/services/api/trust-index";
 import type { TrustIndexSubmitPayload } from "@/types";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Loader2, X } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 interface TrustIndexDialogProps {
@@ -44,6 +38,7 @@ export function TrustIndexDialog({
   onDismiss,
   onSubmitted,
 }: TrustIndexDialogProps) {
+  const titleId = useId();
   const [scores, setScores] = useState(INITIAL_SCORES);
 
   const submitMutation = useMutation({
@@ -91,115 +86,119 @@ export function TrustIndexDialog({
   ).length;
   const allScoresSet = filledCount === TRUST_DIMENSIONS.length;
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      onDismiss();
-    }
-  };
+  useEffect(() => {
+    if (!open) return;
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="trust-index-dialog gap-0 p-0 sm:max-w-md">
-        <DialogHeader className="trust-index-dialog__banner !grid !grid-cols-[1fr_auto] !items-center !gap-2.5 !text-start">
-          <div className="trust-index-dialog__intro">
-            <p className="trust-index-dialog__kicker">مؤشر ثقة الجمهور</p>
-            <DialogTitle className="trust-index-dialog__title">
-              ما مدى ثقتك بهذا المحتوى؟
-            </DialogTitle>
-            <DialogDescription className="trust-index-dialog__lead">
-              استطلاع مجهول · أربعة أسئلة فقط
-            </DialogDescription>
-          </div>
-          <div className="trust-index-dialog__progress" aria-hidden>
-            {TRUST_DIMENSIONS.map((dimension) => {
-              const scored =
-                (scores[
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onDismiss();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onDismiss]);
+
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
+    <aside
+      className="trust-index-dock"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby={titleId}
+    >
+      <header className="trust-index-dock__banner">
+        <div className="trust-index-dock__seal" aria-hidden>
+          <OliveBranch className="trust-index-dock__branch" />
+          <span className="trust-index-dock__stamp">رأيك</span>
+          <OliveBranch flip className="trust-index-dock__branch" />
+        </div>
+        <div className="trust-index-dock__intro">
+          <p className="trust-index-dialog__kicker">مؤشر ثقة الجمهور</p>
+          <h2 id={titleId} className="trust-index-dialog__title">
+            ما مدى ثقتك بهذا المحتوى؟
+          </h2>
+          <p className="trust-index-dialog__lead">
+            وصلت للنهاية — أربعة أسئلة سريعة، هويتك غير مسجّلة
+          </p>
+        </div>
+        <button
+          type="button"
+          className="trust-index-dock__close"
+          onClick={onDismiss}
+          aria-label="إغلاق التقييم"
+        >
+          <X />
+        </button>
+      </header>
+
+      <div className="trust-index-dialog__body">
+        {TRUST_DIMENSIONS.map((dimension, index) => (
+          <section key={dimension.key} className="trust-index-dialog__card">
+            <span className="trust-index-dialog__index">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <StarRatingInput
+              badge={dimension.label}
+              label={dimension.question}
+              value={
+                scores[
                   `${dimension.key}_score` as keyof TrustIndexSubmitPayload
-                ] as number) >= 1;
-              return (
-                <span
-                  key={dimension.key}
-                  className={
-                    scored
-                      ? "trust-index-dialog__dot trust-index-dialog__dot--on"
-                      : "trust-index-dialog__dot"
-                  }
-                  title={dimension.label}
-                />
-              );
-            })}
-          </div>
-        </DialogHeader>
-
-        <div className="trust-index-dialog__body">
-          {TRUST_DIMENSIONS.map((dimension, index) => (
-            <section key={dimension.key} className="trust-index-dialog__card">
-              <span className="trust-index-dialog__index">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <StarRatingInput
-                badge={dimension.label}
-                label={dimension.question}
-                value={
-                  scores[
-                    `${dimension.key}_score` as keyof TrustIndexSubmitPayload
-                  ] as number
-                }
-                disabled={submitMutation.isPending}
-                onChange={(value) =>
-                  setScores((current) => ({
-                    ...current,
-                    [`${dimension.key}_score`]: value,
-                  }))
-                }
-              />
-            </section>
-          ))}
-
-          <div className="trust-index-dialog__note">
-            <label htmlFor="trust-index-comment">
-              في جملة واحدة، ما أكثر شيء أثر على تقييمك؟
-              <span> اختياري</span>
-            </label>
-            <Textarea
-              id="trust-index-comment"
-              value={scores.comment ?? ""}
-              maxLength={2000}
-              rows={2}
+                ] as number
+              }
               disabled={submitMutation.isPending}
-              placeholder="مثلاً: وضوح المصادر، أو نبرة الخبر..."
-              onChange={(event) =>
+              onChange={(value) =>
                 setScores((current) => ({
                   ...current,
-                  comment: event.target.value,
+                  [`${dimension.key}_score`]: value,
                 }))
               }
             />
-          </div>
-        </div>
+          </section>
+        ))}
 
-        <DialogFooter className="trust-index-dialog__footer">
-          <p className="trust-index-dialog__anon">هويتك غير مسجّلة · صوتك يُحتسب</p>
-          <div className="trust-index-dialog__actions">
-            <Button
-              variant="outline"
-              disabled={submitMutation.isPending}
-              onClick={onDismiss}
-            >
-              لاحقاً
-            </Button>
-            <Button
-              disabled={!allScoresSet || submitMutation.isPending}
-              onClick={() => submitMutation.mutate()}
-            >
-              {submitMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              إرسال التقييم
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="trust-index-dialog__note">
+          <label htmlFor="trust-index-comment">
+            في جملة واحدة، ما أكثر شيء أثر على تقييمك؟
+            <span> اختياري</span>
+          </label>
+          <Textarea
+            id="trust-index-comment"
+            value={scores.comment ?? ""}
+            maxLength={2000}
+            rows={2}
+            disabled={submitMutation.isPending}
+            placeholder="مثلاً: وضوح المصادر، أو نبرة الخبر..."
+            onChange={(event) =>
+              setScores((current) => ({
+                ...current,
+                comment: event.target.value,
+              }))
+            }
+          />
+        </div>
+      </div>
+
+      <footer className="trust-index-dialog__footer trust-index-dock__footer">
+        <div className="trust-index-dialog__actions">
+          <Button
+            variant="outline"
+            disabled={submitMutation.isPending}
+            onClick={onDismiss}
+          >
+            لاحقاً
+          </Button>
+          <Button
+            disabled={!allScoresSet || submitMutation.isPending}
+            onClick={() => submitMutation.mutate()}
+          >
+            {submitMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : null}
+            إرسال التقييم
+          </Button>
+        </div>
+      </footer>
+    </aside>,
+    document.body,
   );
 }

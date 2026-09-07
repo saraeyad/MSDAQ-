@@ -380,6 +380,143 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
   }
 
+  .trust-index-dock {
+    position: fixed;
+    z-index: 70;
+    left: 1rem;
+    bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    width: min(22.5rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+    border: 1px solid rgba(45, 74, 45, 0.22);
+    border-radius: 1.25rem;
+    background: #f8f3ea;
+    box-shadow:
+      0 18px 48px rgba(36, 60, 38, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    animation: trust-index-dock-in 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .trust-index-dock__banner {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem 0.7rem 0.7rem 0.85rem;
+    background-color: #ece6dc;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M0 24 Q12 18 24 24 T48 24' fill='none' stroke='%232d4a2d' stroke-width='0.6' opacity='0.12'/%3E%3C/svg%3E"),
+      repeating-linear-gradient(
+        45deg,
+        rgba(45, 74, 45, 0.07) 0,
+        rgba(45, 74, 45, 0.07) 1px,
+        transparent 1px,
+        transparent 7px
+      );
+    text-align: start;
+  }
+
+  .trust-index-dock__banner::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0.75rem;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      #c41e3a 20%,
+      #c41e3a 80%,
+      transparent
+    );
+    opacity: 0.7;
+  }
+
+  .trust-index-dock__seal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    color: #2d4a2d;
+  }
+
+  .trust-index-dock__branch {
+    width: 0.7rem;
+    height: 1.4rem;
+    opacity: 0.8;
+  }
+
+  .trust-index-dock__stamp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.35rem;
+    height: 2.35rem;
+    border: 1.5px dashed rgba(196, 30, 58, 0.42);
+    border-radius: 9999px;
+    background: rgba(249, 140, 52, 0.12);
+    color: #c41e3a;
+    font-family: var(--font-headline);
+    font-size: 0.62rem;
+    font-weight: 800;
+    transform: rotate(-8deg);
+  }
+
+  .trust-index-dock__intro {
+    min-width: 0;
+  }
+
+  .trust-index-dock__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 0;
+    border-radius: 9999px;
+    background: transparent;
+    color: rgba(26, 26, 26, 0.55);
+    cursor: pointer;
+  }
+
+  .trust-index-dock__close:hover {
+    background: rgba(45, 74, 45, 0.08);
+    color: #1a1a1a;
+  }
+
+  .trust-index-dock__close svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .trust-index-dock .trust-index-dialog__body {
+    max-height: min(46vh, 22rem);
+  }
+
+  .trust-index-dock__footer {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+  }
+
+  @keyframes trust-index-dock-in {
+    from {
+      opacity: 0;
+      transform: translateX(-1.75rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .trust-index-dock {
+      animation: none;
+    }
+  }
+
   .trust-index-dialog__banner {
     position: relative;
     display: grid;
@@ -1200,5 +1337,156 @@
 
   .site-nav-submenu--active::before {
     background: var(--primary);
+  }
+
+  .pilot-welcome {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+  }
+
+  .pilot-welcome__backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background:
+      radial-gradient(
+        80% 70% at 50% 40%,
+        rgba(26, 26, 26, 0.38) 0%,
+        rgba(26, 26, 26, 0.58) 100%
+      );
+    cursor: pointer;
+  }
+
+  .pilot-welcome__card {
+    position: relative;
+    z-index: 1;
+    width: min(28rem, 100%);
+    overflow: hidden;
+    border: 1px solid rgba(45, 74, 45, 0.18);
+    border-radius: 1.5rem;
+    padding: 2rem 1.5rem 1.6rem;
+    background-color: #fffaf3;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M0 24 Q12 18 24 24 T48 24' fill='none' stroke='%232d4a2d' stroke-width='0.6' opacity='0.1'/%3E%3C/svg%3E"),
+      linear-gradient(180deg, #fffdf8 0%, #f7efe3 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      0 24px 60px rgba(26, 26, 26, 0.28);
+    text-align: center;
+    outline: none;
+    animation: pilot-welcome-in 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pilot-welcome__card::before {
+    content: "";
+    position: absolute;
+    inset-inline: 1.25rem;
+    top: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      #f98c34 18%,
+      #c41e3a 50%,
+      #f98c34 82%,
+      transparent
+    );
+  }
+
+  .pilot-welcome__seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+    color: #2d4a2d;
+  }
+
+  .pilot-welcome__branch {
+    width: 0.95rem;
+    height: 2rem;
+    opacity: 0.85;
+  }
+
+  .pilot-welcome__stamp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4.4rem;
+    height: 4.4rem;
+    border: 2px dashed rgba(196, 30, 58, 0.45);
+    border-radius: 9999px;
+    background: rgba(249, 140, 52, 0.1);
+    color: #c41e3a;
+    font-family: var(--font-headline);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    transform: rotate(-8deg);
+  }
+
+  .pilot-welcome__logo {
+    justify-content: center;
+    margin-inline: auto;
+  }
+
+  .pilot-welcome__kicker {
+    margin-top: 1.15rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: #2d4a2d;
+  }
+
+  .pilot-welcome__title {
+    margin-top: 0.55rem;
+    font-family: var(--font-headline);
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.45;
+    color: #1a1a1a;
+  }
+
+  .pilot-welcome__lead {
+    margin-top: 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: rgba(26, 26, 26, 0.68);
+  }
+
+  .pilot-welcome__cta {
+    margin-top: 1.4rem;
+    min-width: 10rem;
+  }
+
+  @keyframes pilot-welcome-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @media (min-width: 640px) {
+    .pilot-welcome__card {
+      padding: 2.35rem 2rem 1.85rem;
+    }
+
+    .pilot-welcome__title {
+      font-size: 1.7rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pilot-welcome__card {
+      animation: none;
+    }
   }
 }

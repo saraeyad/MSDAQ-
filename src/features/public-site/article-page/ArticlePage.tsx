@@ -66,7 +66,7 @@ function useArticleTrustSurvey({
 
   const mediaTrigger = useTrustIndexMediaTrigger({
     articleId,
-    enabled: enabled && mediaEnabled && !hasTextBody,
+    enabled: enabled && mediaEnabled,
     progress: mediaProgress,
   });
 

@@ -99,7 +99,7 @@ export function isTrustIndexTabActive(): boolean {
 }
 
 export const TRUST_MEDIA_MIN_PLAY_SECONDS = 45;
-export const TRUST_MEDIA_DURATION_RATIO = 0.75;
+export const TRUST_MEDIA_DURATION_RATIO = 0.5;
 
 export interface TrustMediaProgress {
   currentTime: number;
@@ -115,10 +115,15 @@ export function trustMediaThresholdReached(progress: {
   ended?: boolean;
 }): boolean {
   if (progress.ended) return true;
-  if (progress.playedSeconds >= TRUST_MEDIA_MIN_PLAY_SECONDS) return true;
   if (
     progress.duration > 0 &&
     progress.currentTime / progress.duration >= TRUST_MEDIA_DURATION_RATIO
+  ) {
+    return true;
+  }
+  if (
+    progress.duration > 0 &&
+    progress.playedSeconds / progress.duration >= TRUST_MEDIA_DURATION_RATIO
   ) {
     return true;
   }

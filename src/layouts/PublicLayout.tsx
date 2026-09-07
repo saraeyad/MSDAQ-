@@ -11,6 +11,7 @@ import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { LogIn } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
+import { PilotLaunchWelcome } from "@/features/public-site/welcome/PilotLaunchWelcome";
 
 function shouldShowHomeSections(pathname: string): boolean {
   if (pathname === ROUTES.ARTICLES || /^\/articles\/[^/]+$/.test(pathname)) {
@@ -83,6 +84,7 @@ export default function PublicLayout() {
         {showHomeSections ? <PartnersStrip /> : null}
         <SiteFooter className={showHomeSections ? undefined : "mt-0"} />
         <PlatformFeedbackFab />
+        <PilotLaunchWelcome />
       </div>
     </PlatformFeedbackProvider>
   );
