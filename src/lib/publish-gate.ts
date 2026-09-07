@@ -159,6 +159,7 @@ export function mediaStepComplete(
     | "source_audio"
     | "media_url"
     | "video"
+    | "video_poster"
     | "video_status"
   >,
 ): boolean {
@@ -310,6 +311,7 @@ export function derivePublishGate(
     | "source_audio"
     | "media_url"
     | "video"
+    | "video_poster"
     | "video_status"
     | "cover_image"
   >,
