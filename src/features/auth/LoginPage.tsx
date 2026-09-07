@@ -5,12 +5,26 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth";
 import { getApiData, getApiErrorMessage } from "@/lib/api-data";
 import { Auth_APIs } from "@/services/api/auth";
-import { normalizeAuthUser } from "@/context/types";
-import { ROUTES } from "@/router/routes";
+import { normalizeAuthUser, type AuthUser } from "@/context/types";
+import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+
+const WORKSPACE_PERMISSIONS = [
+  PERMISSIONS.VIEW_ARTICLES,
+  PERMISSIONS.VIEW_ADMIN_DASHBOARD,
+  PERMISSIONS.ACCESS_TOOLS,
+];
+
+function defaultAfterLoginPath(user: AuthUser): string {
+  const permissions = user.permissions ?? [];
+  if (WORKSPACE_PERMISSIONS.some((permission) => permissions.includes(permission))) {
+    return ROUTES.NEWSROOM;
+  }
+  return ROUTES.HOME;
+}
 
 function safeInternalPath(value: string | null): string | null {
   if (!value) return null;
@@ -39,10 +53,11 @@ export default function LoginPage() {
     try {
       const response = await Auth_APIs.login({ email, password });
       const { token, user } = getApiData(response);
-      saveAuth(token, normalizeAuthUser(user));
+      const sessionUser = normalizeAuthUser(user);
+      saveAuth(token, sessionUser);
 
       const redirect = safeInternalPath(searchParams.get("redirect"));
-      navigate(redirect ?? ROUTES.HOME, { replace: true });
+      navigate(redirect ?? defaultAfterLoginPath(sessionUser), { replace: true });
       toast.success(response.data.message || "مرحباً بك");
     } catch (err) {
       toast.error(getApiErrorMessage(err));
