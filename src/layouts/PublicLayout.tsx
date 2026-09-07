@@ -9,10 +9,32 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { LogIn } from "lucide-react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
 
+function shouldShowHomeSections(pathname: string): boolean {
+  if (pathname === ROUTES.ARTICLES || /^\/articles\/[^/]+$/.test(pathname)) {
+    return false;
+  }
+  if (/^\/categories\/[^/]+$/.test(pathname)) {
+    return false;
+  }
+  if (/^\/publications(?:\/[^/]+)?$/.test(pathname)) {
+    return false;
+  }
+  if (
+    pathname === ROUTES.ABOUT ||
+    pathname === ROUTES.PARTNERS ||
+    pathname === ROUTES.DATA_INFO
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export default function PublicLayout() {
+  const location = useLocation();
+  const showHomeSections = shouldShowHomeSections(location.pathname);
   const { token, hasAnyPermission } = useAuth();
   const canOpenWorkspace = hasAnyPermission([
     PERMISSIONS.VIEW_ARTICLES,
@@ -57,9 +79,9 @@ export default function PublicLayout() {
         <main>
           <Outlet />
         </main>
-        <HomeToolsSection />
-        <PartnersStrip />
-        <SiteFooter />
+        {showHomeSections ? <HomeToolsSection /> : null}
+        {showHomeSections ? <PartnersStrip /> : null}
+        <SiteFooter className={showHomeSections ? undefined : "mt-0"} />
         <PlatformFeedbackFab />
       </div>
     </PlatformFeedbackProvider>

@@ -5,8 +5,6 @@ export default function AboutPage() {
   return (
     <div className="pb-16">
       <PublicPageHero
-        badge="عن المركز"
-        badgeAlign="start"
         title="من نحن"
         description="صبارة بوست منصة إعلامية موثوقة تمكّن المجتمع والصحفيين من مواجهة المعلومات المضللة."
       />

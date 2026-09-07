@@ -7,17 +7,11 @@ import {
 } from "@/features/public-site/sections/news-sections";
 
 function StaticSectionContent({ config }: { config: StaticSectionConfig }) {
-  const Icon = config.icon;
-
   return (
     <div className="pb-16">
       <section className="border-b border-border bg-gradient-to-bl from-muted/50 via-card to-card py-12 md:py-16">
         <div className="container-page">
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-accent px-4 py-1.5 text-xs font-semibold text-accent-foreground">
-            <Icon className="size-3.5" />
-            {config.badge}
-          </span>
-          <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
+          <h1 className="font-headline text-3xl font-bold md:text-4xl">
             {config.title}
           </h1>
           <p className="mt-3 max-w-2xl text-muted-foreground md:text-lg">

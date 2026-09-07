@@ -16,9 +16,8 @@ function PartnerCard({ partner }: { partner: Partner }) {
 
 export default function PartnersPage() {
   return (
-    <div className="partners-page pb-16">
+    <div className="partners-page">
       <PublicPageHero
-        badge="عن المركز"
         title="شركاؤنا"
         description="شراكات استراتيجية مع مؤسسات دولية ومحلية تدعم عملنا في التحقق الإعلامي وتمكين المجتمع."
       />

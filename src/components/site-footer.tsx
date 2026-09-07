@@ -6,6 +6,7 @@ import {
 } from "@/features/public-site/categories/public-nav";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { ROUTES } from "@/router/routes";
+import { cn } from "@/lib/utils";
 import { Mail, MapPin, Phone, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -33,7 +34,7 @@ const CONTACT = {
 const MAP_EMBED =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d108716.77!2d34.3!3d31.5!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1500492432b8c4b1%3A0x7c0e0e0e0e0e0e0e!2sGaza%20City!5e0!3m2!1sen!2sps!4v1700000000000!5m2!1sen!2sps";
 
-export function SiteFooter() {
+export function SiteFooter({ className }: { className?: string }) {
   const { data: categories } = usePublicCategories();
   const { openFeedback } = usePlatformFeedback();
   const sections =
@@ -42,7 +43,7 @@ export function SiteFooter() {
       : [];
 
   return (
-    <footer className="mt-16 bg-[#1a1a1a] text-white">
+    <footer className={cn("mt-16 bg-[#1a1a1a] text-white", className)}>
       <div className="container-page grid gap-10 py-12 lg:grid-cols-12">
         <div className="lg:col-span-3">
           <BrandLogo linkToHome size="lg" onDark />
