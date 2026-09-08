@@ -89,6 +89,14 @@ export function HomeHero() {
         </div>
       </div>
 
+      <div className="home-cinematic-hero__center-logo">
+        <img
+          src="/brand/cdmc.png"
+          alt="مركز التنمية والإعلام المجتمعي"
+          decoding="async"
+        />
+      </div>
+
       <div className="home-cinematic-hero__spine" aria-hidden>
         {hero.spine.map((label) => (
           <span key={label}>{label}</span>

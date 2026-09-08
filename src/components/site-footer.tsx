@@ -1,5 +1,4 @@
 import { BrandLogo } from "@/components/brand-logo";
-import { usePlatformFeedback } from "@/context/platform-feedback";
 import { usePublicCopy } from "@/context/locale";
 import {
   buildPublicFooterSections,
@@ -29,7 +28,6 @@ const MAP_EMBED =
 
 export function SiteFooter({ className }: { className?: string }) {
   const { data: categories } = usePublicCategories();
-  const { openFeedback } = usePlatformFeedback();
   const { footer } = usePublicCopy();
   const sections =
     categories && categories.length > 0
@@ -42,25 +40,24 @@ export function SiteFooter({ className }: { className?: string }) {
     { to: ROUTES.PARTNERS, label: footer.partners },
     { to: ROUTES.SITE_POLICY, label: footer.sitePolicy },
     { to: ROUTES.TERMS, label: footer.terms },
-    { to: ROUTES.TOOLS_OVERVIEW, label: footer.verificationTools },
   ];
 
   return (
     <footer className={cn("site-footer mt-16 text-white", className)}>
-      <div className="container-page grid gap-10 py-12 lg:grid-cols-12">
+      <div className="container-page grid gap-6 py-7 lg:grid-cols-12">
         <div className="lg:col-span-3">
           <BrandLogo linkToHome size="lg" onDark />
-          <p className="mt-4 text-sm leading-relaxed text-white/70">
+          <p className="mt-2 text-xs leading-relaxed text-white/70">
             {footer.tagline}
           </p>
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {SOCIAL_LINKS.map((social) => (
               <a
                 key={social.label}
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/80 transition-colors hover:border-primary hover:bg-primary hover:text-white"
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/20 px-2.5 py-1 text-xs text-white/80 transition-colors hover:border-primary hover:bg-primary hover:text-white"
               >
                 <Share2 className="size-3" />
                 {social.label}
@@ -101,7 +98,7 @@ export function SiteFooter({ className }: { className?: string }) {
               ))}
             </div>
           ) : (
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-3 space-y-1.5">
               {staticLinks.map((link) => (
                 <li key={link.to}>
                   <Link
@@ -120,7 +117,7 @@ export function SiteFooter({ className }: { className?: string }) {
           <h4 className="font-headline text-base font-semibold">
             {footer.info}
           </h4>
-          <ul className="mt-4 space-y-2.5">
+          <ul className="mt-3 space-y-1.5">
             {policyLinks.map((link) => (
               <li key={link.to}>
                 <Link
@@ -131,17 +128,8 @@ export function SiteFooter({ className }: { className?: string }) {
                 </Link>
               </li>
             ))}
-            <li>
-              <button
-                type="button"
-                className="text-sm text-white/70 transition-colors hover:text-primary"
-                onClick={openFeedback}
-              >
-                {footer.shareFeedback}
-              </button>
-            </li>
           </ul>
-          <div className="mt-6 space-y-2 text-sm text-white/70">
+          <div className="mt-3 space-y-1.5 text-xs text-white/70">
             <p className="flex items-center gap-2">
               <MapPin className="size-4 shrink-0 text-primary" />
               {footer.location}
@@ -161,11 +149,11 @@ export function SiteFooter({ className }: { className?: string }) {
           <h4 className="font-headline text-base font-semibold">
             {footer.mapHeading}
           </h4>
-          <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
+          <div className="mt-3 overflow-hidden rounded-xl border border-white/10">
             <iframe
               title={footer.mapTitle}
               src={MAP_EMBED}
-              className="h-52 w-full grayscale-[30%] contrast-[1.1] md:h-56"
+              className="h-36 w-full grayscale-[30%] contrast-[1.1] md:h-40"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
@@ -175,9 +163,9 @@ export function SiteFooter({ className }: { className?: string }) {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-page flex flex-col items-center justify-between gap-2 py-4 text-center text-xs text-white/50 sm:flex-row sm:text-start">
-          <p>© {new Date().getFullYear()} صبارة بوست — جميع الحقوق محفوظة</p>
-          <p>صبارة بوست</p>
+        <div className="container-page flex flex-col items-center justify-between gap-1 py-2.5 text-center text-xs text-white/50 sm:flex-row sm:text-start">
+          <p>© {new Date().getFullYear()} صبّارة بوست — جميع الحقوق محفوظة</p>
+          <p>صبّارة بوست</p>
         </div>
       </div>
     </footer>
