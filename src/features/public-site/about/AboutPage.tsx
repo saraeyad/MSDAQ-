@@ -1,5 +1,4 @@
 import { CenterDefinitionSection } from "@/features/public-site/about/CenterDefinitionSection";
-import { PublicPageHero } from "@/features/public-site/components/PublicPageHero";
 import { usePublicCopy } from "@/context/locale";
 
 export default function AboutPage() {
@@ -7,12 +6,6 @@ export default function AboutPage() {
 
   return (
     <div className="about-speech">
-      <PublicPageHero
-        title={about.title}
-        kicker={about.kicker}
-        description={about.lead}
-      />
-
       <CenterDefinitionSection alt={about.collageAlt} />
 
       <div className="container-page about-speech__body">

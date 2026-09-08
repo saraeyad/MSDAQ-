@@ -89,23 +89,6 @@ export function HomeHero() {
         </div>
       </div>
 
-      <p className="home-cinematic-hero__script" aria-hidden>
-        <span className="home-cinematic-hero__script-text">{hero.scriptLine}</span>
-        <svg
-          className="home-cinematic-hero__script-underline"
-          viewBox="0 0 280 12"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M4 8 C 60 2, 120 10, 180 5 S 260 4, 276 7"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </p>
-
       <div className="home-cinematic-hero__spine" aria-hidden>
         {hero.spine.map((label) => (
           <span key={label}>{label}</span>

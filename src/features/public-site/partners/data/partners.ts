@@ -8,7 +8,6 @@ export interface Partner {
 
 export const PARTNER_LOGOS = {
   unTrustFund: "/partners/un-trust-fund.png",
-  ukGov: "/partners/uk-gov.png",
   crs: "/partners/crs.png",
   aisha: "/partners/aisha.png",
   birzeit: "/partners/birzeit.png",
@@ -37,18 +36,18 @@ function partner({ logoKey, ...rest }: PartnerInput): Partner {
 /** شريط الشعارات — للصفحة الرئيسية ومن نحن */
 export const FEATURED_PARTNERS: Partner[] = [
   partner({
+    id: "cfi",
+    title: "سي إف آي للتنمية الإعلامية",
+    logoAlt: "CFI Media Development",
+    initials: "CFI",
+    logoKey: "cfi",
+  }),
+  partner({
     id: "un-trust",
     title: "صندوق الأمم المتحدة لإنهاء العنف ضد المرأة",
     logoAlt: "United Nations Trust Fund to End Violence Against Women",
     initials: "UN",
     logoKey: "unTrustFund",
-  }),
-  partner({
-    id: "uk-gov",
-    title: "الحكومة البريطانية",
-    logoAlt: "UK Government",
-    initials: "UK",
-    logoKey: "ukGov",
   }),
   partner({
     id: "crs",
@@ -84,13 +83,6 @@ export const FEATURED_PARTNERS: Partner[] = [
     logoAlt: "NGO Development Center",
     initials: "NDC",
     logoKey: "ndc",
-  }),
-  partner({
-    id: "cfi",
-    title: "سي إف آي للتنمية الإعلامية",
-    logoAlt: "CFI Media Development",
-    initials: "CFI",
-    logoKey: "cfi",
   }),
 ];
 
