@@ -156,8 +156,8 @@ const ar: PublicCopy = {
   },
   hero: {
     kicker: ["غزة", "ناس", "صمود"],
-    headline: "قصص حقيقية.",
-    headlineAccent: "حقائق أوضح.",
+    headline: "قصص حقيقية",
+    headlineAccent: "حقائق أوضح",
     brandLine: "صبّارة بوست",
     lead: "إعلام فلسطيني — نروي القصص اليومية التي تهم.",
     ctaExplore: "استكشف قصصنا",
@@ -315,8 +315,8 @@ const en: PublicCopy = {
   },
   hero: {
     kicker: ["GAZA", "PEOPLE", "RESILIENCE"],
-    headline: "Real Stories.",
-    headlineAccent: "Brighter Truths.",
+    headline: "Real Stories",
+    headlineAccent: "Brighter Truths",
     brandLine: "SABBARA POST",
     lead: "Palestinian media, telling the everyday stories that matter.",
     ctaExplore: "Explore Our Stories",

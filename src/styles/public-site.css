@@ -322,8 +322,42 @@
   .site-footer-sections {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem 1.25rem;
-    margin-top: 1rem;
+    gap: 0.55rem 1rem;
+    margin-top: 0.65rem;
+  }
+
+  .site-footer__logo {
+    position: relative;
+    isolation: isolate;
+    overflow: visible;
+    background: transparent;
+  }
+
+  .site-footer__logo::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 8% -14%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse,
+      rgba(247, 243, 234, 0.5) 0%,
+      rgba(247, 243, 234, 0.22) 42%,
+      transparent 72%
+    );
+    filter: blur(7px);
+  }
+
+  .site-footer__logo .brand-logo__img {
+    position: relative;
+    z-index: 1;
+    width: 6.5rem;
+    max-width: none;
+    height: 6.5rem;
+    filter:
+      contrast(1.08)
+      saturate(1.12)
+      drop-shadow(0 4px 8px rgba(17, 17, 17, 0.14));
   }
 
   .site-footer-section__title {
@@ -2313,14 +2347,26 @@
     }
   }
 
-  /* Cinematic home hero — full-bleed photo + overlay copy (mockup) */
+  .home-sticky-stack {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .home-sticky-stack .site-header {
+    position: relative;
+  }
+
+  /* Compact image banner attached to the fixed home header */
   .home-cinematic-hero {
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    min-height: 100vh;
+    height: clamp(15.65rem, calc(34vh - 1cm), 18.65rem);
+    min-height: 0;
     background: #111111;
     color: #ffffff;
+    box-shadow: 0 12px 28px rgba(17, 17, 17, 0.18);
   }
 
   .home-cinematic-hero__bg {
@@ -2374,8 +2420,7 @@
   .home-cinematic-hero__viewfinder {
     position: absolute;
     z-index: 4;
-    inset: clamp(5.25rem, 12vh, 6.5rem) clamp(0.85rem, 2.5vw, 1.75rem)
-      clamp(0.85rem, 2.5vw, 1.75rem);
+    inset: 0.8rem clamp(0.85rem, 2.5vw, 1.75rem);
     pointer-events: none;
   }
 
@@ -2417,7 +2462,7 @@
   .home-cinematic-hero__rec {
     position: absolute;
     z-index: 5;
-    top: clamp(5.6rem, 14vh, 7rem);
+    top: 1.15rem;
     right: clamp(1.35rem, 3.5vw, 2.25rem);
     display: inline-flex;
     align-items: center;
@@ -2451,13 +2496,12 @@
     z-index: 3;
     display: flex;
     align-items: center;
-    min-height: inherit;
-    padding: clamp(6.25rem, 18vh, 9rem) clamp(1.25rem, 5vw, 4.5rem)
-      clamp(4.5rem, 10vh, 6rem);
+    height: 100%;
+    padding: 1.35rem clamp(2rem, 6vw, 5rem);
   }
 
   .home-cinematic-hero__copy {
-    width: min(100%, 36rem);
+    width: min(100%, 31rem);
     margin-left: 0;
     margin-right: auto;
     text-align: start;
@@ -2467,7 +2511,7 @@
   .home-cinematic-hero__title {
     margin-top: 0;
     font-family: var(--font-headline);
-    font-size: clamp(2.15rem, 5.2vw, 3.75rem);
+    font-size: clamp(1.65rem, 3.6vw, 2.6rem);
     font-weight: 800;
     line-height: 1.08;
     letter-spacing: -0.02em;
@@ -2479,9 +2523,9 @@
   }
 
   .home-cinematic-hero__brand {
-    margin-top: 0.55rem;
+    margin-top: 0.35rem;
     font-family: var(--font-headline);
-    font-size: clamp(2.15rem, 5.8vw, 3.85rem);
+    font-size: clamp(1.65rem, 3.8vw, 2.7rem);
     font-weight: 900;
     line-height: 1.05;
     letter-spacing: 0.01em;
@@ -2493,10 +2537,10 @@
   }
 
   .home-cinematic-hero__lead {
-    margin-top: 1rem;
+    margin-top: 0.55rem;
     max-width: 26rem;
-    font-size: clamp(0.92rem, 1.6vw, 1.05rem);
-    line-height: 1.7;
+    font-size: clamp(0.78rem, 1.3vw, 0.92rem);
+    line-height: 1.55;
     color: rgba(255, 255, 255, 0.78);
   }
 
@@ -2505,7 +2549,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 1rem 1.25rem;
-    margin-top: 1.65rem;
+    margin-top: 0.9rem;
   }
 
   .home-cinematic-hero__cta {
@@ -2547,6 +2591,68 @@
   .home-cinematic-hero__play-link:hover .home-cinematic-hero__play-icon {
     border-color: #ffffff;
     background: rgba(255, 255, 255, 0.12);
+  }
+
+  .home-cinematic-hero__center-logo {
+    position: absolute;
+    z-index: 5;
+    left: clamp(1rem, 2vw, 1.5rem);
+    bottom: clamp(0.65rem, 1.5vw, 1rem);
+    width: clamp(8.5rem, 15vw, 10.5rem);
+    padding: 0.45rem 0.55rem;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(247, 243, 234, 0.42) 0%,
+      rgba(247, 243, 234, 0.16) 48%,
+      transparent 76%
+    );
+    filter: drop-shadow(0 0 10px rgba(247, 243, 234, 0.16));
+    animation: cdmc-signature-in 0.65s 0.25s both ease-out;
+  }
+
+  .home-cinematic-hero__center-logo::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1.2rem;
+    height: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.78);
+    border-left: 1px solid rgba(255, 255, 255, 0.78);
+  }
+
+  .home-cinematic-hero__center-logo::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 1.2rem;
+    height: 0.75rem;
+    border-right: 2px solid #c41e3a;
+    border-bottom: 2px solid #c41e3a;
+  }
+
+  .home-cinematic-hero__center-logo img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: auto;
+    filter:
+      drop-shadow(0 0 1px rgba(255, 255, 255, 0.9))
+      drop-shadow(0 0 6px rgba(255, 255, 255, 0.58))
+      drop-shadow(0 3px 7px rgba(0, 0, 0, 0.38));
+  }
+
+  @keyframes cdmc-signature-in {
+    from {
+      opacity: 0;
+      transform: translate3d(-0.75rem, 0, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
   }
 
   .home-cinematic-hero__script {
@@ -2603,21 +2709,25 @@
     pointer-events: none;
   }
 
-  @media (min-width: 768px) {
-    .home-cinematic-hero__spine {
-      display: flex;
-    }
-  }
-
   @media (max-width: 640px) {
-    .home-cinematic-hero__script {
+    .home-cinematic-hero__content {
+      padding: 1.15rem 1.35rem;
+    }
+
+    .home-cinematic-hero__lead {
       display: none;
     }
 
-    .home-cinematic-hero__content {
-      align-items: flex-end;
-      padding-bottom: 2.5rem;
+    .home-cinematic-hero__actions {
+      gap: 0.65rem;
     }
+
+    .home-cinematic-hero__center-logo {
+      width: 7rem;
+      bottom: 0.5rem;
+      padding: 0.35rem 0.4rem;
+    }
+
   }
 
   .home-news-rail {
@@ -2776,7 +2886,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .home-cinematic-hero__rec-dot,
-    .news-rail__live-dot {
+    .news-rail__live-dot,
+    .home-cinematic-hero__center-logo {
       animation: none;
     }
   }

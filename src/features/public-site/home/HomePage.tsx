@@ -1,5 +1,4 @@
 import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
-import { HomeHero } from "@/features/public-site/home/HomeHero";
 import { NewsSlider } from "@/features/public-site/components/news-slider";
 import { usePublicCopy } from "@/context/locale";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
@@ -65,8 +64,6 @@ export default function HomePage() {
 
   return (
     <div>
-      <HomeHero />
-
       <section className="home-news-rail" aria-label={home.nowLabel}>
         <div className="container-page">
           {isLoading ? (

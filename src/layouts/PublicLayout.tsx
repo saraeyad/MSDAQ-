@@ -12,9 +12,9 @@ import { usePublicCopy } from "@/context/locale";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { cn } from "@/lib/utils";
 import { LogIn } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
+import { HomeHero } from "@/features/public-site/home/HomeHero";
 import { PilotLaunchWelcome } from "@/features/public-site/welcome/PilotLaunchWelcome";
 
 function shouldShowHomeSections(pathname: string): boolean {
@@ -44,8 +44,6 @@ export default function PublicLayout() {
   const showHomeSections = shouldShowHomeSections(location.pathname);
   const { token, hasAnyPermission } = useAuth();
   const { nav } = usePublicCopy();
-  const [heroScrolled, setHeroScrolled] = useState(false);
-  const overlayHeader = isHome && !heroScrolled;
 
   const canOpenWorkspace = hasAnyPermission([
     PERMISSIONS.VIEW_ARTICLES,
@@ -63,20 +61,33 @@ export default function PublicLayout() {
       : undefined
     : nav.login;
 
-  useEffect(() => {
-    if (!isHome) {
-      setHeroScrolled(false);
-      return;
-    }
-
-    const onScroll = () => {
-      setHeroScrolled(window.scrollY > 72);
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [isHome]);
+  const siteHeader = (
+    <header className="site-header site-header--paper">
+      <div className="site-header__inner container-page flex min-h-16 items-center gap-3 py-1.5 md:gap-5">
+        <div className="site-header__brand">
+          <SiteBrandLink linkToHome />
+        </div>
+        <DesktopSiteNav />
+        <div className="ms-auto flex shrink-0 items-center gap-2">
+          <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
+          <LocaleSwitcher className="hidden sm:inline-flex" />
+          {authHref && authLabel ? (
+            <Button
+              asChild
+              size="sm"
+              className="site-header__auth-btn hidden gap-2 lg:inline-flex"
+            >
+              <Link to={authHref}>
+                {!token ? <LogIn className="size-4" /> : null}
+                {authLabel}
+              </Link>
+            </Button>
+          ) : null}
+          <MobileSiteNav authHref={authHref} authLabel={authLabel} />
+        </div>
+      </div>
+    </header>
+  );
 
   return (
     <PlatformFeedbackProvider>
@@ -86,37 +97,14 @@ export default function PublicLayout() {
           isHome && "public-home",
         )}
       >
-        <header
-          className={cn(
-            "site-header",
-            overlayHeader ? "site-header--hero" : "site-header--paper",
-            isHome && heroScrolled && "site-header--scrolled",
-          )}
-        >
-          <div className="site-header__inner container-page flex min-h-16 items-center gap-3 py-1.5 md:gap-5">
-            <div className="site-header__brand">
-              <SiteBrandLink linkToHome />
-            </div>
-            <DesktopSiteNav />
-            <div className="ms-auto flex shrink-0 items-center gap-2">
-              <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
-              <LocaleSwitcher className="hidden sm:inline-flex" />
-              {authHref && authLabel ? (
-                <Button
-                  asChild
-                  size="sm"
-                  className="site-header__auth-btn hidden gap-2 lg:inline-flex"
-                >
-                  <Link to={authHref}>
-                    {!token ? <LogIn className="size-4" /> : null}
-                    {authLabel}
-                  </Link>
-                </Button>
-              ) : null}
-              <MobileSiteNav authHref={authHref} authLabel={authLabel} />
-            </div>
+        {isHome ? (
+          <div className="home-sticky-stack">
+            {siteHeader}
+            <HomeHero />
           </div>
-        </header>
+        ) : (
+          siteHeader
+        )}
 
         <main>
           <Outlet />
