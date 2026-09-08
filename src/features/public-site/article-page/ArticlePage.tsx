@@ -233,12 +233,6 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                 {article.category?.name_ar ??
                   publicMediaTypeLabel(article.media_type)}
               </span>
-              {article.author?.name && (
-                <>
-                  <span>•</span>
-                  <span>{article.author.name}</span>
-                </>
-              )}
               <span>•</span>
               <span>
                 {new Date(article.published_at).toLocaleDateString("ar")}

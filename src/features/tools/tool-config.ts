@@ -134,3 +134,27 @@ export const CATEGORY_DESCRIPTIONS: Record<ToolCategory, string> = {
 export function getToolBySlug(slug: string | undefined): ToolConfigEntry | undefined {
   return TOOL_REGISTRY.find((t) => t.slug === slug);
 }
+
+/** First five public cards — same count as the original homepage kit. */
+export const HOME_PREVIEW_TOOL_SLUGS = [
+  "credibility-check",
+  "reverse-image",
+  "ai-detection",
+  "domain-checker",
+  "speech-to-text",
+] as const;
+
+/** Extra newsroom tools revealed after “explore”. */
+export const HOME_MORE_TOOL_SLUGS = [
+  "text-to-speech",
+  "standards-check",
+  "localization",
+  "fussha-rewriter",
+  "bias-neutralizer",
+] as const;
+
+export function getHomeToolsBySlugs(slugs: readonly string[]): ToolConfigEntry[] {
+  return slugs
+    .map((slug) => getToolBySlug(slug))
+    .filter((tool): tool is ToolConfigEntry => Boolean(tool));
+}

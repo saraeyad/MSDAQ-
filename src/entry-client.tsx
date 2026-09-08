@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth";
+import { LocaleProvider } from "@/context/locale";
 import { SiteOriginProvider } from "@/context/site-origin";
 import AppRouter from "@/router/AppRouter";
 import "./index.css";
@@ -38,20 +39,22 @@ const app = (
   <StrictMode>
     <HelmetProvider>
       <NuqsAdapter>
-        <AuthProvider>
-          <SiteOriginProvider>
-            <QueryClientProvider client={queryClient}>
-              {dehydratedState ? (
-                <HydrationBoundary state={dehydratedState}>
+        <LocaleProvider>
+          <AuthProvider>
+            <SiteOriginProvider>
+              <QueryClientProvider client={queryClient}>
+                {dehydratedState ? (
+                  <HydrationBoundary state={dehydratedState}>
+                    <AppRouter />
+                  </HydrationBoundary>
+                ) : (
                   <AppRouter />
-                </HydrationBoundary>
-              ) : (
-                <AppRouter />
-              )}
-              <Toaster position="top-center" expand visibleToasts={4} />
-            </QueryClientProvider>
-          </SiteOriginProvider>
-        </AuthProvider>
+                )}
+                <Toaster position="top-center" expand visibleToasts={4} />
+              </QueryClientProvider>
+            </SiteOriginProvider>
+          </AuthProvider>
+        </LocaleProvider>
       </NuqsAdapter>
     </HelmetProvider>
   </StrictMode>

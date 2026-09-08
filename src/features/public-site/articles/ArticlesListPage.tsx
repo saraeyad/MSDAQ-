@@ -2,6 +2,7 @@ import { PageLoading } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { PublicArticleCover } from "@/components/cover-image";
 import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
+import { useLocale, usePublicCopy } from "@/context/locale";
 import { publicMediaTypeLabel } from "@/lib/media-labels";
 import { articlePath } from "@/router/routes";
 import { Articles_APIs } from "@/services/api/articles";
@@ -14,6 +15,10 @@ export default function ArticlesListPage() {
   const search = params.get("search") ?? "";
   const mediaType = params.get("media_type") ?? "";
   const page = Math.max(1, Number(params.get("page") ?? "1"));
+  const { pageHero } = usePublicCopy();
+  const { dir } = useLocale();
+  const PrevIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
+  const NextIcon = dir === "rtl" ? ChevronLeft : ChevronRight;
 
   const { data, isLoading } = useQuery({
     queryKey: ["articles", search, mediaType, page],
@@ -43,22 +48,20 @@ export default function ArticlesListPage() {
       {isSearchView ? (
         <>
           <h1 className="section-title">
-            نتائج البحث عن «{searchQuery}»
+            {pageHero.searchResults(searchQuery)}
           </h1>
           <p className="section-description">
             {isLoading
-              ? "جاري البحث في المقالات المنشورة..."
+              ? pageHero.searching
               : articles.length > 0
-                ? `${pagination?.total ?? articles.length} نتيجة`
-                : "لم يُعثر على مقالات مطابقة"}
+                ? pageHero.resultCount(pagination?.total ?? articles.length)
+                : pageHero.noSearchResults}
           </p>
         </>
       ) : (
         <>
-          <h1 className="section-title">المقالات</h1>
-          <p className="section-description">
-            تصفّح المقالات المنشورة على المنصة
-          </p>
+          <h1 className="section-title">{pageHero.articles}</h1>
+          <p className="section-description">{pageHero.articlesLead}</p>
         </>
       )}
 
@@ -67,8 +70,8 @@ export default function ArticlesListPage() {
       ) : articles.length === 0 ? (
         <p className="mt-8 text-muted-foreground">
           {isSearchView
-            ? `لا توجد نتائج لـ «${searchQuery}».`
-            : "لا توجد مقالات مطابقة."}
+            ? pageHero.noResultsFor(searchQuery)
+            : pageHero.noArticles}
         </p>
       ) : (
         <>
@@ -114,11 +117,13 @@ export default function ArticlesListPage() {
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
               >
-                <ChevronRight className="size-4" />
-                السابق
+                <PrevIcon className="size-4" />
+                {dir === "rtl" ? "السابق" : "Previous"}
               </Button>
               <span className="text-sm text-muted-foreground">
-                صفحة {pagination.current_page} من {pagination.last_page}
+                {dir === "rtl"
+                  ? `صفحة ${pagination.current_page} من ${pagination.last_page}`
+                  : `Page ${pagination.current_page} of ${pagination.last_page}`}
               </span>
               <Button
                 variant="outline"
@@ -126,8 +131,8 @@ export default function ArticlesListPage() {
                 disabled={page >= pagination.last_page}
                 onClick={() => setPage(page + 1)}
               >
-                التالي
-                <ChevronLeft className="size-4" />
+                {dir === "rtl" ? "التالي" : "Next"}
+                <NextIcon className="size-4" />
               </Button>
             </div>
           )}

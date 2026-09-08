@@ -1,35 +1,32 @@
+import { usePublicCopy } from "@/context/locale";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/router/routes";
 
-export const BRAND_LOGO_FULL = "/brand/logo.png";
-export const BRAND_LOGO_ICON = "/brand/logo-icon.png";
-
-/** Figma base spec — scaled up via size variants */
-export const BRAND_LOGO_WIDTH = 138.69;
-export const BRAND_LOGO_HEIGHT = 36;
+export const BRAND_LOGO_FULL = "/brand/sabbara-post.png?v=3";
+export const BRAND_LOGO_ICON = "/brand/sabbara-post-icon.png?v=3";
 
 type BrandLogoSize = "sm" | "md" | "lg" | "xl";
 
 const FULL_HEIGHT: Record<BrandLogoSize, string> = {
-  sm: "h-8",
-  md: "h-9",
-  lg: "h-12",
-  xl: "h-16",
+  sm: "h-14",
+  md: "h-16",
+  lg: "h-[5.5rem]",
+  xl: "h-[7.25rem]",
 };
 
 const FULL_WIDTH: Record<BrandLogoSize, string> = {
-  sm: "w-[7.25rem]",
-  md: "w-[8.668rem]",
-  lg: "w-[11.56rem]",
-  xl: "w-auto max-w-full",
+  sm: "w-auto max-w-[8.75rem]",
+  md: "w-auto max-w-[10.5rem]",
+  lg: "w-auto max-w-[13rem]",
+  xl: "w-auto max-w-[14.5rem]",
 };
 
 const ICON_HEIGHT: Record<BrandLogoSize, string> = {
-  sm: "h-7",
-  md: "h-9",
-  lg: "h-11",
-  xl: "h-14",
+  sm: "h-11",
+  md: "h-12",
+  lg: "h-14",
+  xl: "h-16",
 };
 
 interface BrandLogoProps {
@@ -39,7 +36,7 @@ interface BrandLogoProps {
   linkToHome?: boolean;
   /** Stretch the wordmark to the parent width. */
   fill?: boolean;
-  /** White pill behind logo — for dark backgrounds */
+  /** Paper plate behind the lockup — for dark backgrounds */
   onDark?: boolean;
 }
 
@@ -51,15 +48,15 @@ export function BrandLogo({
   fill = false,
   onDark = false,
 }: BrandLogoProps) {
+  const { brand } = usePublicCopy();
   const src = compact ? BRAND_LOGO_ICON : BRAND_LOGO_FULL;
-  const alt = "صبارة بوست";
 
   const img = (
     <img
       src={src}
-      alt={alt}
+      alt={brand.name}
       className={cn(
-        "object-contain",
+        "brand-logo__img object-contain object-center",
         compact
           ? cn(ICON_HEIGHT[size], "w-auto")
           : fill
@@ -73,8 +70,9 @@ export function BrandLogo({
   const content = (
     <div
       className={cn(
-        fill ? "flex w-full items-center" : "inline-flex shrink-0 items-center",
-        onDark && "rounded-lg bg-white px-3 py-2 shadow-sm",
+        "brand-logo inline-flex shrink-0 items-center",
+        fill && "w-full",
+        onDark && "brand-logo--on-dark",
         className,
       )}
     >
@@ -87,7 +85,7 @@ export function BrandLogo({
       <Link
         to={ROUTES.HOME}
         className="inline-flex transition-opacity hover:opacity-85"
-        aria-label="العودة للرئيسية"
+        aria-label={brand.homeAria}
       >
         {content}
       </Link>

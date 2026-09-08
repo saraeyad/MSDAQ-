@@ -14,6 +14,7 @@ export const PARTNER_LOGOS = {
   birzeit: "/partners/birzeit.png",
   wacc: "/partners/wacc.png",
   ndc: "/partners/ndc.png",
+  cfi: "/partners/cfi.png",
 } as const;
 
 type LogoKey = keyof typeof PARTNER_LOGOS;
@@ -83,6 +84,13 @@ export const FEATURED_PARTNERS: Partner[] = [
     logoAlt: "NGO Development Center",
     initials: "NDC",
     logoKey: "ndc",
+  }),
+  partner({
+    id: "cfi",
+    title: "سي إف آي للتنمية الإعلامية",
+    logoAlt: "CFI Media Development",
+    initials: "CFI",
+    logoKey: "cfi",
   }),
 ];
 

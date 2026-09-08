@@ -13,6 +13,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { usePublicCopy } from "@/context/locale";
 import {
   buildPublicNavItems,
   isPublicNavLinkActive,
@@ -44,6 +46,7 @@ function NavParentFlyoutRow({
   entry: PublicNavMenuLink;
   pathname: string;
 }) {
+  const { nav } = usePublicCopy();
   const hasChildren = Boolean(entry.children?.length);
   const parentActive = pathMatches(entry.to, pathname);
   const branchActive = entry.children?.some((child) =>
@@ -81,7 +84,7 @@ function NavParentFlyoutRow({
       <div
         className="site-nav-flyout"
         role="menu"
-        aria-label={`${entry.label} — تصنيفات فرعية`}
+        aria-label={`${entry.label} — ${nav.subcategories}`}
       >
         <p className="site-nav-flyout__heading">{entry.label}</p>
         <ul className="site-nav-flyout__list">
@@ -178,15 +181,19 @@ function NavLinkItem({ item }: { item: PublicNavLinkItem }) {
 
 function useSiteNavItems(): PublicNavItem[] {
   const { data: categories = [] } = usePublicCategories();
+  const { nav } = usePublicCopy();
 
-  return useMemo(() => buildPublicNavItems(categories), [categories]);
+  return useMemo(
+    () => buildPublicNavItems(categories, nav),
+    [categories, nav],
+  );
 }
 
 export function DesktopSiteNav() {
   const navItems = useSiteNavItems();
 
   return (
-    <nav className="hidden flex-1 items-center justify-center gap-4 lg:flex xl:gap-6">
+    <nav className="site-header-nav hidden flex-1 items-center justify-center lg:flex">
       {navItems.map((item) =>
         item.type === "link" ? (
           <NavLinkItem key={item.to + item.label} item={item} />
@@ -291,6 +298,7 @@ export function MobileSiteNav({
 }) {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const { nav } = usePublicCopy();
   const navItems = useSiteNavItems();
   const close = () => setOpen(false);
 
@@ -301,16 +309,19 @@ export function MobileSiteNav({
           variant="outline"
           size="icon"
           className="shrink-0 lg:hidden"
-          aria-label="فتح القائمة"
+          aria-label={nav.openMenu}
         >
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[min(100%,20rem)] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="font-headline text-right">القائمة</SheetTitle>
+          <SheetTitle className="font-headline text-start">{nav.menu}</SheetTitle>
         </SheetHeader>
-        <SiteHeaderSearch className="mt-4 lg:hidden" />
+        <div className="mt-4 flex items-center gap-2">
+          <SiteHeaderSearch className="flex-1 lg:hidden" />
+          <LocaleSwitcher />
+        </div>
         <nav className="mt-6 flex flex-col gap-6">
           {navItems.map((item) =>
             item.type === "link" ? (

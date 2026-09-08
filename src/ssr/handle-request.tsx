@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/context/auth";
+import { LocaleProvider } from "@/context/locale";
 import { SiteOriginProvider } from "@/context/site-origin";
 import { AppRoutes } from "@/router/AppRoutes";
 import {
@@ -86,11 +87,13 @@ function renderPageTree(
     <HelmetProvider context={helmetContext}>
       <QueryClientProvider client={queryClient}>
         <SiteOriginProvider origin={origin}>
-          <AuthProvider>
-            <StaticRouter location={url}>
-              <AppRoutes />
-            </StaticRouter>
-          </AuthProvider>
+          <LocaleProvider>
+            <AuthProvider>
+              <StaticRouter location={url}>
+                <AppRoutes />
+              </StaticRouter>
+            </AuthProvider>
+          </LocaleProvider>
         </SiteOriginProvider>
       </QueryClientProvider>
     </HelmetProvider>,

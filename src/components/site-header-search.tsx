@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { usePublicCopy } from "@/context/locale";
 import { ROUTES } from "@/router/routes";
 import { Search } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
@@ -7,6 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 export function SiteHeaderSearch({ className }: { className?: string }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { nav } = usePublicCopy();
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function SiteHeaderSearch({ className }: { className?: string }) {
       onSubmit={submit}
       className={className}
       role="search"
-      aria-label="بحث في المقالات"
+      aria-label={nav.searchPlaceholder}
     >
       <div className="relative">
         <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -38,7 +40,7 @@ export function SiteHeaderSearch({ className }: { className?: string }) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="بحث في المقالات..."
+          placeholder={nav.searchPlaceholder}
           className="site-header-search-input h-9 w-full ps-8"
         />
       </div>

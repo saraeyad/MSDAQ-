@@ -1,3 +1,4 @@
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SiteBrandLink } from "@/features/public-site/components/site-brand-link";
 import { SiteHeaderSearch } from "@/components/site-header-search";
 import { DesktopSiteNav, MobileSiteNav } from "@/components/site-header-nav";
@@ -7,8 +8,11 @@ import { PlatformFeedbackProvider } from "@/context/platform-feedback";
 import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/PlatformFeedbackFab";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
+import { usePublicCopy } from "@/context/locale";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
+import { cn } from "@/lib/utils";
 import { LogIn } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
 import { PilotLaunchWelcome } from "@/features/public-site/welcome/PilotLaunchWelcome";
@@ -26,7 +30,8 @@ function shouldShowHomeSections(pathname: string): boolean {
   if (
     pathname === ROUTES.ABOUT ||
     pathname === ROUTES.PARTNERS ||
-    pathname === ROUTES.DATA_INFO
+    pathname === ROUTES.DATA_INFO ||
+    pathname === ROUTES.TOOLS_OVERVIEW
   ) {
     return false;
   }
@@ -35,8 +40,13 @@ function shouldShowHomeSections(pathname: string): boolean {
 
 export default function PublicLayout() {
   const location = useLocation();
+  const isHome = location.pathname === ROUTES.HOME;
   const showHomeSections = shouldShowHomeSections(location.pathname);
   const { token, hasAnyPermission } = useAuth();
+  const { nav } = usePublicCopy();
+  const [heroScrolled, setHeroScrolled] = useState(false);
+  const overlayHeader = isHome && !heroScrolled;
+
   const canOpenWorkspace = hasAnyPermission([
     PERMISSIONS.VIEW_ARTICLES,
     PERMISSIONS.VIEW_ADMIN_DASHBOARD,
@@ -49,23 +59,54 @@ export default function PublicLayout() {
     : ROUTES.LOGIN;
   const authLabel = token
     ? canOpenWorkspace
-      ? "مساحة العمل"
+      ? nav.workspace
       : undefined
-    : "تسجيل الدخول";
+    : nav.login;
+
+  useEffect(() => {
+    if (!isHome) {
+      setHeroScrolled(false);
+      return;
+    }
+
+    const onScroll = () => {
+      setHeroScrolled(window.scrollY > 72);
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isHome]);
 
   return (
     <PlatformFeedbackProvider>
-      <div className="min-h-screen page-gradient">
-        <header className="site-header ghazawiya-pattern">
-          <div className="site-header__inner container-page flex min-h-[4.5rem] items-center gap-3 py-3 md:gap-4">
-            <div className="flex shrink-0 items-center">
+      <div
+        className={cn(
+          "min-h-screen page-gradient",
+          isHome && "public-home",
+        )}
+      >
+        <header
+          className={cn(
+            "site-header",
+            overlayHeader ? "site-header--hero" : "site-header--paper",
+            isHome && heroScrolled && "site-header--scrolled",
+          )}
+        >
+          <div className="site-header__inner container-page flex min-h-16 items-center gap-3 py-1.5 md:gap-5">
+            <div className="site-header__brand">
               <SiteBrandLink linkToHome />
             </div>
             <DesktopSiteNav />
             <div className="ms-auto flex shrink-0 items-center gap-2">
               <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
+              <LocaleSwitcher className="hidden sm:inline-flex" />
               {authHref && authLabel ? (
-                <Button asChild size="sm" className="hidden gap-2 lg:inline-flex">
+                <Button
+                  asChild
+                  size="sm"
+                  className="site-header__auth-btn hidden gap-2 lg:inline-flex"
+                >
                   <Link to={authHref}>
                     {!token ? <LogIn className="size-4" /> : null}
                     {authLabel}
@@ -82,7 +123,7 @@ export default function PublicLayout() {
         </main>
         {showHomeSections ? <HomeToolsSection /> : null}
         {showHomeSections ? <PartnersStrip /> : null}
-        <SiteFooter className={showHomeSections ? undefined : "mt-0"} />
+        <SiteFooter className="mt-0" />
         <PlatformFeedbackFab />
         <PilotLaunchWelcome />
       </div>

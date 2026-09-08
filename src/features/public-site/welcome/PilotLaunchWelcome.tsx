@@ -1,9 +1,8 @@
-import { BrandLogo } from "@/components/brand-logo";
-import { OliveBranch } from "@/components/ghazawiya/olive-branch";
+import { usePublicCopy } from "@/context/locale";
 import { Button } from "@/components/ui/button";
 import { useEffect, useId, useRef, useState } from "react";
 
-const STORAGE_KEY = "sabbara-pilot-welcome:v1";
+const STORAGE_KEY = "sabbara-pilot-welcome:v2";
 
 function hasSeenWelcome(): boolean {
   try {
@@ -22,6 +21,7 @@ function markWelcomeSeen(): void {
 }
 
 export function PilotLaunchWelcome() {
+  const { welcome } = usePublicCopy();
   const titleId = useId();
   const cardRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -68,7 +68,7 @@ export function PilotLaunchWelcome() {
       <button
         type="button"
         className="pilot-welcome__backdrop"
-        aria-label="إغلاق الإعلان"
+        aria-label={welcome.close}
         onClick={dismiss}
       />
       <div
@@ -79,25 +79,15 @@ export function PilotLaunchWelcome() {
         aria-labelledby={titleId}
         tabIndex={-1}
       >
-        <div className="pilot-welcome__seal" aria-hidden>
-          <OliveBranch className="pilot-welcome__branch" />
-          <span className="pilot-welcome__stamp">تجريبي</span>
-          <OliveBranch flip className="pilot-welcome__branch" />
-        </div>
-
-        <BrandLogo linkToHome={false} size="lg" className="pilot-welcome__logo" />
-
-        <p className="pilot-welcome__kicker">افتتاحية المنصة</p>
+        <p className="pilot-welcome__kicker">{welcome.kicker}</p>
         <h2 id={titleId} className="pilot-welcome__title">
-          هذا الإطلاق التجريبي لمنصة صبارة بوست
+          <span className="pilot-welcome__title-line">{welcome.titleLine}</span>
+          <span className="pilot-welcome__title-after">{welcome.titleAfter}</span>
         </h2>
-        <p className="pilot-welcome__lead">
-          نفتح الأبواب مبكراً لنسمع منكم — المحتوى والأدوات ما زالت تنمو مع كل
-          زيارة.
-        </p>
+        <p className="pilot-welcome__lead">{welcome.lead}</p>
 
         <Button className="pilot-welcome__cta" onClick={dismiss}>
-          ابدأ التصفح
+          {welcome.cta}
         </Button>
       </div>
     </div>

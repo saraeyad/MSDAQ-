@@ -1,3 +1,4 @@
+import type { PublicCopy } from "@/lib/i18n/public-dictionary";
 import { categoryPath, ROUTES } from "@/router/routes";
 import type { PublicCategory } from "@/types";
 
@@ -37,39 +38,64 @@ const ABOUT_PATHS = [
 ];
 
 /** Editorial / static pages — not CMS categories. */
-const STATIC_NAV_TAIL: PublicNavItem[] = [
-  { type: "link", to: ROUTES.RUYA, label: "رؤيا" },
-  {
-    type: "dropdown",
-    label: "إصدارات",
-    paths: PUBLICATION_PATHS,
-    items: [
-      { to: ROUTES.PUBLICATIONS, label: "جميع الإصدارات" },
-      { to: ROUTES.PUBLICATIONS_REPORTS, label: "تقارير" },
-      { to: ROUTES.PUBLICATIONS_BOOKS, label: "كتب" },
-    ],
-  },
-  {
-    type: "dropdown",
-    label: "عن المركز",
-    paths: ABOUT_PATHS,
-    items: [
-      { to: ROUTES.ABOUT, label: "من نحن" },
-      { to: ROUTES.PARTNERS, label: "شركاؤنا" },
-      { to: ROUTES.DATA_INFO, label: "معلومات وبيانات" },
-    ],
-  },
-];
+function buildStaticNavTail(nav: PublicCopy["nav"]): PublicNavItem[] {
+  return [
+    { type: "link", to: ROUTES.RUYA, label: nav.vision },
+    {
+      type: "dropdown",
+      label: nav.publications,
+      paths: PUBLICATION_PATHS,
+      items: [
+        { to: ROUTES.PUBLICATIONS, label: nav.allPublications },
+        { to: ROUTES.PUBLICATIONS_REPORTS, label: nav.reports },
+        { to: ROUTES.PUBLICATIONS_BOOKS, label: nav.books },
+      ],
+    },
+    {
+      type: "dropdown",
+      label: nav.aboutCenter,
+      paths: ABOUT_PATHS,
+      items: [
+        { to: ROUTES.ABOUT, label: nav.aboutUs },
+        { to: ROUTES.PARTNERS, label: nav.partners },
+        { to: ROUTES.DATA_INFO, label: nav.dataInfo },
+      ],
+    },
+  ];
+}
 
-const STATIC_FOOTER_LINKS = [
-  { to: ROUTES.HOME, label: "الرئيسية" },
-  { to: ROUTES.RUYA, label: "رؤيا" },
-  { to: ROUTES.PUBLICATIONS, label: "إصدارات ودراسات" },
-  { to: ROUTES.DATA_INFO, label: "معلومات وبيانات" },
-];
+function buildStaticFooterLinks(nav: PublicCopy["footer"]) {
+  return [
+    { to: ROUTES.HOME, label: nav.home },
+    { to: ROUTES.RUYA, label: nav.vision },
+    { to: ROUTES.PUBLICATIONS, label: nav.publicationsStudies },
+    { to: ROUTES.DATA_INFO, label: nav.dataInfo },
+  ];
+}
+
+const STATIC_FOOTER_LINKS = buildStaticFooterLinks({
+  home: "الرئيسية",
+  vision: "رؤيا",
+  publicationsStudies: "إصدارات ودراسات",
+  dataInfo: "معلومات وبيانات",
+  tagline: "",
+  sections: "",
+  info: "",
+  location: "",
+  mapHeading: "",
+  mapTitle: "",
+  shareFeedback: "",
+  copyright: () => "",
+  aboutUs: "",
+  partners: "",
+  sitePolicy: "",
+  terms: "",
+  verificationTools: "",
+});
 
 function buildCategoriesDropdown(
   categories: PublicCategory[],
+  sectionsLabel: string,
 ): PublicNavDropdownItem | null {
   if (categories.length === 0) return null;
 
@@ -95,7 +121,7 @@ function buildCategoriesDropdown(
 
   return {
     type: "dropdown",
-    label: "الأقسام",
+    label: sectionsLabel,
     paths,
     items,
   };
@@ -103,14 +129,39 @@ function buildCategoriesDropdown(
 
 export function buildPublicNavItems(
   categories: PublicCategory[],
+  nav?: PublicCopy["nav"],
 ): PublicNavItem[] {
-  const categoriesMenu = buildCategoriesDropdown(categories);
+  const labels = nav ?? {
+    home: "الرئيسية",
+    sections: "الأقسام",
+    vision: "رؤيا",
+    publications: "إصدارات",
+    allPublications: "جميع الإصدارات",
+    reports: "تقارير",
+    books: "كتب",
+    aboutCenter: "عن المركز",
+    aboutUs: "من نحن",
+    partners: "شركاؤنا",
+    dataInfo: "معلومات وبيانات",
+    login: "",
+    workspace: "",
+    menu: "",
+    openMenu: "",
+    subcategories: "",
+    searchPlaceholder: "",
+  };
+
+  const categoriesMenu = buildCategoriesDropdown(categories, labels.sections);
 
   return [
-    { type: "link", to: ROUTES.HOME, label: "الرئيسية", end: true },
+    { type: "link", to: ROUTES.HOME, label: labels.home, end: true },
     ...(categoriesMenu ? [categoriesMenu] : []),
-    ...STATIC_NAV_TAIL,
+    ...buildStaticNavTail(labels),
   ];
+}
+
+export function buildStaticFooterLinksFromCopy(footer: PublicCopy["footer"]) {
+  return buildStaticFooterLinks(footer);
 }
 
 export function isPublicNavLinkActive(

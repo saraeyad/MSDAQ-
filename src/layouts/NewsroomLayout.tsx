@@ -21,7 +21,7 @@ export default function NewsroomLayout() {
     <div className="staff-shell">
       <aside className="staff-shell__aside">
         <div className="staff-shell__brand">
-          <BrandLogo fill linkToHome={false} />
+          <BrandLogo size="lg" linkToHome={false} />
         </div>
         <div className="staff-shell__nav">
           <StaffNavLinks items={visibleLinks} />

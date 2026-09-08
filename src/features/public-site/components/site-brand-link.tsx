@@ -1,16 +1,8 @@
-import { SabbaraBrandIcon } from "@/components/ghazawiya/sabbara-cactus";
+import { BrandLogo } from "@/components/brand-logo";
+import { usePublicCopy } from "@/context/locale";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/router/routes";
 import { Link } from "react-router-dom";
-
-function GhazawiyaMark() {
-  return (
-    <>
-      <SabbaraBrandIcon className="nav-ghazawiya__mark" />
-      <span className="nav-ghazawiya__text">صبارة بوست</span>
-    </>
-  );
-}
 
 export function SiteBrandLink({
   className,
@@ -19,21 +11,31 @@ export function SiteBrandLink({
   className?: string;
   linkToHome?: boolean;
 }) {
+  const { brand } = usePublicCopy();
+
+  const logo = (
+    <BrandLogo
+      linkToHome={false}
+      size="xl"
+      className={cn("site-brand-link__logo", className)}
+    />
+  );
+
   if (linkToHome) {
     return (
       <Link
         to={ROUTES.HOME}
-        className={cn("nav-ghazawiya nav-ghazawiya--link", className)}
-        aria-label="صبارة بوست — العودة للرئيسية"
+        className="site-brand-link site-brand-link--home"
+        aria-label={brand.homeAria}
       >
-        <GhazawiyaMark />
+        {logo}
       </Link>
     );
   }
 
   return (
-    <span className={cn("nav-ghazawiya", className)} aria-hidden="true">
-      <GhazawiyaMark />
+    <span className="site-brand-link" aria-hidden="true">
+      {logo}
     </span>
   );
 }

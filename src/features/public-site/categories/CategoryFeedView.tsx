@@ -42,7 +42,7 @@ export function CategoryFeedView({
 }: CategoryFeedViewProps) {
   return (
     <div className="pb-16">
-      <section className="border-b border-border bg-gradient-to-bl from-muted/50 via-card to-card py-12 md:py-16">
+      <section className="public-page-hero border-b border-border py-12 md:py-16">
         <div className="container-page">
           {headerLoading ? (
             <div className="h-10 w-56 max-w-full animate-pulse rounded-lg bg-muted md:h-12" />

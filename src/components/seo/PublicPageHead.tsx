@@ -1,4 +1,5 @@
 import type { SeoHeadPayload } from "@/lib/seo/types";
+import { useLocale } from "@/context/locale";
 import { Helmet } from "react-helmet-async";
 
 interface PublicPageHeadProps {
@@ -6,15 +7,17 @@ interface PublicPageHeadProps {
 }
 
 export function PublicPageHead({ head }: PublicPageHeadProps) {
+  const { lang, dir, ogLocale } = useLocale();
+
   return (
     <Helmet>
-      <html lang="ar" dir="rtl" />
+      <html lang={lang} dir={dir} />
       <title>{head.title}</title>
       <link rel="canonical" href={head.canonical} />
       <meta property="og:title" content={head.title} />
       <meta property="og:url" content={head.canonical} />
       <meta property="og:type" content={head.ogType} />
-      <meta property="og:locale" content="ar_PS" />
+      <meta property="og:locale" content={ogLocale} />
       {head.description ? (
         <>
           <meta name="description" content={head.description} />

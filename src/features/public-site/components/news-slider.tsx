@@ -1,4 +1,5 @@
 import { PublicArticleCover } from "@/components/cover-image";
+import { useLocale, usePublicCopy } from "@/context/locale";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
@@ -11,7 +12,7 @@ interface NewsSliderProps {
   articles: PublicArticle[];
   className?: string;
   autoPlayMs?: number;
-  variant?: "default" | "banner";
+  variant?: "default" | "banner" | "rail";
   fullWidth?: boolean;
 }
 
@@ -25,6 +26,13 @@ export function NewsSlider({
   const slides = articles.slice(0, 6);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const { locale, dir } = useLocale();
+  const { home } = usePublicCopy();
+
+  const isRail = variant === "rail";
+  const isBanner = variant === "banner";
+  const PrevIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
+  const NextIcon = dir === "rtl" ? ChevronLeft : ChevronRight;
 
   const goTo = useCallback(
     (next: number) => {
@@ -40,29 +48,93 @@ export function NewsSlider({
     return () => window.clearInterval(timer);
   }, [autoPlayMs, goTo, index, paused, slides.length]);
 
+  const slideHeight = isBanner
+    ? "h-[12rem] sm:h-[16rem] md:h-[20rem] lg:h-[24rem]"
+    : "aspect-video";
+
   if (slides.length === 0) {
     return (
       <div
         className={cn(
-          "flex items-center justify-center bg-muted text-muted-foreground",
-          variant === "banner" ? "h-56 md:h-80 lg:h-[28rem]" : "aspect-video",
-          !fullWidth && "rounded-xl",
+          "flex items-center justify-center text-muted-foreground",
+          isRail ? "news-rail news-rail--empty" : slideHeight,
+          !fullWidth && !isRail && "rounded-xl bg-muted",
           className,
         )}
       >
-        لا توجد أخبار للعرض
+        {home.noArticles}
       </div>
     );
   }
 
   const current = slides[index];
-  const slideHeight =
-    variant === "banner" ? "h-56 md:h-80 lg:h-[28rem]" : "aspect-video";
+  const category =
+    current.category?.name_ar ?? mediaTypeLabel(current.media_type);
+  const published = new Date(current.published_at).toLocaleDateString(
+    locale === "ar" ? "ar" : "en-GB",
+    { day: "numeric", month: "short" },
+  );
+
+  if (isRail) {
+    return (
+      <div
+        className={cn("news-rail", className)}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        <span className="news-rail__live">
+          <span className="news-rail__live-dot" aria-hidden />
+          {home.nowLabel}
+        </span>
+
+        <Link to={articlePath(current.id)} className="news-rail__story">
+          <PublicArticleCover
+            article={current}
+            className="news-rail__thumb"
+          />
+          <div className="news-rail__copy">
+            <p className="news-rail__meta">
+              <span>{category}</span>
+              <span aria-hidden>·</span>
+              <time dateTime={current.published_at}>{published}</time>
+            </p>
+            <h2 className="news-rail__title">{current.title}</h2>
+          </div>
+        </Link>
+
+        {slides.length > 1 && (
+          <div className="news-rail__controls">
+            <span className="news-rail__count" aria-hidden>
+              {index + 1}/{slides.length}
+            </span>
+            <button
+              type="button"
+              aria-label={locale === "ar" ? "الخبر السابق" : "Previous story"}
+              onClick={() => goTo(index - 1)}
+              className="news-rail__nav"
+            >
+              <PrevIcon className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label={locale === "ar" ? "الخبر التالي" : "Next story"}
+              onClick={() => goTo(index + 1)}
+              className="news-rail__nav"
+            >
+              <NextIcon className="size-4" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
       className={cn(
-        "group relative w-full overflow-hidden",
+        "news-slider group relative w-full overflow-hidden",
+        isBanner && "news-slider--banner",
+        fullWidth && "news-slider--full-bleed",
         !fullWidth && "rounded-xl border-2 border-border",
         className,
       )}
@@ -78,16 +150,11 @@ export function NewsSlider({
           className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10" />
-        <div
-          className={cn(
-            "absolute inset-x-0 bottom-0",
-            fullWidth ? "container-page p-6 md:p-10" : "p-6 md:p-10",
-          )}
-        >
-          <span className="inline-block rounded-md border border-primary/40 bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-            {current.category?.name_ar ?? mediaTypeLabel(current.media_type)}
+        <div className="absolute inset-x-0 bottom-0 p-6 md:p-10">
+          <span className="news-slider__category inline-block rounded-md px-3 py-1 text-xs font-semibold">
+            {category}
           </span>
-          <h2 className="mt-3 max-w-3xl font-headline text-xl font-bold leading-snug text-white md:text-3xl lg:text-4xl">
+          <h2 className="mt-3 max-w-3xl font-headline text-xl font-bold leading-snug text-white md:text-3xl">
             {current.title}
           </h2>
           {current.description && (
@@ -95,9 +162,6 @@ export function NewsSlider({
               {current.description}
             </p>
           )}
-          <p className="mt-3 text-xs text-white/70">
-            {new Date(current.published_at).toLocaleDateString("ar")}
-          </p>
         </div>
       </Link>
 
@@ -105,37 +169,20 @@ export function NewsSlider({
         <>
           <button
             type="button"
-            aria-label="الخبر السابق"
+            aria-label={locale === "ar" ? "الخبر السابق" : "Previous story"}
             onClick={() => goTo(index - 1)}
-            className="absolute start-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100 md:start-6"
+            className="absolute start-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100"
           >
-            <ChevronRight className="size-5" />
+            <PrevIcon className="size-5" />
           </button>
           <button
             type="button"
-            aria-label="الخبر التالي"
+            aria-label={locale === "ar" ? "الخبر التالي" : "Next story"}
             onClick={() => goTo(index + 1)}
-            className="absolute end-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100 md:end-6"
+            className="absolute end-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100"
           >
-            <ChevronLeft className="size-5" />
+            <NextIcon className="size-5" />
           </button>
-
-          <div className="absolute bottom-5 start-1/2 z-10 flex -translate-x-1/2 gap-2">
-            {slides.map((slide, i) => (
-              <button
-                key={slide.id}
-                type="button"
-                aria-label={`الانتقال إلى الخبر ${i + 1}`}
-                onClick={() => setIndex(i)}
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  i === index
-                    ? "w-6 bg-primary"
-                    : "w-1.5 bg-white/60 hover:bg-white",
-                )}
-              />
-            ))}
-          </div>
         </>
       )}
     </div>

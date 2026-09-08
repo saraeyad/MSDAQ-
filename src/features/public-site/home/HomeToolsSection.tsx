@@ -1,86 +1,96 @@
-import { Button } from "@/components/ui/button";
-import { ROUTES } from "@/router/routes";
+import { useAuth } from "@/context/auth";
+import { useLocale, usePublicCopy } from "@/context/locale";
 import {
-  ArrowLeft,
-  Globe,
-  Image,
-  Mic,
-  Search,
-  Shield,
-} from "lucide-react";
+  HOME_PREVIEW_TOOL_SLUGS,
+  getHomeToolsBySlugs,
+  type ToolConfigEntry,
+} from "@/features/tools/tool-config";
+import { PERMISSIONS, ROUTES } from "@/router/routes";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const TOOLS = [
-  {
-    icon: Shield,
-    title: "التحقق من المصداقية",
-    description: "نتحقق من كل ادعاء قبل النشر باستخدام مصادر موثوقة.",
-  },
-  {
-    icon: Image,
-    title: "البحث العكسي عن الصور",
-    description: "تتبع أصل الصور المتداولة والتحقق من تاريخ ظهورها.",
-  },
-  {
-    icon: Search,
-    title: "كشف الصور المُولَّدة بالذكاء الاصطناعي",
-    description: "فحص الصور بحثاً عن علامات التلاعب أو التوليد الآلي.",
-  },
-  {
-    icon: Globe,
-    title: "فحص سمعة النطاقات",
-    description: "مراجعة مصداقية المواقع قبل الاعتماد عليها كمصادر.",
-  },
-  {
-    icon: Mic,
-    title: "أدوات الصوت",
-    description: "تحويل الصوت إلى نص والنص إلى صوت للمحتوى الصوتي.",
-  },
-];
+function toolHref(slug: string, canOpenTools: boolean) {
+  return canOpenTools ? `/newsroom/tools/${slug}` : ROUTES.TOOLS_OVERVIEW;
+}
+
+function ToolPlate({
+  tool,
+  index,
+  canOpenTools,
+  label,
+  description,
+}: {
+  tool: ToolConfigEntry;
+  index: number;
+  canOpenTools: boolean;
+  label?: string;
+  description?: string;
+}) {
+  const Icon = tool.icon;
+  return (
+    <Link to={toolHref(tool.slug, canOpenTools)} className="home-tools-plate">
+      <span className="home-tools-plate__num" aria-hidden>
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <span className="home-tools-plate__icon" aria-hidden>
+        <Icon className="size-5" strokeWidth={1.75} />
+      </span>
+      <h3 className="home-tools-plate__title">{label ?? tool.label}</h3>
+      <p className="home-tools-plate__desc">{description ?? tool.description}</p>
+    </Link>
+  );
+}
 
 export function HomeToolsSection() {
-  return (
-    <section className="home-tools-section py-16 md:py-24">
-      <div className="container-page">
-        <div className="flex flex-col items-center text-center">
-          <h2 className="font-headline text-2xl font-bold tracking-tight md:text-3xl lg:text-[2rem]">
-            أدواتنا للتحقق من الأخبار
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-            يستخدم فريق صبارة بوست أدوات متقدمة لضمان جودة المحتوى المنشور —
-            من تحليل الصور إلى فحص المصداقية.
-          </p>
-        </div>
+  const { home } = usePublicCopy();
+  const { dir } = useLocale();
+  const { token, hasPermission } = useAuth();
+  const canOpenTools = Boolean(token) && hasPermission(PERMISSIONS.ACCESS_TOOLS);
+  const preview = getHomeToolsBySlugs(HOME_PREVIEW_TOOL_SLUGS);
+  const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-          {TOOLS.map((tool) => (
-            <article key={tool.title} className="home-tools-card">
-              <span className="home-tools-card__icon">
-                <tool.icon className="size-5" strokeWidth={1.75} />
-              </span>
-              <h3 className="mt-4 font-headline text-lg font-bold leading-snug text-foreground">
-                {tool.title}
-              </h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {tool.description}
-              </p>
-            </article>
+  return (
+    <section className="home-tools-bench" aria-labelledby="home-tools-title">
+      <div className="container-page">
+        <header className="home-tools-bench__head">
+          <div className="home-tools-bench__copy">
+            <h2 id="home-tools-title" className="home-tools-bench__title">
+              {home.toolsTitle}
+            </h2>
+            <p className="home-tools-bench__lead">{home.toolsLead}</p>
+          </div>
+        </header>
+
+        <div className="home-tools-bench__grid">
+          {preview.map((tool, index) => (
+            <ToolPlate
+              key={tool.slug}
+              tool={tool}
+              index={index}
+              canOpenTools={canOpenTools}
+              label={
+                tool.slug === "speech-to-text" ? home.toolsVoiceTitle : undefined
+              }
+              description={
+                tool.slug === "speech-to-text" ? home.toolsVoiceLead : undefined
+              }
+            />
           ))}
 
-          <article className="home-tools-cta sm:col-span-2 lg:col-span-1">
-            <p className="font-headline text-xl font-bold text-foreground">
-              المزيد من الأدوات
-            </p>
-            <p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              اكتشف كل أدوات التحقق المتاحة في المنصة
-            </p>
-            <Button asChild className="mt-6" size="lg">
-              <Link to={ROUTES.TOOLS_OVERVIEW}>
-                استكشف الأدوات
-                <ArrowLeft className="size-4" />
-              </Link>
-            </Button>
-          </article>
+          <Link
+            to={ROUTES.TOOLS_OVERVIEW}
+            className="home-tools-plate home-tools-plate--cta"
+          >
+            <span className="home-tools-plate__num" aria-hidden>
+              +
+            </span>
+            <p className="home-tools-plate__title">{home.toolsCtaTitle}</p>
+            <p className="home-tools-plate__desc">{home.toolsCtaLead}</p>
+            <span className="home-tools-plate__cta">
+              {home.toolsCta}
+              <Arrow className="size-4" />
+            </span>
+          </Link>
         </div>
       </div>
     </section>

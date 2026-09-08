@@ -1,8 +1,9 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { usePlatformFeedback } from "@/context/platform-feedback";
+import { usePublicCopy } from "@/context/locale";
 import {
   buildPublicFooterSections,
-  STATIC_FOOTER_LINKS,
+  buildStaticFooterLinksFromCopy,
 } from "@/features/public-site/categories/public-nav";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { ROUTES } from "@/router/routes";
@@ -10,25 +11,17 @@ import { cn } from "@/lib/utils";
 import { Mail, MapPin, Phone, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const POLICY_LINKS = [
-  { to: ROUTES.ABOUT, label: "من نحن" },
-  { to: ROUTES.PARTNERS, label: "شركاؤنا" },
-  { to: ROUTES.SITE_POLICY, label: "سياسة الموقع" },
-  { to: ROUTES.TERMS, label: "الشروط والأحكام" },
-  { to: ROUTES.TOOLS_OVERVIEW, label: "أدوات التحقق" },
-];
-
 const SOCIAL_LINKS = [
-  { href: "https://facebook.com", label: "فيسبوك" },
-  { href: "https://instagram.com", label: "إنستغرام" },
-  { href: "https://youtube.com", label: "يوتيوب" },
-  { href: "https://linkedin.com", label: "لينكدإن" },
+  { href: "https://facebook.com", label: "Facebook" },
+  { href: "https://instagram.com", label: "Instagram" },
+  { href: "https://youtube.com", label: "YouTube" },
+  { href: "https://linkedin.com", label: "LinkedIn" },
 ];
 
 const CONTACT = {
   email: "cdmc@cdmcgaza.ps",
   phone: "00970592432020",
-  address: "غزة – شارع النصر",
+  address: "Gaza — Al-Naser St.",
 } as const;
 
 const MAP_EMBED =
@@ -37,19 +30,28 @@ const MAP_EMBED =
 export function SiteFooter({ className }: { className?: string }) {
   const { data: categories } = usePublicCategories();
   const { openFeedback } = usePlatformFeedback();
+  const { footer } = usePublicCopy();
   const sections =
     categories && categories.length > 0
       ? buildPublicFooterSections(categories)
       : [];
+  const staticLinks = buildStaticFooterLinksFromCopy(footer);
+
+  const policyLinks = [
+    { to: ROUTES.ABOUT, label: footer.aboutUs },
+    { to: ROUTES.PARTNERS, label: footer.partners },
+    { to: ROUTES.SITE_POLICY, label: footer.sitePolicy },
+    { to: ROUTES.TERMS, label: footer.terms },
+    { to: ROUTES.TOOLS_OVERVIEW, label: footer.verificationTools },
+  ];
 
   return (
-    <footer className={cn("mt-16 bg-[#1a1a1a] text-white", className)}>
+    <footer className={cn("site-footer mt-16 text-white", className)}>
       <div className="container-page grid gap-10 py-12 lg:grid-cols-12">
         <div className="lg:col-span-3">
           <BrandLogo linkToHome size="lg" onDark />
           <p className="mt-4 text-sm leading-relaxed text-white/70">
-            صبارة بوست — منصة إعلامية موثوقة تمكّن المجتمع من مواجهة المعلومات
-            المضللة.
+            {footer.tagline}
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             {SOCIAL_LINKS.map((social) => (
@@ -68,7 +70,9 @@ export function SiteFooter({ className }: { className?: string }) {
         </div>
 
         <div className="lg:col-span-4">
-          <h4 className="font-headline text-base font-semibold">الأقسام</h4>
+          <h4 className="font-headline text-base font-semibold">
+            {footer.sections}
+          </h4>
           {sections.length > 0 ? (
             <div className="site-footer-sections">
               {sections.map((section) => (
@@ -98,7 +102,7 @@ export function SiteFooter({ className }: { className?: string }) {
             </div>
           ) : (
             <ul className="mt-4 space-y-2.5">
-              {STATIC_FOOTER_LINKS.map((link) => (
+              {staticLinks.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
@@ -113,9 +117,11 @@ export function SiteFooter({ className }: { className?: string }) {
         </div>
 
         <div className="lg:col-span-2">
-          <h4 className="font-headline text-base font-semibold">معلومات</h4>
+          <h4 className="font-headline text-base font-semibold">
+            {footer.info}
+          </h4>
           <ul className="mt-4 space-y-2.5">
-            {POLICY_LINKS.map((link) => (
+            {policyLinks.map((link) => (
               <li key={link.to}>
                 <Link
                   to={link.to}
@@ -131,14 +137,14 @@ export function SiteFooter({ className }: { className?: string }) {
                 className="text-sm text-white/70 transition-colors hover:text-primary"
                 onClick={openFeedback}
               >
-                شاركنا رأيك
+                {footer.shareFeedback}
               </button>
             </li>
           </ul>
           <div className="mt-6 space-y-2 text-sm text-white/70">
             <p className="flex items-center gap-2">
               <MapPin className="size-4 shrink-0 text-primary" />
-              غزة، فلسطين
+              {footer.location}
             </p>
             <p className="flex items-center gap-2">
               <Mail className="size-4 shrink-0 text-primary" />
@@ -152,10 +158,12 @@ export function SiteFooter({ className }: { className?: string }) {
         </div>
 
         <div className="lg:col-span-3">
-          <h4 className="font-headline text-base font-semibold">موقعنا</h4>
+          <h4 className="font-headline text-base font-semibold">
+            {footer.mapHeading}
+          </h4>
           <div className="mt-4 overflow-hidden rounded-xl border border-white/10">
             <iframe
-              title="موقع صبارة بوست على الخريطة"
+              title={footer.mapTitle}
               src={MAP_EMBED}
               className="h-52 w-full grayscale-[30%] contrast-[1.1] md:h-56"
               loading="lazy"

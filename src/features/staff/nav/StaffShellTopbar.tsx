@@ -32,7 +32,7 @@ export function StaffShellTopbar({ items }: { items: StaffNavItem[] }) {
         </SheetTrigger>
         <SheetContent side="right" className="w-72 p-0">
           <SheetHeader className="staff-shell__brand text-start">
-            <BrandLogo fill linkToHome={false} />
+            <BrandLogo size="lg" linkToHome={false} />
             <SheetTitle className="sr-only">القائمة</SheetTitle>
           </SheetHeader>
           <div className="staff-shell__mobile-nav">

@@ -1,4 +1,3 @@
-import { OliveBranch } from "@/components/ghazawiya/olive-branch";
 import { usePlatformFeedback } from "@/context/platform-feedback";
 import { MessageSquareText } from "lucide-react";
 
@@ -16,10 +15,10 @@ export function PlatformFeedbackFab() {
       onClick={openFeedback}
       aria-label="شاركنا رأيك في منصة صبارة بوست"
     >
-      <OliveBranch className="platform-feedback-fab__branch" />
-      <MessageSquareText className="platform-feedback-fab__icon" aria-hidden />
+      <span className="platform-feedback-fab__icon" aria-hidden>
+        <MessageSquareText className="size-4" strokeWidth={2.2} />
+      </span>
       <span className="platform-feedback-fab__label">رأيك</span>
-      <OliveBranch flip className="platform-feedback-fab__branch" />
     </button>
   );
 }
