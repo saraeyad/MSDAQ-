@@ -82,7 +82,7 @@ export default function PublicLayout() {
     <PlatformFeedbackProvider>
       <div
         className={cn(
-          "min-h-screen page-gradient",
+          "flex min-h-screen flex-col page-gradient",
           isHome && "public-home",
         )}
       >
@@ -118,12 +118,12 @@ export default function PublicLayout() {
           </div>
         </header>
 
-        <main>
+        <main className="flex flex-1 flex-col">
           <Outlet />
         </main>
         {showHomeSections ? <HomeToolsSection /> : null}
         {showHomeSections ? <PartnersStrip /> : null}
-        <SiteFooter className="mt-0" />
+        <SiteFooter className="mt-auto" />
         <PlatformFeedbackFab />
         <PilotLaunchWelcome />
       </div>
