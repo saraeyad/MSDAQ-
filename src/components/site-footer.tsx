@@ -11,10 +11,9 @@ import { Mail, MapPin, Phone, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const SOCIAL_LINKS = [
-  { href: "https://facebook.com", label: "Facebook" },
-  { href: "https://instagram.com", label: "Instagram" },
-  { href: "https://youtube.com", label: "YouTube" },
-  { href: "https://linkedin.com", label: "LinkedIn" },
+  { href: "https://cdmcgaza.ps/ar/", label: "الموقع" },
+  { href: "https://www.instagram.com/cdmcgaza/", label: "Instagram" },
+  { href: "https://www.facebook.com/cdmcgaza/?locale=ar_AR", label: "Facebook" },
 ];
 
 const CONTACT = {

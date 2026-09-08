@@ -120,7 +120,6 @@ export default function LoginPage() {
 
           <div className="login-card__brand">
             <h1 className="login-card__title">تسجيل الدخول</h1>
-            <p className="login-card__subtitle">مساحة عمل صبارة بوست</p>
           </div>
 
           <form onSubmit={handleSubmit} className="login-card__form">

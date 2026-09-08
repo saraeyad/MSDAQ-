@@ -90,8 +90,9 @@ export function HomeHero() {
       </div>
 
       <div className="home-cinematic-hero__center-logo">
+        <span className="home-cinematic-hero__center-logo-grain" aria-hidden />
         <img
-          src="/brand/cdmc.png"
+          src="/brand/cdmc.png?v=2"
           alt="مركز التنمية والإعلام المجتمعي"
           decoding="async"
         />

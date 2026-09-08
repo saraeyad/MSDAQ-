@@ -354,12 +354,11 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background:
-    radial-gradient(
-      70% 60% at 50% 45%,
-      rgba(17, 17, 17, 0.18) 0%,
-      rgba(17, 17, 17, 0.52) 100%
-    );
+  background: radial-gradient(
+    70% 60% at 50% 45%,
+    rgba(17, 17, 17, 0.18) 0%,
+    rgba(17, 17, 17, 0.52) 100%
+  );
 }
 
 .login-shell {
@@ -468,14 +467,14 @@
   width: 100%;
   flex-direction: column;
   justify-content: center;
-  padding: 1.75rem 1.5rem 1.6rem;
+  padding: 0.35rem 1.5rem 1.6rem;
   background: #ffffff;
 }
 
 .login-card__top {
   display: flex;
   justify-content: center;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0;
 }
 
 .login-card__home {
@@ -487,8 +486,8 @@
   height: 9.25rem;
   width: auto;
   max-width: 18.5rem;
-  margin-top: -0.6rem;
-  margin-bottom: -2.1rem;
+  margin-top: -2.15rem;
+  margin-bottom: 0.15rem;
 }
 
 .login-card__home:hover {
@@ -496,21 +495,19 @@
 }
 
 .login-card__brand {
-  margin-bottom: 1.5rem;
+  margin-top: 0.35rem;
+  margin-bottom: 1.35rem;
   text-align: center;
 }
 
 .login-card__title {
+  margin: 0;
+  width: 100%;
   font-family: var(--font-headline);
   font-size: 1.55rem;
   font-weight: 800;
+  text-align: center;
   color: #111111;
-}
-
-.login-card__subtitle {
-  margin-top: 0.3rem;
-  font-size: 0.9rem;
-  color: rgba(17, 17, 17, 0.55);
 }
 
 .login-card__form {
