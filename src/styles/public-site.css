@@ -2301,7 +2301,7 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    min-height: 100vh;
+    min-height: 0;
     background: #111111;
     color: #ffffff;
   }
@@ -2433,10 +2433,9 @@
     position: relative;
     z-index: 3;
     display: flex;
-    align-items: center;
-    min-height: inherit;
-    padding: clamp(6.25rem, 18vh, 9rem) clamp(1.25rem, 5vw, 4.5rem)
-      clamp(4.5rem, 10vh, 6rem);
+    align-items: flex-end;
+    min-height: 0;
+    padding: clamp(6.25rem, 16vh, 8.5rem) clamp(1.25rem, 5vw, 4.5rem) 1.35rem;
   }
 
   .home-cinematic-hero__copy {
@@ -2450,7 +2449,7 @@
   .home-cinematic-hero__title {
     margin-top: 0;
     font-family: var(--font-headline);
-    font-size: clamp(2.15rem, 5.2vw, 3.75rem);
+    font-size: clamp(1.4rem, 3.2vw, 2.25rem);
     font-weight: 800;
     line-height: 1.08;
     letter-spacing: -0.02em;
@@ -2489,6 +2488,7 @@
     align-items: center;
     gap: 1rem 1.25rem;
     margin-top: 1.65rem;
+    /* min-height: 2.75rem; */
   }
 
   .home-cinematic-hero__cta {
@@ -2686,7 +2686,7 @@
 
     .home-cinematic-hero__content {
       align-items: flex-end;
-      padding-bottom: 2.5rem;
+      padding-bottom: 1.15rem;
     }
 
     .home-cinematic-hero__center-logo {

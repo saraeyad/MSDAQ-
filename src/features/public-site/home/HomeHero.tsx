@@ -1,32 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { useLocale, usePublicCopy } from "@/context/locale";
-import { articlePath, ROUTES } from "@/router/routes";
-import { Articles_APIs } from "@/services/api/articles";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Circle, Play } from "lucide-react";
-import { Link } from "react-router-dom";
+import { usePublicCopy } from "@/context/locale";
+import { Circle } from "lucide-react";
 
 const HERO_IMAGE = "/images/hero-people.jpg";
 const HERO_FALLBACK = "/images/hero-verification.png";
 
 export function HomeHero() {
-  const { dir } = useLocale();
   const copy = usePublicCopy();
   const hero = copy.hero;
-  const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
-
-  const { data: videoData } = useQuery({
-    queryKey: ["home-latest-video"],
-    queryFn: () =>
-      Articles_APIs.list({
-        latest: true,
-        media_type: "video",
-      }),
-    staleTime: 60_000,
-  });
-
-  const latestVideo = videoData?.items?.find((a) => a.media_type === "video");
-  const playHref = latestVideo ? articlePath(latestVideo.id) : ROUTES.ARTICLES;
 
   return (
     <section className="home-cinematic-hero" aria-labelledby="home-hero-title">
@@ -71,21 +51,7 @@ export function HomeHero() {
 
           <p className="home-cinematic-hero__brand">{hero.brandLine}</p>
           <p className="home-cinematic-hero__lead">{hero.lead}</p>
-
-          <div className="home-cinematic-hero__actions">
-            <Button asChild size="lg" className="home-cinematic-hero__cta">
-              <Link to={ROUTES.ARTICLES}>
-                {hero.ctaExplore}
-                <Arrow className="size-4" />
-              </Link>
-            </Button>
-            <Link to={playHref} className="home-cinematic-hero__play-link">
-              <span className="home-cinematic-hero__play-icon" aria-hidden>
-                <Play className="size-4 fill-current" />
-              </span>
-              <span>{hero.ctaPlay}</span>
-            </Link>
-          </div>
+          {/* <div className="home-cinematic-hero__actions" aria-hidden /> */}
         </div>
       </div>
 

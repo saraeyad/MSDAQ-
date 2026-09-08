@@ -156,10 +156,10 @@ const ar: PublicCopy = {
   },
   hero: {
     kicker: ["غزة", "ناس", "صمود"],
-    headline: "قصص حقيقية.",
-    headlineAccent: "حقائق أوضح.",
+    headline: "قصص حقيقية",
+    headlineAccent: "حقائق أوضح",
     brandLine: "صبّارة بوست",
-    lead: "إعلام فلسطيني — نروي القصص اليومية التي تهم.",
+    lead: "إعلام فلسطيني- نروي القصص اليومية",
     ctaExplore: "استكشف قصصنا",
     ctaPlay: "شاهد آخر فيديو",
     scriptLine: "نفس الناس · قصص أقوى",
@@ -170,8 +170,8 @@ const ar: PublicCopy = {
   home: {
     latestBadge: "أحدث المحتوى",
     latestTitle: "استكشف الأخبار والتحققات",
-    latestTitleLine: "استكشف الأخبار.",
-    latestTitleAccent: "تحقق أوضح.",
+    latestTitleLine: "استكشف الأخبار",
+    latestTitleAccent: "تحقق أوضح",
     latestKicker: ["قصص", "تحقق", "غزة"],
     latestLead: "تصفّح أحدث عشرة مقالات من المنصة",
     nowLabel: "الآن",
@@ -201,8 +201,7 @@ const ar: PublicCopy = {
     mapHeading: "موقعنا",
     mapTitle: "موقع صبارة بوست على الخريطة",
     shareFeedback: "شاركنا رأيك",
-    copyright: (year) =>
-      `© ${year} صبارة بوست — جميع الحقوق محفوظة`,
+    copyright: (year) => `© ${year} صبارة بوست — جميع الحقوق محفوظة`,
     aboutUs: "من نحن",
     partners: "شركاؤنا",
     sitePolicy: "سياسة الموقع",
@@ -345,7 +344,8 @@ const en: PublicCopy = {
     toolsLead:
       "The same suite our newsroom uses before publishing — claims, images, domains, and voice.",
     toolsCtaTitle: "More tools",
-    toolsCtaLead: "Open the rest of the verification kit used inside the platform",
+    toolsCtaLead:
+      "Open the rest of the verification kit used inside the platform",
     toolsCta: "Explore the tools",
     toolsCollapse: "Hide extra tools",
     toolsVoiceTitle: "Voice tools",
