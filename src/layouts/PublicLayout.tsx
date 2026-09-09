@@ -9,6 +9,11 @@ import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/Pl
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
 import { usePublicCopy } from "@/context/locale";
+import {
+  isPublicArticlePath,
+  resetArticleViewDedupe,
+  trackPageView,
+} from "@/lib/google-analytics";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { cn } from "@/lib/utils";
 import { LogIn } from "lucide-react";
@@ -62,6 +67,12 @@ export default function PublicLayout() {
       ? nav.workspace
       : undefined
     : nav.login;
+
+  useEffect(() => {
+    resetArticleViewDedupe(location.pathname);
+    if (isPublicArticlePath(location.pathname)) return;
+    trackPageView(`${location.pathname}${location.search}`);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (!isHome) {

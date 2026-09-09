@@ -164,6 +164,7 @@ export interface AdminAnalyticsReferrer {
   source?: string;
   referrer?: string;
   name?: string;
+  views?: number;
   sessions?: number;
   visitors?: number;
   users?: number;

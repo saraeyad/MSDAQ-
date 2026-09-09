@@ -20,7 +20,8 @@ import { useSiteOrigin } from "@/context/site-origin";
 import { Button } from "@/components/ui/button";
 import { Articles_APIs } from "@/services/api/articles";
 import type { PublicArticle } from "@/types";
-import { ROUTES } from "@/router/routes";
+import { articlePath, ROUTES } from "@/router/routes";
+import { trackArticleView } from "@/lib/google-analytics";
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { usePlatformFeedback } from "@/context/platform-feedback";
@@ -160,6 +161,14 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
   const showLangToggle =
     hasLanguageVariant(article, "simplified") ||
     hasLanguageVariant(article, "dialect");
+
+  useEffect(() => {
+    trackArticleView({
+      id: article.id,
+      title: article.title,
+      path: articlePath(article.id),
+    });
+  }, [article.id, article.title]);
 
   return (
     <>
