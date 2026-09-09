@@ -4,6 +4,7 @@ import {
   unwrapList,
 } from "@/lib/api-data";
 import type {
+  AdminAnalytics,
   AdminDashboard,
   AdminUsersListParams,
   ApiResponse,
@@ -154,6 +155,15 @@ export const AdminDashboard_APIs = {
     const response = await API.get<ApiResponse<AdminDashboard>>(
       "/api/admin/dashboard",
       { params: { days: clampedDays } },
+    );
+    return getApiData(response);
+  },
+};
+
+export const AdminAnalytics_APIs = {
+  get: async (): Promise<AdminAnalytics> => {
+    const response = await API.get<ApiResponse<AdminAnalytics>>(
+      "/api/admin/analytics",
     );
     return getApiData(response);
   },

@@ -1982,15 +1982,15 @@
 
   .site-nav-parent-link:hover,
   .site-nav-parent-row:hover > .site-nav-parent-link {
-    background: #f8ebe3;
-    color: #b45309;
+    background: #f8e3e4;
+    color: #a31830;
   }
 
   .site-nav-parent-row:hover
     > .site-nav-parent-link
     .site-nav-parent-link__chevron {
     opacity: 0.9;
-    color: #b45309;
+    color: #a31830;
     transform: translateX(-2px);
   }
 

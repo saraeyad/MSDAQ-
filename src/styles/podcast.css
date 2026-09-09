@@ -168,7 +168,7 @@
   }
 
   .waveform-bars__bar--played {
-    background: #f98c34;
+    background: #1a1a1a;
   }
 
   .waveform-bars--dark .waveform-bars__bar {
@@ -176,13 +176,8 @@
   }
 
   .waveform-bars--dark .waveform-bars__bar--played,
-  .waveform-bars--cover .waveform-bars__bar {
-    background: linear-gradient(
-      180deg,
-      rgba(249, 140, 52, 0.7) 0%,
-      #f98c34 55%,
-      #d96a1f 100%
-    );
+  .waveform-bars--cover .waveform-bars__bar--played {
+    background: #1a1a1a;
   }
 
   .waveform-bars--inline {

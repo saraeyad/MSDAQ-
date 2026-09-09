@@ -2,6 +2,7 @@ import AdminLayout from "@/layouts/AdminLayout";
 import NewsroomLayout from "@/layouts/NewsroomLayout";
 import PublicLayout from "@/layouts/PublicLayout";
 import CategoriesManagementPage from "@/features/admin/categories/CategoriesManagementPage";
+import AdminAnalyticsPage from "@/features/admin/analytics/AdminAnalyticsPage";
 import AdminDashboardPage from "@/features/admin/dashboard/AdminDashboardPage";
 import LibraryPage from "@/features/newsroom/library/LibraryPage";
 import PlatformFeedbackPage from "@/features/platform-feedback/PlatformFeedbackPage";
@@ -214,6 +215,14 @@ export function AppRoutes() {
           element={
             <RequirePermission permission={PERMISSIONS.VIEW_ADMIN_DASHBOARD}>
               <AdminDashboardPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_ANALYTICS}
+          element={
+            <RequirePermission permission={PERMISSIONS.VIEW_ADMIN_DASHBOARD}>
+              <AdminAnalyticsPage />
             </RequirePermission>
           }
         />

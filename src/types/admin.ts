@@ -141,3 +141,58 @@ export interface AdminDashboard {
   people: AdminDashboardPeople;
   recent: AdminDashboardRecentArticle[];
 }
+
+export interface AdminAnalyticsToday {
+  visitors: number;
+  pageviews: number;
+  sessions: number;
+  avg_session_duration_secs: number;
+}
+
+/** Raw row shapes from GA proxy — keys may vary slightly by backend version. */
+export interface AdminAnalyticsTopPage {
+  path?: string;
+  page_path?: string;
+  page_title?: string;
+  title?: string;
+  views?: number;
+  pageviews?: number;
+  count?: number;
+}
+
+export interface AdminAnalyticsReferrer {
+  source?: string;
+  referrer?: string;
+  name?: string;
+  sessions?: number;
+  visitors?: number;
+  users?: number;
+  count?: number;
+}
+
+export interface AdminAnalyticsDevice {
+  device?: string;
+  name?: string;
+  sessions?: number;
+  visitors?: number;
+  users?: number;
+  count?: number;
+}
+
+export interface AdminAnalyticsCountry {
+  country?: string;
+  name?: string;
+  sessions?: number;
+  visitors?: number;
+  users?: number;
+  count?: number;
+}
+
+export interface AdminAnalytics {
+  realtime: number;
+  today: AdminAnalyticsToday;
+  top_pages: AdminAnalyticsTopPage[];
+  referrers: AdminAnalyticsReferrer[];
+  devices: AdminAnalyticsDevice[];
+  countries: AdminAnalyticsCountry[];
+}

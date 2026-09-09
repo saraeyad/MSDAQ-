@@ -33,6 +33,7 @@ export const ROUTES = {
   NEWSROOM_PLATFORM_FEEDBACK: "/newsroom/platform-feedback",
 
   ADMIN: "/admin",
+  ADMIN_ANALYTICS: "/admin/analytics",
   ADMIN_TEAM: "/admin/team",
   ADMIN_ROLES: "/admin/roles",
   ADMIN_ROLE_EDIT: "/admin/roles/:id/edit",

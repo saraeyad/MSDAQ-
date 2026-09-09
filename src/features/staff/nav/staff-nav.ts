@@ -2,6 +2,7 @@ import { PERMISSIONS } from "@/router/permissions";
 import { ROUTES } from "@/router/routes";
 import type { LucideIcon } from "lucide-react";
 import {
+  Activity,
   BarChart3,
   Calendar,
   FileText,
@@ -106,6 +107,14 @@ export const STAFF_NAV_ITEMS: StaffNavItem[] = [
     icon: Newspaper,
     group: "admin",
     end: true,
+    permission: PERMISSIONS.VIEW_ADMIN_DASHBOARD,
+  },
+  {
+    to: ROUTES.ADMIN_ANALYTICS,
+    label: "تحليلات الموقع",
+    pageTitle: "تحليلات الموقع",
+    icon: Activity,
+    group: "admin",
     permission: PERMISSIONS.VIEW_ADMIN_DASHBOARD,
   },
   {
