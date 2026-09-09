@@ -5,19 +5,18 @@ import { SourceConsentBanner } from "@/features/publishing-flow/components/Sourc
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { ArticleTrustIndexSection } from "@/features/trust-index/ArticleTrustIndexSection";
-import { RescheduleArticleDialog } from "@/features/newsroom/RescheduleArticleDialog";
+import { ArticleStatusActions } from "@/features/newsroom/ArticleStatusActions";
 import { usePermission } from "@/hooks/usePermission";
 import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl, resolvePlayableVideoUrl } from "@/lib/media-url";
-import { derivePublishGate, inferArticleStep } from "@/lib/publish-gate";
+import { derivePublishGate } from "@/lib/publish-gate";
 import { articleAcceptsPublicReviews, articleReviewThresholds } from "@/lib/trust-index-labels";
 import { cn } from "@/lib/utils";
 import {
   ARTICLE_TRUST_FEEDBACK_HASH,
   PERMISSIONS,
   ROUTES,
-  staffArticleEditPath,
 } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +28,6 @@ import {
   FileText,
   ImageIcon,
   Loader2,
-  PenLine,
   Trash2,
   User,
 } from "lucide-react";
@@ -103,11 +101,16 @@ export default function StaffArticleDetailPage() {
   const queryClient = useQueryClient();
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
-  const canReschedule = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
+  const canPublish =
+    usePermission(PERMISSIONS.PUBLISH_ARTICLES) || canEdit;
+  const canSchedule =
+    usePermission(PERMISSIONS.SCHEDULE_ARTICLES) || canEdit;
+  const canRevert =
+    usePermission(PERMISSIONS.REVERT_ARTICLES) || canEdit;
   const canViewTrustIndex = usePermission(PERMISSIONS.VIEW_TRUST_INDEX);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [confirmRevert, setConfirmRevert] = useState(false);
 
   const { data: article, isLoading, isError, error } = useQuery({
     queryKey: ["staff-article", id],
@@ -121,6 +124,17 @@ export default function StaffArticleDetailPage() {
       toast.success("تم حذف المقال");
       void queryClient.invalidateQueries({ queryKey: ["staff-articles"] });
       navigate(ROUTES.NEWSROOM_ARTICLES);
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
+  });
+
+  const revertMutation = useMutation({
+    mutationFn: () => ArticlesStaff_APIs.revert(id!),
+    onSuccess: () => {
+      toast.success("تم إخفاء المقال عن الجمهور وإرجاعه إلى مسودة");
+      setConfirmRevert(false);
+      void queryClient.invalidateQueries({ queryKey: ["staff-articles"] });
+      void queryClient.invalidateQueries({ queryKey: ["staff-article", id] });
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
   });
@@ -169,7 +183,6 @@ export default function StaffArticleDetailPage() {
   }
 
   const gate = derivePublishGate(article);
-  const editStep = inferArticleStep(article);
   const coverUrl = resolveMediaUrl(article.cover_image);
   const playableVideoUrl = resolvePlayableVideoUrl(article.video, {
     coverImage: article.cover_image,
@@ -203,22 +216,14 @@ export default function StaffArticleDetailPage() {
         </Link>
 
         <div className="staff-article-toolbar__actions">
-          {canReschedule && article.status === "scheduled" && (
-            <Button variant="outline" size="sm" onClick={() => setRescheduleOpen(true)}>
-              <CalendarClock className="size-4" />
-              إعادة جدولة
-            </Button>
-          )}
-          {canEdit && (
-            <Button asChild size="sm">
-              <Link
-                to={staffArticleEditPath(article.id, editStep)}
-              >
-                <PenLine className="size-4" />
-                تحرير في مسار النشر
-              </Link>
-            </Button>
-          )}
+          <ArticleStatusActions
+            article={article}
+            canEdit={canEdit}
+            canPublish={canPublish}
+            canSchedule={canSchedule}
+            canRevert={canRevert}
+            onRevert={() => setConfirmRevert(true)}
+          />
           {canDelete && (
             <Button
               variant="destructive"
@@ -479,9 +484,14 @@ export default function StaffArticleDetailPage() {
         onConfirm={() => deleteMutation.mutate()}
       />
 
-      <RescheduleArticleDialog
-        article={rescheduleOpen ? article : null}
-        onClose={() => setRescheduleOpen(false)}
+      <ConfirmDialog
+        open={confirmRevert}
+        title="إرجاع إلى مسودة"
+        description={`سيتم إخفاء «${article.title}» عن الجمهور وإرجاعه إلى مسودة. التعديل متاح دون هذا الإجراء.`}
+        confirmLabel="إرجاع إلى مسودة"
+        isPending={revertMutation.isPending}
+        onClose={() => setConfirmRevert(false)}
+        onConfirm={() => revertMutation.mutate()}
       />
     </div>
   );

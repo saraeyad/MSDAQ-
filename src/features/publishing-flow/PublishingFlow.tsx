@@ -100,7 +100,15 @@ export default function PublishingFlow() {
           <PenLine className="size-3.5" />
           مسار النشر
         </span>
-        <h2 className="section-title">مقال جديد</h2>
+        <h2 className="section-title">
+          {isNew
+            ? "مقال جديد"
+            : article?.status === "published"
+              ? "تحديث مقال منشور"
+              : article?.status === "scheduled"
+                ? "تحديث مقال مجدول"
+                : "تعديل المقال"}
+        </h2>
       </header>
 
       {!isNew && article && (

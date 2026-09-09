@@ -12,7 +12,7 @@ import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
 import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { StatusBadge } from "@/features/admin/components/StatusBadge";
-import { RescheduleArticleDialog } from "@/features/newsroom/RescheduleArticleDialog";
+import { ArticleStatusActions } from "@/features/newsroom/ArticleStatusActions";
 import { CategoryFlyoutFilter } from "@/features/newsroom/CategoryFlyoutFilter";
 import { usePermission } from "@/hooks/usePermission";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
@@ -31,7 +31,6 @@ import { cn } from "@/lib/utils";
 import {
   PERMISSIONS,
   ROUTES,
-  staffArticleEditPath,
   staffArticlePath,
   staffArticleTrustFeedbackPath,
 } from "@/router/routes";
@@ -40,10 +39,8 @@ import type { ArticleStatus, StaffArticle } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
-  CalendarClock,
   Eye,
   FileText,
-  PenLine,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -62,21 +59,24 @@ function StaffArticleCard({
   article,
   canEdit,
   canDelete,
-  canReschedule,
+  canPublish,
+  canSchedule,
+  canRevert,
   canViewTrustIndex,
   onDelete,
-  onReschedule,
+  onRevert,
 }: {
   article: StaffArticle;
   canEdit: boolean;
   canDelete: boolean;
-  canReschedule: boolean;
+  canPublish: boolean;
+  canSchedule: boolean;
+  canRevert: boolean;
   canViewTrustIndex: boolean;
   onDelete: (article: StaffArticle) => void;
-  onReschedule: (article: StaffArticle) => void;
+  onRevert: (article: StaffArticle) => void;
 }) {
   const coverUrl = resolveMediaUrl(article.cover_image);
-  const editStep = inferArticleStep(article);
   const { target: reviewTarget, max: reviewMax } =
     articleReviewThresholds(article);
 
@@ -153,16 +153,6 @@ function StaffArticleCard({
             عرض
           </Link>
         </Button>
-        {canReschedule && article.status === "scheduled" ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onReschedule(article)}
-          >
-            <CalendarClock className="size-3.5" />
-            إعادة جدولة
-          </Button>
-        ) : null}
         {canViewTrustIndex ? (
           <Button
             asChild
@@ -176,14 +166,14 @@ function StaffArticleCard({
             </Link>
           </Button>
         ) : null}
-        {canEdit ? (
-          <Button asChild variant="outline" size="sm">
-            <Link to={staffArticleEditPath(article.id, editStep)}>
-              <PenLine className="size-3.5" />
-              تحرير
-            </Link>
-          </Button>
-        ) : null}
+        <ArticleStatusActions
+          article={article}
+          canEdit={canEdit}
+          canPublish={canPublish}
+          canSchedule={canSchedule}
+          canRevert={canRevert}
+          onRevert={onRevert}
+        />
         {canDelete ? (
           <Button
             variant="ghost"
@@ -205,13 +195,16 @@ export default function NewsroomArticlesPage() {
   const { user } = useAuth();
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
-  const canReschedule = usePermission(PERMISSIONS.SCHEDULE_ARTICLES);
+  const canPublish =
+    usePermission(PERMISSIONS.PUBLISH_ARTICLES) || canEdit;
+  const canSchedule =
+    usePermission(PERMISSIONS.SCHEDULE_ARTICLES) || canEdit;
+  const canRevert =
+    usePermission(PERMISSIONS.REVERT_ARTICLES) || canEdit;
   const canViewTrustIndex = usePermission(PERMISSIONS.VIEW_TRUST_INDEX);
   const [params, setParams] = useSearchParams();
   const [deleteTarget, setDeleteTarget] = useState<StaffArticle | null>(null);
-  const [rescheduleTarget, setRescheduleTarget] = useState<StaffArticle | null>(
-    null,
-  );
+  const [revertTarget, setRevertTarget] = useState<StaffArticle | null>(null);
 
   const status = params.get("status") ?? "";
   const category = params.get("category") ?? "";
@@ -287,6 +280,16 @@ export default function NewsroomArticlesPage() {
     onSuccess: () => {
       toast.success("تم حذف المقال");
       setDeleteTarget(null);
+      void queryClient.invalidateQueries({ queryKey: ["staff-articles"] });
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
+  });
+
+  const revertMutation = useMutation({
+    mutationFn: (id: number | string) => ArticlesStaff_APIs.revert(id),
+    onSuccess: () => {
+      toast.success("تم إخفاء المقال عن الجمهور وإرجاعه إلى مسودة");
+      setRevertTarget(null);
       void queryClient.invalidateQueries({ queryKey: ["staff-articles"] });
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
@@ -444,10 +447,12 @@ export default function NewsroomArticlesPage() {
                 article={article}
                 canEdit={canEdit}
                 canDelete={canDelete}
-                canReschedule={canReschedule}
+                canPublish={canPublish}
+                canSchedule={canSchedule}
+                canRevert={canRevert}
                 canViewTrustIndex={canViewTrustIndex}
                 onDelete={setDeleteTarget}
-                onReschedule={setRescheduleTarget}
+                onRevert={setRevertTarget}
               />
             ))}
           </div>
@@ -473,9 +478,14 @@ export default function NewsroomArticlesPage() {
         }
       />
 
-      <RescheduleArticleDialog
-        article={rescheduleTarget}
-        onClose={() => setRescheduleTarget(null)}
+      <ConfirmDialog
+        open={!!revertTarget}
+        title="إرجاع إلى مسودة"
+        description={`سيتم إخفاء «${revertTarget?.title}» عن الجمهور وإرجاعه إلى مسودة. التعديل متاح دون هذا الإجراء.`}
+        confirmLabel="إرجاع إلى مسودة"
+        isPending={revertMutation.isPending}
+        onClose={() => setRevertTarget(null)}
+        onConfirm={() => revertTarget && revertMutation.mutate(revertTarget.id)}
       />
     </div>
   );

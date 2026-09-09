@@ -221,7 +221,7 @@ export function isStepFilled(step: number, article: StaffArticle): boolean {
  */
 export function inferArticleStep(article: StaffArticle): number {
   if (article.status === "published" || article.status === "scheduled") {
-    return 7;
+    return stepsForMediaType(article.media_type)[0]?.num ?? 1;
   }
 
   const steps = stepsForMediaType(article.media_type).map((s) => s.num);
