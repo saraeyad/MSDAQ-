@@ -59,13 +59,17 @@ export function PublicArticleCover({
   fallbackClassName,
 }: {
   article: {
+    title?: string;
     cover_image?: string | null;
+    cover_description?: string | null;
     images?: { thumb?: string; full?: string }[];
   };
   alt?: string;
   className?: string;
   fallbackClassName?: string;
 }) {
+  const resolvedAlt =
+    alt || article.cover_description?.trim() || article.title || "";
   const candidates = useMemo(() => {
     const raw = [
       article.cover_image,
@@ -89,7 +93,7 @@ export function PublicArticleCover({
   return (
     <img
       src={src}
-      alt={alt}
+      alt={resolvedAlt}
       className={className}
       loading="lazy"
       decoding="async"

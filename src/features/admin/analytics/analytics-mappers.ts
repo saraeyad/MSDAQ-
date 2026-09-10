@@ -227,8 +227,8 @@ export function mapTopArticles(rows: unknown): AnalyticsPageRow[] {
 }
 
 function humanizeSource(raw: string): string {
-  if (!raw) return "مباشر";
   const key = raw.toLowerCase();
+  if (!raw || key === "(direct)" || key === "direct") return "مباشر";
   if (key.includes("facebook") || key.includes("fbclid")) return "فيسبوك";
   if (key.includes("instagram")) return "إنستغرام";
   if (key.includes("google")) return "جوجل";

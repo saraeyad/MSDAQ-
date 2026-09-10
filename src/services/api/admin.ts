@@ -5,6 +5,7 @@ import {
 } from "@/lib/api-data";
 import type {
   AdminAnalytics,
+  AdminAnalyticsRange,
   AdminDashboard,
   AdminUsersListParams,
   ApiResponse,
@@ -160,11 +161,33 @@ export const AdminDashboard_APIs = {
   },
 };
 
+const ANALYTICS_RANGE_ALIASES: Partial<Record<AdminAnalyticsRange, string[]>> = {
+  month: ["last_month", "month"],
+  year: ["year", "last_year"],
+};
+
 export const AdminAnalytics_APIs = {
-  get: async (): Promise<AdminAnalytics> => {
-    const response = await API.get<ApiResponse<AdminAnalytics>>(
-      "/api/admin/analytics",
-    );
-    return getApiData(response);
+  get: async (
+    range: AdminAnalyticsRange = "today",
+  ): Promise<AdminAnalytics> => {
+    const candidates =
+      range === "today"
+        ? [undefined]
+        : (ANALYTICS_RANGE_ALIASES[range] ?? [range]);
+
+    let lastError: unknown;
+    for (const value of candidates) {
+      try {
+        const response = await API.get<ApiResponse<AdminAnalytics>>(
+          "/api/platform-feedback/analytics",
+          { params: value ? { range: value } : undefined },
+        );
+        return getApiData(response);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError;
   },
 };

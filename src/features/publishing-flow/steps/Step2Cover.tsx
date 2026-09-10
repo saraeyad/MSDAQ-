@@ -5,6 +5,7 @@ import { NextStepButton } from "@/features/publishing-flow/components/NextStepBu
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
 import {
   runWithToolProcessing,
@@ -75,6 +76,10 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
   const [publicCoverUrl, setPublicCoverUrl] = useState<string | null>(() =>
     absoluteMediaUrlForApi(article.cover_image),
   );
+  const [coverDescription, setCoverDescription] = useState(
+    () => article.cover_description?.trim() ?? "",
+  );
+  const [savingCaption, setSavingCaption] = useState(false);
 
   const articleId = article.id;
   const mediaType = article.media_type;
@@ -120,6 +125,10 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
       );
     }
   }, [article.cover_image]);
+
+  useEffect(() => {
+    setCoverDescription(article.cover_description?.trim() ?? "");
+  }, [article.cover_description]);
 
   useEffect(() => {
     setMediaUrl(article.media_url ?? "");
@@ -179,6 +188,16 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     setUploading(true);
     try {
       const data = await ArticlesStaff_APIs.uploadCover(articleId, file);
+      const caption = coverDescription.trim();
+      if (caption) {
+        const updated = await ArticlesStaff_APIs.updateCoverDescription(
+          articleId,
+          caption,
+        );
+        if (updated.cover_description != null) {
+          setCoverDescription(updated.cover_description);
+        }
+      }
       const uploadedPublicUrl = absoluteMediaUrlForApi(data.cover_url);
       setPublicCoverUrl(uploadedPublicUrl);
 
@@ -262,6 +281,7 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
       setPreview("");
       setOriginalFile(null);
       setPublicCoverUrl(null);
+      setCoverDescription("");
       setSearchResults([]);
       setReverseSearched(false);
       toast.success("تم حذف الغلاف");
@@ -360,6 +380,76 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
   const videoReadyButBroken =
     videoStatus === "ready" && !!article.video?.trim() && !playableVideoUrl;
 
+  const savedCaption = article.cover_description?.trim() ?? "";
+  const captionDirty = coverDescription.trim() !== savedCaption;
+
+  const saveCoverCaption = async () => {
+    if (!preview) {
+      toast.error("ارفع صورة الغلاف أولاً");
+      return;
+    }
+    setSavingCaption(true);
+    try {
+      const data = await ArticlesStaff_APIs.updateCoverDescription(
+        articleId,
+        coverDescription,
+      );
+      if (data.cover_description != null) {
+        setCoverDescription(data.cover_description);
+      }
+      toast.success("تم حفظ وصف الغلاف");
+      await refreshArticle();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      setSavingCaption(false);
+    }
+  };
+
+  const coverCaptionField = (
+    <div className="cover-caption">
+      <div className="cover-caption__head">
+        <div>
+          <p className="cover-caption__title">وصف الغلاف</p>
+          <p className="cover-caption__hint">
+            يظهر تحت الصورة في صفحة المقال — مثل تنبيه أنها مولّدة بالذكاء الاصطناعي
+          </p>
+        </div>
+        <span className="cover-caption__badge">اختياري</span>
+      </div>
+      <Textarea
+        id="cover-description"
+        className="cover-caption__field"
+        value={coverDescription}
+        maxLength={500}
+        onChange={(event) => setCoverDescription(event.target.value)}
+        placeholder="مثال: تم إنشاء هذه الصورة بالذكاء الاصطناعي"
+        disabled={uploading || savingCaption || !preview}
+      />
+      <div className="cover-caption__bar">
+        <span className="cover-caption__count" data-full={coverDescription.length >= 480}>
+          {coverDescription.length}
+          <span>/500</span>
+        </span>
+        {preview ? (
+          <Button
+            type="button"
+            size="sm"
+            disabled={uploading || savingCaption || !captionDirty}
+            onClick={() => void saveCoverCaption()}
+          >
+            {(uploading || savingCaption) && (
+              <Loader2 className="size-4 animate-spin" />
+            )}
+            حفظ الوصف
+          </Button>
+        ) : (
+          <p className="cover-caption__empty">ارفع صورة أولاً لإضافة وصف</p>
+        )}
+      </div>
+    </div>
+  );
+
   const coverSection = (
     <CoverUploadSection
       preview={preview}
@@ -427,7 +517,12 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
         }}
       />
 
-      {mediaType === "text" && coverSection}
+      {mediaType === "text" && (
+        <>
+          {coverSection}
+          {coverCaptionField}
+        </>
+      )}
 
       {mediaType === "audio" && (
         <>
@@ -483,6 +578,7 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
           <div className="space-y-2">
             <p className="text-sm font-medium">صورة الغلاف</p>
             {coverSection}
+            {coverCaptionField}
           </div>
         </>
       )}
@@ -572,6 +668,7 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
           <div className="space-y-2">
             <p className="text-sm font-medium">صورة الغلاف</p>
             {coverSection}
+            {coverCaptionField}
           </div>
         </>
       )}

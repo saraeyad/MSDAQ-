@@ -142,6 +142,15 @@ export interface AdminDashboard {
   recent: AdminDashboardRecentArticle[];
 }
 
+export type AdminAnalyticsRange =
+  | "today"
+  | "3days"
+  | "7days"
+  | "30days"
+  | "month"
+  | "90days"
+  | "year";
+
 export interface AdminAnalyticsToday {
   visitors: number;
   pageviews: number;
@@ -151,6 +160,7 @@ export interface AdminAnalyticsToday {
 
 /** Raw row shapes from GA proxy — keys may vary slightly by backend version. */
 export interface AdminAnalyticsTopPage {
+  page?: string;
   path?: string;
   page_path?: string;
   page_title?: string;
@@ -191,7 +201,10 @@ export interface AdminAnalyticsCountry {
 
 export interface AdminAnalytics {
   realtime: number;
-  today: AdminAnalyticsToday;
+  range?: AdminAnalyticsRange | string;
+  summary?: AdminAnalyticsToday;
+  /** Legacy alias some older payloads still send instead of `summary`. */
+  today?: AdminAnalyticsToday;
   top_pages: AdminAnalyticsTopPage[];
   referrers: AdminAnalyticsReferrer[];
   devices: AdminAnalyticsDevice[];

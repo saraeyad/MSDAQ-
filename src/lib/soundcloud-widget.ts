@@ -46,26 +46,39 @@ export function loadSoundCloudWidgetApi(): Promise<void> {
   }
 
   scriptPromise = new Promise((resolve, reject) => {
+    const finish = () => {
+      if (window.SC?.Widget) {
+        resolve();
+        return;
+      }
+      scriptPromise = null;
+      reject(new Error("SoundCloud widget failed to load"));
+    };
+
+    const fail = () => {
+      scriptPromise = null;
+      reject(new Error("SoundCloud widget failed to load"));
+    };
+
     const existing = document.querySelector<HTMLScriptElement>(
       `script[src="${SOUNDCLOUD_WIDGET_SCRIPT}"]`,
     );
 
     if (existing) {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener(
-        "error",
-        () => reject(new Error("SoundCloud widget failed to load")),
-        { once: true },
-      );
+      existing.addEventListener("load", finish, { once: true });
+      existing.addEventListener("error", fail, { once: true });
+      // HMR / cached script: `load` already fired, so check on the next tick.
+      window.setTimeout(() => {
+        if (window.SC?.Widget) resolve();
+      }, 0);
       return;
     }
 
     const script = document.createElement("script");
     script.src = SOUNDCLOUD_WIDGET_SCRIPT;
     script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error("SoundCloud widget failed to load"));
+    script.onload = finish;
+    script.onerror = fail;
     document.body.appendChild(script);
   });
 

@@ -1,5 +1,6 @@
 import { usePlatformFeedback } from "@/context/platform-feedback";
-import { MessageSquareText } from "lucide-react";
+
+const FAB_ART = "/brand/sabbara-feedback-fab.png?v=1";
 
 export function PlatformFeedbackFab() {
   const { feedbackOpen, openFeedback, trustIndexOpen } = usePlatformFeedback();
@@ -15,10 +16,12 @@ export function PlatformFeedbackFab() {
       onClick={openFeedback}
       aria-label="شاركنا رأيك في منصة صبارة بوست"
     >
-      <span className="platform-feedback-fab__icon" aria-hidden>
-        <MessageSquareText className="size-4" strokeWidth={2.2} />
-      </span>
-      <span className="platform-feedback-fab__label">رأيك</span>
+      <img
+        src={FAB_ART}
+        alt=""
+        className="platform-feedback-fab__art"
+        draggable={false}
+      />
     </button>
   );
 }

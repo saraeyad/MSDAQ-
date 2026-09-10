@@ -81,6 +81,7 @@ export interface StaffArticle {
   category: PublicArticleCategory;
   sources: ArticleSource[];
   cover_image: string | null;
+  cover_description?: string | null;
   images: ArticleImage[];
   source_audio: string | null;
   generated_audio: string | null;
@@ -207,6 +208,7 @@ export interface PublicArticle {
   author?: { id: number; name: string };
   category?: PublicArticleCategory;
   cover_image: string | null;
+  cover_description?: string | null;
   images: ArticleImage[];
   sources?: ArticleSource[];
   source_audio?: string | null;

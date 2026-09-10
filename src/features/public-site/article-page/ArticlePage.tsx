@@ -10,12 +10,17 @@ import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { PublicArticleCover } from "@/components/cover-image";
 import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
-import { resolvePublicArticleAudioSource, publicMediaTypeLabel } from "@/lib/media-labels";
-import { publicArticleCoverUrl, resolveMediaUrl, resolvePlayableVideoUrl, youtubeEmbedUrl } from "@/lib/media-url";
 import {
-  buildArticleJsonLd,
-  buildArticleSeoHead,
-} from "@/lib/seo/article-seo";
+  resolvePublicArticleAudioSource,
+  publicMediaTypeLabel,
+} from "@/lib/media-labels";
+import {
+  publicArticleCoverUrl,
+  resolveMediaUrl,
+  resolvePlayableVideoUrl,
+  youtubeEmbedUrl,
+} from "@/lib/media-url";
+import { buildArticleJsonLd, buildArticleSeoHead } from "@/lib/seo/article-seo";
 import { useSiteOrigin } from "@/context/site-origin";
 import { Button } from "@/components/ui/button";
 import { Articles_APIs } from "@/services/api/articles";
@@ -136,6 +141,7 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
   const youtubeEmbed =
     youtubeEmbedUrl(article.media_url) ?? youtubeEmbedUrl(article.video);
   const coverUrl = publicArticleCoverUrl(article);
+  const coverCaption = article.cover_description?.trim() ?? "";
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
   const hasPlayableAudio = isAudio && Boolean(audioSource);
@@ -156,8 +162,9 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
   });
   const sources = article.sources ?? [];
   const galleryImages =
-    article.images?.map((image) => resolveMediaUrl(image.full)).filter(Boolean) ??
-    [];
+    article.images
+      ?.map((image) => resolveMediaUrl(image.full))
+      .filter(Boolean) ?? [];
   const showLangToggle =
     hasLanguageVariant(article, "simplified") ||
     hasLanguageVariant(article, "dialect");
@@ -214,11 +221,23 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                 />
               </div>
             ) : coverUrl ? (
-              <PublicArticleCover
-                article={article}
-                alt={article.title}
-                className="mb-8 aspect-[21/9] w-full rounded-2xl object-cover"
-              />
+              <figure className="article-cover-block mb-8">
+                <PublicArticleCover
+                  article={article}
+                  alt={coverCaption || article.title}
+                  className="article-cover-block__image aspect-[21/9] w-full object-cover"
+                />
+                {coverCaption ? (
+                  <figcaption className="article-cover-caption">
+                    {/* <span className="article-cover-caption__label">
+                      وصف الصورة
+                    </span> */}
+                    <p className="article-cover-caption__text">
+                      {coverCaption}
+                    </p>
+                  </figcaption>
+                ) : null}
+              </figure>
             ) : article.media_type === "audio" ? (
               <div className="relative mb-8 aspect-[21/9] overflow-hidden rounded-2xl">
                 <PodcastAudioPlayer
@@ -230,7 +249,7 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                       : null
                   }
                   variant="cover"
-                  interactive={Boolean(audioSource)}
+                  interactive={false}
                   className="size-full min-h-[12rem]"
                   onPlaybackProgress={onAudioProgress}
                 />
@@ -305,6 +324,7 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                   }
                   variant="embed"
                   interactive
+                  showSourceLink
                   onPlaybackProgress={onAudioProgress}
                 />
               </div>
@@ -389,7 +409,10 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <RelatedArticlesSidebar article={article} />
             {acceptingReviews ? (
-              <ArticleTrustFeedbackButton onClick={openManually} disabled={open} />
+              <ArticleTrustFeedbackButton
+                onClick={openManually}
+                disabled={open}
+              />
             ) : null}
           </div>
         </div>
@@ -401,7 +424,11 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
 export default function ArticlePage({ initialArticle }: ArticlePageProps) {
   const { id } = useParams();
 
-  const { data: article, isLoading, isError } = useQuery({
+  const {
+    data: article,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["public-article", id],
     queryFn: () => Articles_APIs.get(id!),
     enabled: Boolean(id),

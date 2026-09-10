@@ -105,11 +105,21 @@ export const ArticlesStaff_APIs = {
   ) => {
     const formData = new FormData();
     formData.append("cover", file);
-    const response = await API.postFormData<ApiResponse<{ cover_url: string }>>(
-      articleUrl(id, "/cover"),
-      formData,
-      options,
-    );
+    const response = await API.postFormData<
+      ApiResponse<{ cover_url: string; cover_description?: string | null }>
+    >(articleUrl(id, "/cover"), formData, options);
+    return getApiData(response);
+  },
+
+  updateCoverDescription: async (
+    id: number | string,
+    description: string,
+  ) => {
+    const response = await API.patch<
+      ApiResponse<{ cover_description?: string | null }>
+    >(articleUrl(id, "/cover/description"), {
+      description: description.trim().slice(0, 500),
+    });
     return getApiData(response);
   },
 

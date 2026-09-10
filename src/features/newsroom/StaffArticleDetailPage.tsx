@@ -11,7 +11,10 @@ import { getApiErrorMessage } from "@/lib/api-data";
 import { mediaTypeLabel } from "@/lib/media-labels";
 import { resolveMediaUrl, resolvePlayableVideoUrl } from "@/lib/media-url";
 import { derivePublishGate } from "@/lib/publish-gate";
-import { articleAcceptsPublicReviews, articleReviewThresholds } from "@/lib/trust-index-labels";
+import {
+  articleAcceptsPublicReviews,
+  articleReviewThresholds,
+} from "@/lib/trust-index-labels";
 import { cn } from "@/lib/utils";
 import {
   ARTICLE_TRUST_FEEDBACK_HASH,
@@ -101,18 +104,20 @@ export default function StaffArticleDetailPage() {
   const queryClient = useQueryClient();
   const canEdit = usePermission(PERMISSIONS.EDIT_ARTICLES);
   const canDelete = usePermission(PERMISSIONS.DELETE_ARTICLES);
-  const canPublish =
-    usePermission(PERMISSIONS.PUBLISH_ARTICLES) || canEdit;
-  const canSchedule =
-    usePermission(PERMISSIONS.SCHEDULE_ARTICLES) || canEdit;
-  const canRevert =
-    usePermission(PERMISSIONS.REVERT_ARTICLES) || canEdit;
+  const canPublish = usePermission(PERMISSIONS.PUBLISH_ARTICLES) || canEdit;
+  const canSchedule = usePermission(PERMISSIONS.SCHEDULE_ARTICLES) || canEdit;
+  const canRevert = usePermission(PERMISSIONS.REVERT_ARTICLES) || canEdit;
   const canViewTrustIndex = usePermission(PERMISSIONS.VIEW_TRUST_INDEX);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmRevert, setConfirmRevert] = useState(false);
 
-  const { data: article, isLoading, isError, error } = useQuery({
+  const {
+    data: article,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["staff-article", id],
     queryFn: () => ArticlesStaff_APIs.getArticle(id!),
     enabled: !!id,
@@ -250,7 +255,7 @@ export default function StaffArticleDetailPage() {
           <>
             <img
               src={coverUrl}
-              alt=""
+              alt={article.cover_description?.trim() || article.title}
               className="staff-article-hero__banner-image"
             />
             <div className="staff-article-hero__banner-overlay" />
@@ -299,7 +304,6 @@ export default function StaffArticleDetailPage() {
               ) : null}
             </div>
           )}
-
         </div>
       </header>
 
@@ -319,9 +323,17 @@ export default function StaffArticleDetailPage() {
                 <div className="staff-article-cover">
                   <img
                     src={coverUrl}
-                    alt=""
+                    alt={article.cover_description?.trim() || article.title}
                     className="staff-article-cover__img"
                   />
+                  {article.cover_description?.trim() ? (
+                    <p className="staff-article-cover__caption">
+                      <span className="staff-article-cover__caption-label">
+                        وصف الصورة
+                      </span>
+                      <span>{article.cover_description.trim()}</span>
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -350,8 +362,7 @@ export default function StaffArticleDetailPage() {
                   className="staff-article-video"
                   src={playableVideoUrl}
                 />
-              ) : article.video?.trim() &&
-                article.video_status === "ready" ? (
+              ) : article.video?.trim() && article.video_status === "ready" ? (
                 <p className="staff-article-media-note" role="alert">
                   تعذّر تشغيل الفيديو — الرابط المخزّن ليس ملف فيديو صالحاً.
                 </p>
@@ -388,7 +399,10 @@ export default function StaffArticleDetailPage() {
           {hasContent ? (
             <SectionPanel icon={FileText} title="المحتوى">
               <ContentPreview label="الفصحى" text={article.content.formal} />
-              <ContentPreview label="مبسّطة" text={article.content.simplified} />
+              <ContentPreview
+                label="مبسّطة"
+                text={article.content.simplified}
+              />
               <ContentPreview label="عامية" text={article.content.dialect} />
             </SectionPanel>
           ) : null}
@@ -401,7 +415,9 @@ export default function StaffArticleDetailPage() {
               <ul className="staff-article-sources">
                 {article.sources.map((source) => (
                   <li key={source.id} className="staff-article-source">
-                    <p className="staff-article-source__name">{source.source}</p>
+                    <p className="staff-article-source__name">
+                      {source.source}
+                    </p>
                     <p className="staff-article-source__type">
                       {source.source_type}
                     </p>
@@ -434,7 +450,9 @@ export default function StaffArticleDetailPage() {
             data-closed={acceptingReviews ? "false" : "true"}
           >
             <div className="staff-article-review-limits__head">
-              <p className="staff-article-review-limits__kicker">تقييم القرّاء</p>
+              <p className="staff-article-review-limits__kicker">
+                تقييم القرّاء
+              </p>
               <span
                 className={
                   acceptingReviews
