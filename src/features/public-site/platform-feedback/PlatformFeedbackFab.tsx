@@ -1,6 +1,6 @@
 import { usePlatformFeedback } from "@/context/platform-feedback";
 
-const FAB_ART = "/brand/sabbara-feedback-fab.png?v=1";
+const FAB_ART = "/brand/sabbara-feedback-fab.webp?v=2";
 
 export function PlatformFeedbackFab() {
   const { feedbackOpen, openFeedback, trustIndexOpen } = usePlatformFeedback();

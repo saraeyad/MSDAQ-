@@ -147,6 +147,15 @@ export function publicArticleCoverUrl(article: {
   return resolveMediaUrl(first?.full ?? first?.thumb ?? null);
 }
 
+/** Poster/preview still: video_poster first, then cover. */
+export function publicArticlePosterUrl(article: {
+  video_poster?: string | null;
+  cover_image?: string | null;
+  images?: { thumb?: string; full?: string }[];
+}): string | null {
+  return resolveMediaUrl(article.video_poster) ?? publicArticleCoverUrl(article);
+}
+
 const IMAGE_EXTENSION = /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?.*)?$/i;
 const VIDEO_EXTENSION =
   /\.(mp4|webm|ogg|ogv|mov|m4v|avi|mkv|m3u8?|mpd)(\?.*)?$/i;

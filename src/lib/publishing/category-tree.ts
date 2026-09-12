@@ -1,47 +1,5 @@
 import type { Category, PublicCategory } from "@/types";
 
-export interface CategorySelectOption {
-  id: number;
-  name_ar: string;
-  slug: string;
-  depth: number;
-  parentName?: string;
-}
-
-type CategoryTreeNode = Pick<
-  Category | PublicCategory,
-  "id" | "slug" | "name_ar" | "children"
->;
-
-export function flattenCategoriesForSelect(
-  tree: CategoryTreeNode[],
-): CategorySelectOption[] {
-  const result: CategorySelectOption[] = [];
-
-  for (const parent of tree) {
-    const children = parent.children ?? [];
-
-    result.push({
-      id: parent.id,
-      name_ar: parent.name_ar,
-      slug: parent.slug,
-      depth: 0,
-    });
-
-    for (const child of children) {
-      result.push({
-        id: child.id,
-        name_ar: child.name_ar,
-        slug: child.slug,
-        depth: 1,
-        parentName: parent.name_ar,
-      });
-    }
-  }
-
-  return result;
-}
-
 type CategoryFilterNode = {
   id?: number | string | null;
   slug: string;
@@ -197,9 +155,4 @@ export function flattenCategoryRows(tree: Category[]): CategoryTableRow[] {
   }
 
   return rows;
-}
-
-export function formatCategorySelectLabel(option: CategorySelectOption): string {
-  if (option.depth === 0) return option.name_ar;
-  return `\u2003${option.name_ar}`;
 }

@@ -13,9 +13,17 @@ import { StaffUserMenu } from "@/features/staff/nav/StaffUserMenu";
 import type { StaffNavItem } from "@/features/staff/nav/staff-nav";
 import { Menu } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 
 export function StaffShellTopbar({ items }: { items: StaffNavItem[] }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { pathname } = useLocation();
+  const pageTitle =
+    [...items]
+      .sort((a, b) => b.to.length - a.to.length)
+      .find((item) =>
+        item.end ? pathname === item.to : pathname.startsWith(item.to),
+      )?.pageTitle ?? "";
 
   return (
     <header className="staff-shell__topbar">
@@ -43,6 +51,10 @@ export function StaffShellTopbar({ items }: { items: StaffNavItem[] }) {
           </div>
         </SheetContent>
       </Sheet>
+
+      {pageTitle ? (
+        <h1 className="staff-shell__page-title">{pageTitle}</h1>
+      ) : null}
 
       <div className="staff-shell__topbar-actions">
         <StaffHomeLink />

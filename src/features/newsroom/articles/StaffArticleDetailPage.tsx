@@ -1,14 +1,16 @@
-import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { StatusBadge } from "@/features/admin/components/StatusBadge";
 import { PublishGatePanel } from "@/features/publishing-flow/components/PublishGatePanel";
 import { SourceConsentBanner } from "@/features/publishing-flow/components/SourceConsentBanner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { PublicArticleAudioPlayer } from "@/features/public-site/components/PublicArticleAudioPlayer";
+import { PublicArticleVideoPlayer } from "@/features/public-site/components/PublicArticleVideoPlayer";
 import { ArticleTrustIndexSection } from "@/features/trust-index/components/ArticleTrustIndexSection";
 import { ArticleStatusActions } from "@/features/newsroom/articles/ArticleStatusActions";
 import { usePermission } from "@/hooks/auth";
+import { useStaffArticleMedia } from "@/hooks/publishing";
 import { getApiErrorMessage } from "@/lib/api";
-import { mediaTypeLabel, resolveMediaUrl, resolvePlayableVideoUrl } from "@/lib/media";
+import { mediaTypeLabel, mergeArticleMedia, resolveMediaUrl } from "@/lib/media";
 import { derivePublishGate } from "@/lib/publishing";
 import {
   articleAcceptsPublicReviews,
@@ -112,7 +114,7 @@ export default function StaffArticleDetailPage() {
   const [confirmRevert, setConfirmRevert] = useState(false);
 
   const {
-    data: article,
+    data: articleData,
     isLoading,
     isError,
     error,
@@ -121,6 +123,10 @@ export default function StaffArticleDetailPage() {
     queryFn: () => ArticlesStaff_APIs.getArticle(id!),
     enabled: !!id,
   });
+  const { data: articleMedia } = useStaffArticleMedia(id, !!id);
+  const article = articleData
+    ? mergeArticleMedia(articleData, articleMedia)
+    : articleData;
 
   const deleteMutation = useMutation({
     mutationFn: () => ArticlesStaff_APIs.deleteArticle(id!),
@@ -188,19 +194,15 @@ export default function StaffArticleDetailPage() {
 
   const gate = derivePublishGate(article);
   const coverUrl = resolveMediaUrl(article.cover_image);
-  const playableVideoUrl = resolvePlayableVideoUrl(article.video, {
-    coverImage: article.cover_image,
-    videoPoster: article.video_poster,
-  });
-  const sourceAudioUrl = resolveMediaUrl(article.source_audio);
-  const generatedAudioUrl = resolveMediaUrl(article.generated_audio);
+  const isAudio = article.media_type === "audio";
+  const isVideo = article.media_type === "video";
   const hasMedia =
     coverUrl ||
-    article.media_url ||
-    playableVideoUrl ||
-    sourceAudioUrl ||
-    generatedAudioUrl ||
-    article.video_status;
+    article.video_poster ||
+    article.video_status ||
+    isAudio ||
+    isVideo ||
+    Boolean(article.generated_audio);
   const hasContent =
     article.content.formal?.trim() ||
     article.content.simplified?.trim() ||
@@ -360,40 +362,36 @@ export default function StaffArticleDetailPage() {
                 </p>
               ) : null}
 
-              {playableVideoUrl ? (
-                <video
-                  controls
+              {isVideo ? (
+                <PublicArticleVideoPlayer
+                  articleId={article.id}
+                  scope="staff"
+                  title={article.title}
+                  posterUrl={article.video_poster ?? coverUrl}
+                  coverImage={article.cover_image}
+                  videoPoster={article.video_poster}
                   className="staff-article-video"
-                  src={playableVideoUrl}
                 />
-              ) : article.video?.trim() && article.video_status === "ready" ? (
-                <p className="staff-article-media-note" role="alert">
-                  تعذّر تشغيل الفيديو — الرابط المخزّن ليس ملف فيديو صالحاً.
-                </p>
               ) : null}
 
-              {sourceAudioUrl ? (
+              {isAudio ? (
                 <div className="staff-article-audio">
                   <p className="staff-article-audio__label">الصوت المصدر</p>
-                  <PodcastAudioPlayer
-                    seed={`article-${article.id}-source`}
-                    url={sourceAudioUrl}
+                  <PublicArticleAudioPlayer
+                    articleId={article.id}
+                    scope="staff"
                     coverUrl={coverUrl ?? undefined}
-                    title={article.title}
-                    subtitle="صوت المصدر"
                   />
                 </div>
               ) : null}
 
-              {generatedAudioUrl ? (
+              {article.generated_audio && !isAudio ? (
                 <div className="staff-article-audio">
                   <p className="staff-article-audio__label">الصوت المُولَّد</p>
-                  <PodcastAudioPlayer
-                    seed={`article-${article.id}-generated`}
-                    url={generatedAudioUrl}
+                  <PublicArticleAudioPlayer
+                    articleId={article.id}
+                    scope="staff"
                     coverUrl={coverUrl ?? undefined}
-                    title={article.title}
-                    subtitle="صوت مُولَّد"
                   />
                 </div>
               ) : null}

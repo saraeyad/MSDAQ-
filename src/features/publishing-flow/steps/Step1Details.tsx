@@ -338,6 +338,9 @@ export function Step1Details({
         await queryClient.invalidateQueries({
           queryKey: ["staff-article", String(article.id)],
         });
+        await queryClient.invalidateQueries({
+          queryKey: ["staff", "article-media", String(article.id)],
+        });
         toast.success("تم حفظ التفاصيل");
         onComplete?.();
         return;

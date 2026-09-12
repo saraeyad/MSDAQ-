@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/router/routes";
 
-export const BRAND_LOGO_FULL = "/brand/sabbara-post.png?v=3";
-export const BRAND_LOGO_ICON = "/brand/sabbara-post-icon.png?v=3";
+export const BRAND_LOGO_FULL = "/brand/sabbara-post.webp?v=4";
+export const BRAND_LOGO_ICON = "/brand/sabbara-post-icon.webp?v=4";
 
 type BrandLogoSize = "sm" | "md" | "lg" | "xl";
 

@@ -9,13 +9,13 @@ import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { PublicArticleCover } from "@/components/article/cover-image";
 import { ArticleVerifiedBadge } from "@/components/article/article-verified-badge";
+import { PublicArticleAudioPlayer } from "@/features/public-site/components/PublicArticleAudioPlayer";
+import { PublicArticleVideoPlayer } from "@/features/public-site/components/PublicArticleVideoPlayer";
 import {
   publicArticleCoverUrl,
+  publicArticlePosterUrl,
   publicMediaTypeLabel,
   resolveMediaUrl,
-  resolvePlayableVideoUrl,
-  resolvePublicArticleAudioSource,
-  youtubeEmbedUrl,
 } from "@/lib/media";
 import { buildArticleJsonLd, buildArticleSeoHead } from "@/lib/seo/article-seo";
 import { useSiteOrigin } from "@/context/site-origin";
@@ -25,7 +25,6 @@ import type { PublicArticle } from "@/types";
 import { articlePath, ROUTES } from "@/router/routes";
 import {
   articleAcceptsPublicReviews,
-  countWords,
   trackArticleView,
   type TrustMediaProgress,
 } from "@/lib/site";
@@ -36,7 +35,7 @@ import { TrustIndexDialog } from "@/features/public-site/trust-index/TrustIndexD
 import { ArticleTrustFeedbackButton } from "@/features/public-site/trust-index/ArticleTrustFeedbackButton";
 import { useTrustIndexMediaTrigger } from "@/features/public-site/trust-index/useTrustIndexMediaTrigger";
 import { useTrustIndexTrigger } from "@/features/public-site/trust-index/useTrustIndexTrigger";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const RelatedArticlesSidebar = lazy(() =>
@@ -47,30 +46,24 @@ const RelatedArticlesSidebar = lazy(() =>
 
 function useArticleTrustSurvey({
   articleId,
-  body,
   mediaEnabled,
   enabled = true,
 }: {
   articleId: number | string;
-  body: string;
   mediaEnabled: boolean;
   enabled?: boolean;
 }) {
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [endEl, setEndEl] = useState<HTMLDivElement | null>(null);
   const [mediaProgress, setMediaProgress] = useState<TrustMediaProgress | null>(
     null,
   );
   const [manualOpen, setManualOpen] = useState(false);
-  const wordCount = useMemo(() => countWords(body), [body]);
   const { setTrustIndexOpen } = usePlatformFeedback();
-  const hasTextBody = wordCount > 0;
 
   const textTrigger = useTrustIndexTrigger({
     articleId,
-    wordCount,
-    bodyRef,
-    enabled: enabled && hasTextBody,
+    endEl,
+    enabled,
   });
 
   const mediaTrigger = useTrustIndexMediaTrigger({
@@ -102,25 +95,12 @@ function useArticleTrustSurvey({
     return () => setTrustIndexOpen(false);
   }, [open, setTrustIndexOpen]);
 
-  const onVideoProgress = (ended = false) => {
-    const video = videoRef.current;
-    if (!video) return;
-    setMediaProgress({
-      currentTime: video.currentTime,
-      duration: Number.isFinite(video.duration) ? video.duration : 0,
-      isPlaying: !video.paused && !video.ended,
-      ended: ended || video.ended,
-    });
-  };
-
   return {
-    bodyRef,
-    videoRef,
+    endRef: setEndEl,
     open,
     dismiss,
     openManually,
-    onAudioProgress: setMediaProgress,
-    onVideoProgress,
+    onMediaProgress: setMediaProgress,
   };
 }
 
@@ -136,31 +116,20 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
   const body = resolveArticleBody(article, lang);
   const queryClient = useQueryClient();
   const acceptingReviews = articleAcceptsPublicReviews(article);
-  const audioSource = resolvePublicArticleAudioSource(article);
-  const playableVideoUrl = resolvePlayableVideoUrl(article.video, {
-    coverImage: article.cover_image,
-    videoPoster: article.video_poster,
-  });
-  const youtubeEmbed =
-    youtubeEmbedUrl(article.media_url) ?? youtubeEmbedUrl(article.video);
   const coverUrl = publicArticleCoverUrl(article);
+  const posterUrl = publicArticlePosterUrl(article);
   const coverCaption = article.cover_description?.trim() ?? "";
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
-  const hasPlayableAudio = isAudio && Boolean(audioSource);
-  const hasPlayableVideo = isVideo && Boolean(playableVideoUrl);
   const {
-    bodyRef,
-    videoRef,
+    endRef,
     open,
     dismiss,
     openManually,
-    onAudioProgress,
-    onVideoProgress,
+    onMediaProgress,
   } = useArticleTrustSurvey({
     articleId: article.id,
-    body,
-    mediaEnabled: hasPlayableAudio || hasPlayableVideo,
+    mediaEnabled: isAudio || isVideo,
     enabled: acceptingReviews,
   });
   const sources = article.sources ?? [];
@@ -195,34 +164,16 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
 
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="min-w-0">
-            {article.media_type === "video" && youtubeEmbed ? (
-              <div className="relative mb-8 aspect-video overflow-hidden rounded-2xl bg-black">
-                <iframe
-                  src={youtubeEmbed}
-                  title={article.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0 size-full border-0"
-                />
-              </div>
-            ) : article.media_type === "video" && playableVideoUrl ? (
-              <div className="relative mb-8 aspect-video overflow-hidden rounded-2xl bg-black">
-                <video
-                  ref={videoRef}
-                  src={playableVideoUrl}
-                  poster={
-                    resolveMediaUrl(article.video_poster) ??
-                    coverUrl ??
-                    undefined
-                  }
-                  controls
-                  className="size-full object-contain"
-                  onTimeUpdate={() => onVideoProgress()}
-                  onPlay={() => onVideoProgress()}
-                  onPause={() => onVideoProgress()}
-                  onEnded={() => onVideoProgress(true)}
-                />
-              </div>
+            {isVideo ? (
+              <PublicArticleVideoPlayer
+                articleId={article.id}
+                title={article.title}
+                posterUrl={posterUrl}
+                coverImage={article.cover_image}
+                videoPoster={article.video_poster}
+                className="mb-8"
+                onVideoProgress={onMediaProgress}
+              />
             ) : coverUrl ? (
               <figure className="article-cover-block mb-8">
                 <PublicArticleCover
@@ -237,20 +188,13 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                   </figcaption>
                 ) : null}
               </figure>
-            ) : article.media_type === "audio" ? (
+            ) : isAudio ? (
               <div className="relative mb-8 aspect-[21/9] overflow-hidden rounded-2xl">
                 <PodcastAudioPlayer
                   seed={article.id}
-                  url={audioSource?.kind === "file" ? audioSource.url : null}
-                  hostedPageUrl={
-                    audioSource?.kind === "soundcloud"
-                      ? audioSource.pageUrl
-                      : null
-                  }
                   variant="cover"
                   interactive={false}
                   className="size-full min-h-[12rem]"
-                  onPlaybackProgress={onAudioProgress}
                 />
               </div>
             ) : null}
@@ -311,45 +255,20 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
               </div>
             )}
 
-            {article.media_type === "audio" && audioSource && (
+            {isAudio ? (
               <div className="mt-6">
-                <PodcastAudioPlayer
-                  seed={article.id}
-                  url={audioSource.kind === "file" ? audioSource.url : null}
-                  hostedPageUrl={
-                    audioSource.kind === "soundcloud"
-                      ? audioSource.pageUrl
-                      : null
-                  }
+                <PublicArticleAudioPlayer
+                  articleId={article.id}
                   variant="embed"
-                  interactive
+                  coverUrl={coverUrl ?? undefined}
                   showSourceLink
-                  onPlaybackProgress={onAudioProgress}
+                  onPlaybackProgress={onMediaProgress}
                 />
               </div>
-            )}
-
-            {article.media_type === "video" &&
-              article.media_url &&
-              !youtubeEmbed &&
-              article.media_url !== playableVideoUrl && (
-                <div className="mt-6">
-                  <a
-                    href={article.media_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    مشاهدة على المنصة الخارجية
-                  </a>
-                </div>
-              )}
+            ) : null}
 
             {body ? (
-              <div
-                ref={bodyRef}
-                className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed"
-              >
+              <div className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed">
                 {body}
               </div>
             ) : article.media_type !== "audio" &&
@@ -404,6 +323,13 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                 </ul>
               </section>
             )}
+
+            <div
+              ref={endRef}
+              className="h-8 w-full"
+              aria-hidden
+              data-trust-index-end
+            />
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">

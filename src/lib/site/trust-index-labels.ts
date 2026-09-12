@@ -83,23 +83,9 @@ export function trustIndexHasData(summary: TrustIndexSummary | undefined): boole
   return (summary?.count ?? 0) > 0;
 }
 
-export function countWords(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
-
-export function trustReadingThresholdSeconds(wordCount: number): number {
-  const readingSeconds = (wordCount / 180) * 60 * 0.75;
-  return Math.max(45, Math.round(readingSeconds));
-}
-
-/** Tab is visible and focused — per Trust Index §1.4 (Page Visibility API). */
-export function isTrustIndexTabActive(): boolean {
-  if (typeof document === "undefined") return false;
-  return document.visibilityState === "visible" && document.hasFocus();
-}
-
-export const TRUST_MEDIA_MIN_PLAY_SECONDS = 45;
 export const TRUST_MEDIA_DURATION_RATIO = 0.5;
+/** Used when duration is unknown (YouTube/SoundCloud not ready yet). */
+export const TRUST_MEDIA_MIN_PLAY_SECONDS = 45;
 
 export interface TrustMediaProgress {
   currentTime: number;
@@ -125,6 +111,9 @@ export function trustMediaThresholdReached(progress: {
     progress.duration > 0 &&
     progress.playedSeconds / progress.duration >= TRUST_MEDIA_DURATION_RATIO
   ) {
+    return true;
+  }
+  if (progress.duration <= 0 && progress.playedSeconds >= TRUST_MEDIA_MIN_PLAY_SECONDS) {
     return true;
   }
   return false;

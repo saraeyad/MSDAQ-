@@ -327,7 +327,7 @@ export default function NewsroomArticlesPage() {
   };
 
   return (
-    <div className="newsroom-articles-page">
+    <div className="newsroom-articles-page" dir="rtl">
       <header className="newsroom-articles-hero">
         <div className="newsroom-articles-hero__intro">
           <p className="newsroom-articles-hero__kicker">غرفة الأخبار</p>

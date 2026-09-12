@@ -78,7 +78,7 @@ export const TOOL_REGISTRY: ToolConfigEntry[] = [
   {
     slug: "credibility-check",
     label: "فحص المصداقية",
-    description: "التحقق من ادعاءات النص مقابل مصادر موثوقة",
+    description: "هذه الخدمة غير متاحة حاليا",
     icon: BookOpen,
     permission: PERMISSIONS.RUN_CREDIBILITY_CHECK,
     category: "editorial",
@@ -142,15 +142,6 @@ export const HOME_PREVIEW_TOOL_SLUGS = [
   "ai-detection",
   "domain-checker",
   "speech-to-text",
-] as const;
-
-/** Extra newsroom tools revealed after “explore”. */
-export const HOME_MORE_TOOL_SLUGS = [
-  "text-to-speech",
-  "standards-check",
-  "localization",
-  "fussha-rewriter",
-  "bias-neutralizer",
 ] as const;
 
 export function getHomeToolsBySlugs(slugs: readonly string[]): ToolConfigEntry[] {

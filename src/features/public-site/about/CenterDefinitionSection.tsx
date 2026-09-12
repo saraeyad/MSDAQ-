@@ -1,4 +1,4 @@
-const COLLAGE_IMAGE = "/about/center-collage.png";
+const COLLAGE_IMAGE = "/about/center-collage.webp";
 
 export function CenterDefinitionSection({ alt }: { alt: string }) {
   return (

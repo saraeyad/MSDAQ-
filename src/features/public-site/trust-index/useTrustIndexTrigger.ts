@@ -6,15 +6,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseTrustIndexTriggerOptions {
   articleId: number | string;
-  wordCount: number;
-  bodyRef: React.RefObject<HTMLElement | null>;
+  /** Element at the real end of the article (after body, gallery, sources). */
+  endEl: HTMLElement | null;
   enabled?: boolean;
+}
+
+function isArticleEndInView(node: HTMLElement): boolean {
+  const rect = node.getBoundingClientRect();
+  return rect.top < window.innerHeight - 48;
 }
 
 export function useTrustIndexTrigger({
   articleId,
-  wordCount,
-  bodyRef,
+  endEl,
   enabled = true,
 }: UseTrustIndexTriggerOptions) {
   const [open, setOpen] = useState(false);
@@ -38,27 +42,35 @@ export function useTrustIndexTrigger({
   }, [articleId]);
 
   useEffect(() => {
-    if (!enabled || wordCount <= 0) return;
+    if (!enabled || !endEl) return;
 
-    const checkScrollEnd = () => {
-      const body = bodyRef.current;
-      if (!body) return;
-      const rect = body.getBoundingClientRect();
-      const bottom = rect.bottom + window.scrollY;
-      if (window.scrollY + window.innerHeight >= bottom - 8) {
+    let wasBelowFold = !isArticleEndInView(endEl);
+
+    const check = () => {
+      if (!isArticleEndInView(endEl)) {
+        wasBelowFold = true;
+        return;
+      }
+      if (wasBelowFold || window.scrollY > 40) {
         tryOpen();
       }
     };
 
-    window.addEventListener("scroll", checkScrollEnd, { passive: true });
-    window.addEventListener("resize", checkScrollEnd);
-    checkScrollEnd();
+    const observer = new IntersectionObserver(() => check(), {
+      root: null,
+      threshold: 0,
+    });
+    observer.observe(endEl);
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    check();
 
     return () => {
-      window.removeEventListener("scroll", checkScrollEnd);
-      window.removeEventListener("resize", checkScrollEnd);
+      observer.disconnect();
+      window.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
     };
-  }, [articleId, bodyRef, enabled, tryOpen, wordCount]);
+  }, [articleId, enabled, endEl, tryOpen]);
 
   return { open, dismiss };
 }

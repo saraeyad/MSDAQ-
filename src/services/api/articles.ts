@@ -2,9 +2,11 @@ import {
   getApiData,
   parsePublicArticlesListResponse,
 } from "@/lib/api";
+import { normalizeArticleMedia } from "@/lib/media/article-media";
 import type {
   PaginatedResponse,
   PublicArticle,
+  PublicArticleMedia,
   PublicArticlesListResult,
 } from "@/types";
 import type { ApiResponse } from "@/types";
@@ -37,5 +39,13 @@ export const Articles_APIs = {
       `/api/public/articles/${articleIdParam(id)}`,
     );
     return getApiData(response);
+  },
+
+  /** Call only when the reader presses play — never on page load. */
+  getMedia: async (id: number | string): Promise<PublicArticleMedia> => {
+    const response = await API.get<ApiResponse<PublicArticleMedia>>(
+      `/api/public/articles/${articleIdParam(id)}/media`,
+    );
+    return normalizeArticleMedia(getApiData(response));
   },
 };

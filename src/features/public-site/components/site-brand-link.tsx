@@ -39,5 +39,3 @@ export function SiteBrandLink({
     </span>
   );
 }
-
-export const NavGhazawiyaLink = SiteBrandLink;

@@ -393,12 +393,12 @@ export function CoverBlurEditor({
     source.toBlob(
       async (blob) => {
         if (!blob) return;
-        const file = new File([blob], "cover-blurred.jpg", {
-          type: "image/jpeg",
+        const file = new File([blob], "cover-blurred.webp", {
+          type: "image/webp",
         });
         await onSave(file);
       },
-      "image/jpeg",
+      "image/webp",
       0.92,
     );
   };

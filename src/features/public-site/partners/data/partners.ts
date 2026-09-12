@@ -7,13 +7,13 @@ export interface Partner {
 }
 
 export const PARTNER_LOGOS = {
-  unTrustFund: "/partners/un-trust-fund.png",
-  crs: "/partners/crs.png",
-  aisha: "/partners/aisha.png",
-  birzeit: "/partners/birzeit.png",
-  wacc: "/partners/wacc.png",
-  ndc: "/partners/ndc.png",
-  cfi: "/partners/cfi.png",
+  unTrustFund: "/partners/un-trust-fund.webp",
+  crs: "/partners/crs.webp",
+  aisha: "/partners/aisha.webp",
+  birzeit: "/partners/birzeit.webp",
+  wacc: "/partners/wacc.webp",
+  ndc: "/partners/ndc.webp",
+  cfi: "/partners/cfi.webp",
 } as const;
 
 type LogoKey = keyof typeof PARTNER_LOGOS;

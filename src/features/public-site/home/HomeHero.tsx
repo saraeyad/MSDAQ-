@@ -1,8 +1,8 @@
 import { usePublicCopy } from "@/context/locale";
 import { Circle } from "lucide-react";
 
-const HERO_IMAGE = "/images/hero-people.jpg";
-const HERO_FALLBACK = "/images/hero-verification.png";
+const HERO_IMAGE = "/images/hero-people.webp";
+const HERO_FALLBACK = "/images/hero-verification.webp";
 
 export function HomeHero() {
   const copy = usePublicCopy();
@@ -61,7 +61,7 @@ export function HomeHero() {
       <div className="home-cinematic-hero__center-logo">
         <span className="home-cinematic-hero__center-logo-grain" aria-hidden />
         <img
-          src="/brand/cdmc.png?v=2"
+          src="/brand/cdmc.webp?v=3"
           alt="مركز التنمية والإعلام المجتمعي"
           loading="lazy"
           decoding="async"

@@ -1,13 +1,14 @@
 import { getApiData, parseStaffArticlesListResponse } from "@/lib/api";
 import { normalizeCredibilityResult } from "@/lib/publishing";
 import { normalizeStandardsResult } from "@/lib/publishing";
-import { appendSttAudioField } from "@/lib/media";
+import { appendSttAudioField, normalizeArticleMedia } from "@/lib/media";
 import {
   STANDARDS_REQUEST_TIMEOUT_MS,
   TTS_REQUEST_TIMEOUT_MS,
 } from "@/lib/publishing";
 import type {
   ApiResponse,
+  ArticleMedia,
   CredibilityCheckResult,
   LocalizationResult,
   PaginatedResponse,
@@ -77,6 +78,14 @@ export const ArticlesStaff_APIs = {
   getArticle: async (id: number | string): Promise<StaffArticle> => {
     const response = await API.get<ApiResponse<StaffArticle>>(articleUrl(id));
     return getApiData(response);
+  },
+
+  /** Same payload as public /media — call when staff need the playable source. */
+  getMedia: async (id: number | string): Promise<ArticleMedia> => {
+    const response = await API.get<ApiResponse<ArticleMedia>>(
+      articleUrl(id, "/media"),
+    );
+    return normalizeArticleMedia(getApiData(response));
   },
 
   createArticle: async (data: CreateArticlePayload): Promise<StaffArticle> => {

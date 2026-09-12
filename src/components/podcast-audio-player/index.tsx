@@ -9,7 +9,7 @@ import {
 } from "@/lib/media";
 import type { TrustMediaProgress } from "@/lib/site";
 import { cn } from "@/lib/utils";
-import { ArrowUpLeft, Pause, Play } from "lucide-react";
+import { ArrowUpLeft, Loader2, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { WaveformBars } from "./WaveformBars";
 
@@ -44,6 +44,9 @@ interface PodcastAudioPlayerProps {
   coverUrl?: string;
   onPlaybackProgress?: (progress: TrustMediaProgress) => void;
   showSourceLink?: boolean;
+  autoPlay?: boolean;
+  onNeedSource?: () => void;
+  sourcePending?: boolean;
 }
 
 function waveBarCount(variant: PodcastAudioPlayerVariant) {
@@ -73,6 +76,7 @@ interface WaveformPlayerShellProps {
   currentTime: number;
   durationSeconds: number;
   playDisabled?: boolean;
+  playPending?: boolean;
   onPlayClick: (event: MouseEvent<HTMLButtonElement>) => void;
   onSeek?: (ratio: number) => void;
   hiddenBridge?: ReactNode;
@@ -90,6 +94,7 @@ function WaveformPlayerShell({
   currentTime,
   durationSeconds,
   playDisabled = false,
+  playPending = false,
   onPlayClick,
   onSeek,
   hiddenBridge,
@@ -211,10 +216,14 @@ function WaveformPlayerShell({
         )}
         onClick={onPlayClick}
         onPointerDown={(event) => event.stopPropagation()}
-        disabled={playDisabled}
-        aria-label={isPlaying ? "إيقاف مؤقت" : "تشغيل"}
+        disabled={playDisabled || playPending}
+        aria-label={
+          playPending ? "جاري التحميل" : isPlaying ? "إيقاف مؤقت" : "تشغيل"
+        }
       >
-        {isPlaying ? (
+        {playPending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : isPlaying ? (
           <Pause className="size-4 fill-current" />
         ) : (
           <Play className="size-4 fill-current" />
@@ -288,11 +297,15 @@ function PodcastAudioPlayerFile({
   subtitle,
   coverUrl,
   onPlaybackProgress,
+  autoPlay = false,
 }: PodcastAudioPlayerProps & { url: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onProgressRef = useRef(onPlaybackProgress);
   onProgressRef.current = onPlaybackProgress;
   const [isPlaying, setIsPlaying] = useState(false);
+  const [starting, setStarting] = useState(autoPlay);
+  const startingRef = useRef(autoPlay);
+  startingRef.current = starting;
   const [currentTime, setCurrentTime] = useState(0);
   const [durationSeconds, setDurationSeconds] = useState(
     () => duration ?? estimateDurationFromSeed(seed),
@@ -302,7 +315,7 @@ function PodcastAudioPlayerFile({
     if (!audio) return;
 
     setCurrentTime(0);
-    setIsPlaying(false);
+    if (autoPlay) setStarting(true);
 
     const syncDuration = () => {
       if (Number.isFinite(audio.duration) && audio.duration > 0) {
@@ -330,14 +343,18 @@ function PodcastAudioPlayerFile({
     };
 
     const onPlay = () => {
+      startingRef.current = false;
+      setStarting(false);
       setIsPlaying(true);
       emit({ currentTime: audio.currentTime, isPlaying: true });
     };
     const onPause = () => {
+      if (startingRef.current) return;
       setIsPlaying(false);
       emit({ currentTime: audio.currentTime, isPlaying: false });
     };
     const onEnded = () => {
+      setStarting(false);
       setIsPlaying(false);
       emit({ currentTime: audio.duration || audio.currentTime, isPlaying: false, ended: true });
       setCurrentTime(0);
@@ -361,9 +378,17 @@ function PodcastAudioPlayerFile({
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
-      audio.pause();
     };
-  }, [url]);
+  }, [url, autoPlay]);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    void audio.play().catch(() => {
+      setStarting(false);
+    });
+  }, [autoPlay, url]);
 
   useEffect(() => {
     if (duration != null && duration > 0) {
@@ -375,7 +400,7 @@ function PodcastAudioPlayerFile({
     event.preventDefault();
     event.stopPropagation();
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || starting) return;
 
     if (isPlaying) {
       audio.pause();
@@ -405,6 +430,7 @@ function PodcastAudioPlayerFile({
       isPlaying={isPlaying}
       currentTime={currentTime}
       durationSeconds={durationSeconds}
+      playPending={starting && !isPlaying}
       onPlayClick={handlePlay}
       onSeek={variant === "cover" ? undefined : handleSeek}
       hiddenBridge={
@@ -431,6 +457,7 @@ function PodcastAudioPlayerSoundCloud({
   coverUrl,
   onPlaybackProgress,
   showSourceLink = false,
+  autoPlay = false,
 }: PodcastAudioPlayerProps & { pageUrl: string }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const onProgressRef = useRef(onPlaybackProgress);
@@ -444,8 +471,9 @@ function PodcastAudioPlayerSoundCloud({
     () => duration ?? estimateDurationFromSeed(seed),
   );
   const isPlayingRef = useRef(false);
-  const pendingPlayRef = useRef(false);
-  const [widgetArmed, setWidgetArmed] = useState(false);
+  const pendingPlayRef = useRef(autoPlay);
+  const [widgetArmed, setWidgetArmed] = useState(autoPlay);
+  const [starting, setStarting] = useState(autoPlay);
   isPlayingRef.current = isPlaying;
 
   const widgetSrc = buildSoundCloudWidgetUrl(pageUrl);
@@ -475,13 +503,14 @@ function PodcastAudioPlayerSoundCloud({
             if (ms > 0) setDurationSeconds(ms / 1000);
           });
           if (pendingPlayRef.current) {
-            pendingPlayRef.current = false;
             widget.play();
           }
         });
 
         widget.bind(Events.PLAY, () => {
           if (cancelled) return;
+          pendingPlayRef.current = false;
+          setStarting(false);
           setIsPlaying(true);
           widget.getPosition((ms) => {
             widget.getDuration((durationMs) => {
@@ -496,6 +525,7 @@ function PodcastAudioPlayerSoundCloud({
 
         widget.bind(Events.PAUSE, () => {
           if (cancelled) return;
+          if (pendingPlayRef.current) return;
           setIsPlaying(false);
           widget.getPosition((ms) => {
             widget.getDuration((durationMs) => {
@@ -523,6 +553,7 @@ function PodcastAudioPlayerSoundCloud({
 
         widget.bind(Events.FINISH, () => {
           if (cancelled) return;
+          setStarting(false);
           setIsPlaying(false);
           widget.getDuration((durationMs) => {
             const durationSec = durationMs > 0 ? durationMs / 1000 : 0;
@@ -555,9 +586,11 @@ function PodcastAudioPlayerSoundCloud({
   const handlePlay = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    if (starting) return;
     const widget = widgetRef.current;
     if (!widget) {
-      pendingPlayRef.current = !isPlayingRef.current;
+      pendingPlayRef.current = true;
+      setStarting(true);
       setWidgetArmed(true);
       return;
     }
@@ -566,7 +599,8 @@ function PodcastAudioPlayerSoundCloud({
       widget.pause();
       return;
     }
-    pendingPlayRef.current = false;
+    pendingPlayRef.current = true;
+    setStarting(true);
     widget.play();
   };
 
@@ -588,6 +622,7 @@ function PodcastAudioPlayerSoundCloud({
       isPlaying={isPlaying}
       currentTime={currentTime}
       durationSeconds={durationSeconds}
+      playPending={starting && !isPlaying}
       onPlayClick={handlePlay}
       onSeek={variant === "cover" ? undefined : handleSeek}
       sourceUrl={showSourceLink ? pageUrl : null}
@@ -607,6 +642,38 @@ function PodcastAudioPlayerSoundCloud({
   );
 }
 
+function PodcastAudioPlayerPending({
+  seed,
+  duration,
+  variant = "inline",
+  className,
+  title,
+  subtitle,
+  coverUrl,
+  onNeedSource,
+  sourcePending = false,
+}: PodcastAudioPlayerProps) {
+  return (
+    <WaveformPlayerShell
+      seed={seed}
+      variant={variant}
+      className={className}
+      title={title}
+      subtitle={subtitle}
+      coverUrl={coverUrl}
+      isPlaying={false}
+      currentTime={0}
+      durationSeconds={duration ?? estimateDurationFromSeed(seed)}
+      playPending={sourcePending}
+      onPlayClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!sourcePending) onNeedSource?.();
+      }}
+    />
+  );
+}
+
 export function PodcastAudioPlayer({
   seed,
   url,
@@ -620,6 +687,9 @@ export function PodcastAudioPlayer({
   coverUrl,
   onPlaybackProgress,
   showSourceLink = false,
+  autoPlay = false,
+  onNeedSource,
+  sourcePending = false,
 }: PodcastAudioPlayerProps) {
   if (interactive && hostedPageUrl) {
     return (
@@ -634,6 +704,7 @@ export function PodcastAudioPlayer({
         coverUrl={coverUrl}
         onPlaybackProgress={onPlaybackProgress}
         showSourceLink={showSourceLink}
+        autoPlay={autoPlay}
       />
     );
   }
@@ -650,6 +721,23 @@ export function PodcastAudioPlayer({
         subtitle={subtitle}
         coverUrl={coverUrl}
         onPlaybackProgress={onPlaybackProgress}
+        autoPlay={autoPlay}
+      />
+    );
+  }
+
+  if (interactive && onNeedSource) {
+    return (
+      <PodcastAudioPlayerPending
+        seed={seed}
+        duration={duration}
+        variant={variant}
+        className={className}
+        title={title}
+        subtitle={subtitle}
+        coverUrl={coverUrl}
+        onNeedSource={onNeedSource}
+        sourcePending={sourcePending}
       />
     );
   }

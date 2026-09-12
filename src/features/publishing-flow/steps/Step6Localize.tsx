@@ -111,6 +111,9 @@ export function Step6Localize({
         await queryClient.invalidateQueries({
           queryKey: ["staff-article", String(articleId)],
         });
+        await queryClient.invalidateQueries({
+          queryKey: ["staff", "article-media", String(articleId)],
+        });
         toast.success("تم توليد النسخة الصوتية");
       });
     } catch (err) {

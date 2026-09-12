@@ -53,16 +53,3 @@ export function PartnerLogo({
     />
   );
 }
-
-export function PartnerCmcBadge({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "flex h-12 w-14 shrink-0 items-center justify-center bg-[#6d6d6d] text-xs font-bold tracking-wide text-white",
-        className,
-      )}
-    >
-      CMC
-    </div>
-  );
-}

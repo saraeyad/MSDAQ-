@@ -1,2 +1,2 @@
-export { usePermission, useAnyPermission } from "./usePermission";
+export { usePermission } from "./usePermission";
 export { useIsSuperAdmin } from "./useIsSuperAdmin";

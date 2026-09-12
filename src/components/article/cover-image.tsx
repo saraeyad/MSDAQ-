@@ -65,6 +65,7 @@ export function PublicArticleCover({
     title?: string;
     cover_image?: string | null;
     cover_description?: string | null;
+    video_poster?: string | null;
     images?: { thumb?: string; full?: string }[];
   };
   alt?: string;
@@ -76,6 +77,7 @@ export function PublicArticleCover({
     alt || article.cover_description?.trim() || article.title || "";
   const candidates = useMemo(() => {
     const raw = [
+      article.video_poster,
       article.cover_image,
       ...(article.images?.flatMap((image) => [image.full, image.thumb]) ?? []),
     ];
@@ -83,7 +85,7 @@ export function PublicArticleCover({
       .map(resolveMediaUrl)
       .filter((url): url is string => Boolean(url));
     return [...new Set(resolved)];
-  }, [article.cover_image, article.images]);
+  }, [article.cover_image, article.images, article.video_poster]);
 
   const [index, setIndex] = useState(0);
   const src = candidates[index];

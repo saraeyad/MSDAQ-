@@ -83,10 +83,11 @@ export interface StaffArticle {
   cover_image: string | null;
   cover_description?: string | null;
   images: ArticleImage[];
-  source_audio: string | null;
-  generated_audio: string | null;
-  media_url: string | null;
-  video: string | null;
+  /** Playable sources live on GET /articles/{id}/media, not index/show. */
+  source_audio?: string | null;
+  generated_audio?: string | null;
+  media_url?: string | null;
+  video?: string | null;
   video_poster: string | null;
   video_status: VideoStatus;
   review_target?: number | null;
@@ -197,23 +198,32 @@ export interface StaffArticlesListResult {
   pagination?: PublicPagination;
 }
 
+/** Playable sources from GET /articles/{id}/media or /public/articles/{id}/media. */
+export interface ArticleMedia {
+  media_url: string | null;
+  source_audio: string | null;
+  generated_audio: string | null;
+  video: string | null;
+}
+
+/** @deprecated Use ArticleMedia — same payload on public and staff. */
+export type PublicArticleMedia = ArticleMedia;
+
 export interface PublicArticle {
   /** Sqid string in production; numeric in some envs. */
   id: number | string;
   title: string;
   description: string | null;
   media_type: PublicMediaType;
-  media_url?: string | null;
   content: ArticleContent;
   author?: { id: number; name: string };
   category?: PublicArticleCategory;
+  /** Thumb on index, full on show. */
   cover_image: string | null;
   cover_description?: string | null;
   images: ArticleImage[];
   sources?: ArticleSource[];
-  source_audio?: string | null;
-  generated_audio?: string | null;
-  video?: string | null;
+  /** Static preview image for audio/video — not the playable file. */
   video_poster?: string | null;
   published_at: string;
   seo?: ArticleSeo;

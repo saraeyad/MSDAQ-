@@ -12,8 +12,8 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
-const LOGIN_PHOTO = "/images/hero-people.jpg";
-const LOGIN_FALLBACK = "/images/hero-verification.png";
+const LOGIN_PHOTO = "/images/hero-people.webp";
+const LOGIN_FALLBACK = "/images/hero-verification.webp";
 
 const WORKSPACE_PERMISSIONS = [
   PERMISSIONS.VIEW_ARTICLES,

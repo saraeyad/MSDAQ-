@@ -115,13 +115,12 @@ function hasVideoReady(
   >,
 ): boolean {
   if (article.media_url?.trim()) return true;
-  return (
-    article.video_status === "ready" &&
-    !!resolvePlayableVideoUrl(article.video, {
-      coverImage: article.cover_image,
-      videoPoster: article.video_poster,
-    })
-  );
+  if (article.video_status !== "ready") return false;
+  if (!article.video?.trim()) return true;
+  return !!resolvePlayableVideoUrl(article.video, {
+    coverImage: article.cover_image,
+    videoPoster: article.video_poster,
+  });
 }
 
 function articleSources(sources: ArticleSource[] | undefined): ArticleSource[] {

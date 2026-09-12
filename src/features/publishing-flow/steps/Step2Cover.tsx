@@ -145,6 +145,9 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     await queryClient.invalidateQueries({
       queryKey: ["staff-article", String(articleId)],
     });
+    await queryClient.invalidateQueries({
+      queryKey: ["staff", "article-media", String(articleId)],
+    });
   };
 
   useEffect(() => {
@@ -155,18 +158,20 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     const interval = window.setInterval(async () => {
       try {
         const updated = await ArticlesStaff_APIs.getArticle(articleId);
-        applyVideoFromArticle(updated);
-        if (updated.video_status === "ready" || updated.video_status === "failed") {
+        const media = await ArticlesStaff_APIs.getMedia(articleId);
+        const merged = { ...updated, ...media };
+        applyVideoFromArticle(merged);
+        if (merged.video_status === "ready" || merged.video_status === "failed") {
           window.clearInterval(interval);
-          const playable = resolvePlayableVideoUrl(updated.video, {
-            coverImage: updated.cover_image,
-            videoPoster: updated.video_poster,
+          const playable = resolvePlayableVideoUrl(merged.video, {
+            coverImage: merged.cover_image,
+            videoPoster: merged.video_poster,
           });
           if (playable) {
             toast.success("الفيديو جاهز");
-          } else if (updated.video_status === "ready" && updated.video?.trim()) {
+          } else if (merged.video_status === "ready" && merged.video?.trim()) {
             toast.error("تعذّر تشغيل الفيديو — الرابط ليس ملف فيديو صالحاً");
-          } else if (updated.video_status === "failed") {
+          } else if (merged.video_status === "failed") {
             toast.error("فشل معالجة الفيديو");
           }
         }

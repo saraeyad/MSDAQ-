@@ -1,6 +1,15 @@
-import type { ArticleStatus, PublicMediaType, StaffMediaType } from "@/types";
+import type {
+  ArticleStatus,
+  PublicArticleMedia,
+  PublicMediaType,
+  StaffMediaType,
+} from "@/types";
 import { isSoundCloudPageUrl } from "./soundcloud-widget";
-import { resolveMediaUrl } from "./media-url";
+import {
+  resolveMediaUrl,
+  resolvePlayableVideoUrl,
+  youtubeEmbedUrl,
+} from "./media-url";
 const STATUS_LABELS: Record<ArticleStatus, string> = {
   draft: "مسودة",
   scheduled: "مجدول",
@@ -50,66 +59,93 @@ export function isPlayableAudioUrl(url: string | null | undefined): boolean {
   return /\.(mp3|wav|ogg|m4a|aac|flac|webm|opus)(\?|$)/i.test(pathname);
 }
 
-/** Resolve playable audio URL from a public article payload. */
-export function publicArticleAudioUrl(article: {
-  source_audio?: string | null;
-  generated_audio?: string | null;
-  media_url?: string | null;
-}): string | null {
-  const candidates = [
-    article.source_audio,
-    article.generated_audio,
-    article.media_url,
-  ];
+type PublicPlayableFields = Partial<PublicArticleMedia>;
 
-  for (const raw of candidates) {
-    if (!raw?.trim()) continue;
-    const resolved = resolveMediaUrl(raw) ?? raw.trim();
-    if (isPlayableAudioUrl(resolved)) {
-      return resolved;
+/** Uploaded audio file from /media — not the external embed. */
+export function publicArticleAudioUrl(
+  media: PublicPlayableFields,
+): string | null {
+  const raw = media.source_audio;
+  if (!raw?.trim()) return null;
+  const resolved = resolveMediaUrl(raw) ?? raw.trim();
+  return isPlayableAudioUrl(resolved) ? resolved : null;
+}
+
+/** TTS narration from /media — independent of the article's audio/video source. */
+export function publicArticleNarrationUrl(
+  media: PublicPlayableFields,
+): string | null {
+  const raw = media.generated_audio;
+  if (!raw?.trim()) return null;
+  const resolved = resolveMediaUrl(raw) ?? raw.trim();
+  return isPlayableAudioUrl(resolved) ? resolved : null;
+}
+
+export type PublicArticleAudioSource =
+  | { kind: "file"; url: string }
+  | { kind: "soundcloud"; pageUrl: string }
+  | { kind: "external"; pageUrl: string };
+
+/**
+ * Main audio source from GET /media.
+ * `media_url` (embed) wins; otherwise the uploaded `source_audio`.
+ * `generated_audio` is not mixed in here — check it separately.
+ */
+export function resolvePublicArticleAudioSource(
+  media: PublicPlayableFields,
+): PublicArticleAudioSource | null {
+  const embed = media.media_url?.trim();
+  if (embed) {
+    if (isSoundCloudPageUrl(embed)) {
+      return { kind: "soundcloud", pageUrl: embed };
     }
+    const resolvedEmbed = resolveMediaUrl(embed) ?? embed;
+    if (isPlayableAudioUrl(resolvedEmbed)) {
+      return { kind: "file", url: resolvedEmbed };
+    }
+    if (/^https?:\/\//i.test(embed)) {
+      return { kind: "external", pageUrl: embed };
+    }
+  }
+
+  const fileUrl = publicArticleAudioUrl(media);
+  if (fileUrl) {
+    return { kind: "file", url: fileUrl };
   }
 
   return null;
 }
 
-/** External stream/page URL when no direct audio file exists (e.g. SoundCloud). */
-export function publicArticleExternalAudioUrl(article: {
-  source_audio?: string | null;
-  generated_audio?: string | null;
-  media_url?: string | null;
-}): string | null {
-  if (publicArticleAudioUrl(article)) return null;
-
-  const raw =
-    article.media_url ?? article.source_audio ?? article.generated_audio ?? null;
-
-  if (!raw?.trim()) return null;
-
-  const trimmed = raw.trim();
-  if (!/^https?:\/\//i.test(trimmed)) return null;
-
-  return trimmed;
-}
-
-export type PublicArticleAudioSource =
+export type PublicArticleVideoSource =
   | { kind: "file"; url: string }
-  | { kind: "soundcloud"; pageUrl: string };
+  | { kind: "youtube"; embedUrl: string; pageUrl: string }
+  | { kind: "external"; pageUrl: string };
 
-/** Direct MP3/file or SoundCloud (custom in-page player). */
-export function resolvePublicArticleAudioSource(article: {
-  source_audio?: string | null;
-  generated_audio?: string | null;
-  media_url?: string | null;
-}): PublicArticleAudioSource | null {
-  const fileUrl = publicArticleAudioUrl(article);
-  if (fileUrl) {
-    return { kind: "file", url: fileUrl };
+/** Video/embed source from GET /media. `media_url` first, then uploaded `video`. */
+export function resolvePublicArticleVideoSource(
+  media: PublicPlayableFields,
+  options?: {
+    coverImage?: string | null;
+    videoPoster?: string | null;
+  },
+): PublicArticleVideoSource | null {
+  const embed = media.media_url?.trim();
+  if (embed) {
+    const youtube = youtubeEmbedUrl(embed);
+    if (youtube) {
+      return { kind: "youtube", embedUrl: youtube, pageUrl: embed };
+    }
+    if (/^https?:\/\//i.test(embed)) {
+      return { kind: "external", pageUrl: embed };
+    }
   }
 
-  const externalUrl = publicArticleExternalAudioUrl(article);
-  if (externalUrl && isSoundCloudPageUrl(externalUrl)) {
-    return { kind: "soundcloud", pageUrl: externalUrl };
+  const fileUrl = resolvePlayableVideoUrl(media.video, {
+    coverImage: options?.coverImage,
+    videoPoster: options?.videoPoster,
+  });
+  if (fileUrl) {
+    return { kind: "file", url: fileUrl };
   }
 
   return null;

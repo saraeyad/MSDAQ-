@@ -19,7 +19,7 @@ export default function AdminLayout() {
   );
 
   return (
-    <div className="staff-shell">
+    <div className="staff-shell" dir="rtl">
       <aside className="staff-shell__aside">
         <div className="staff-shell__brand">
           <BrandLogo size="lg" linkToHome={false} />
