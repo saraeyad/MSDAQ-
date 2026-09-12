@@ -1,12 +1,12 @@
 import { CategoryFeedView } from "@/features/public-site/categories/CategoryFeedView";
-import { usePublicCategories } from "@/hooks/usePublicCategories";
+import { usePublicCategories } from "@/hooks/public";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { useSiteOrigin } from "@/context/site-origin";
 import {
   findCategoryByFilterKey,
   findParentCategory,
-} from "@/lib/category-tree";
+} from "@/lib/publishing";
 import {
   buildCategoryJsonLd,
   buildCategorySeoHead,

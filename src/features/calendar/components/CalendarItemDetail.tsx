@@ -5,15 +5,15 @@ import {
   canCompleteTaskOccurrence,
   canManageTask,
   canReopenTaskOccurrence,
-} from "@/lib/calendar-access";
+} from "@/lib/calendar";
 import {
   isArticleMeta,
   isEventMeta,
   isTaskMeta,
   TYPE_LABELS,
-} from "@/lib/calendar-feed";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { mediaTypeLabel } from "@/lib/media-labels";
+} from "@/lib/calendar";
+import { getApiErrorMessage } from "@/lib/api";
+import { mediaTypeLabel } from "@/lib/media";
 import { CalendarEvents_APIs } from "@/services/api/calendar-events";
 import { CalendarTasks_APIs } from "@/services/api/calendar-tasks";
 import { PERMISSIONS, staffArticlePath } from "@/router/routes";
@@ -25,7 +25,7 @@ import type {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
-import { formatScheduleDate } from "@/lib/calendar-datetime";
+import { formatScheduleDate } from "@/lib/calendar";
 import {
   CheckCircle2,
   ExternalLink,
@@ -38,7 +38,7 @@ import {
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useState } from "react";
-import { usePermission } from "@/hooks/usePermission";
+import { usePermission } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
 
 const PRIORITY_LABELS = {

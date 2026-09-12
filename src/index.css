@@ -1,12 +1,7 @@
 ﻿@import "tailwindcss";
 @import "tw-animate-css";
-@import "./styles/public-site.css";
-@import "./styles/podcast.css";
-@import "./styles/admin-dashboard.css";
-@import "./styles/admin-analytics.css";
-@import "./styles/newsroom-tools.css";
-@import "./styles/calendar.css";
-@import "./styles/publish-flow.css";
+@import "./styles/public/public-site.css";
+@import "./styles/public/podcast.css";
 
 @theme inline {
   --radius-sm: 0.25rem;

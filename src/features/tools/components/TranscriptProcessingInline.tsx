@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import type { TranscriptPollUiState } from "@/hooks/useTranscriptStatusPoll";
+import type { TranscriptPollUiState } from "@/hooks/publishing";
 import { Loader2 } from "lucide-react";
 
 interface TranscriptProcessingInlineProps {

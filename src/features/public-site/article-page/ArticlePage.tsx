@@ -4,29 +4,31 @@ import {
   hasLanguageVariant,
   resolveArticleBody,
 } from "@/features/public-site/article-page/article-content";
-import { RelatedArticlesSidebar } from "@/features/public-site/article-page/RelatedArticlesSidebar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
-import { PublicArticleCover } from "@/components/cover-image";
-import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
-import {
-  resolvePublicArticleAudioSource,
-  publicMediaTypeLabel,
-} from "@/lib/media-labels";
+import { PublicArticleCover } from "@/components/article/cover-image";
+import { ArticleVerifiedBadge } from "@/components/article/article-verified-badge";
 import {
   publicArticleCoverUrl,
+  publicMediaTypeLabel,
   resolveMediaUrl,
   resolvePlayableVideoUrl,
+  resolvePublicArticleAudioSource,
   youtubeEmbedUrl,
-} from "@/lib/media-url";
+} from "@/lib/media";
 import { buildArticleJsonLd, buildArticleSeoHead } from "@/lib/seo/article-seo";
 import { useSiteOrigin } from "@/context/site-origin";
 import { Button } from "@/components/ui/button";
 import { Articles_APIs } from "@/services/api/articles";
 import type { PublicArticle } from "@/types";
 import { articlePath, ROUTES } from "@/router/routes";
-import { trackArticleView } from "@/lib/google-analytics";
+import {
+  articleAcceptsPublicReviews,
+  countWords,
+  trackArticleView,
+  type TrustMediaProgress,
+} from "@/lib/site";
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { usePlatformFeedback } from "@/context/platform-feedback";
@@ -34,13 +36,14 @@ import { TrustIndexDialog } from "@/features/public-site/trust-index/TrustIndexD
 import { ArticleTrustFeedbackButton } from "@/features/public-site/trust-index/ArticleTrustFeedbackButton";
 import { useTrustIndexMediaTrigger } from "@/features/public-site/trust-index/useTrustIndexMediaTrigger";
 import { useTrustIndexTrigger } from "@/features/public-site/trust-index/useTrustIndexTrigger";
-import {
-  articleAcceptsPublicReviews,
-  countWords,
-  type TrustMediaProgress,
-} from "@/lib/trust-index-labels";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+const RelatedArticlesSidebar = lazy(() =>
+  import("@/features/public-site/article-page/RelatedArticlesSidebar").then(
+    (module) => ({ default: module.RelatedArticlesSidebar }),
+  ),
+);
 
 function useArticleTrustSurvey({
   articleId,
@@ -225,16 +228,12 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                 <PublicArticleCover
                   article={article}
                   alt={coverCaption || article.title}
+                  priority
                   className="article-cover-block__image aspect-[21/9] w-full object-cover"
                 />
                 {coverCaption ? (
                   <figcaption className="article-cover-caption">
-                    {/* <span className="article-cover-caption__label">
-                      وصف الصورة
-                    </span> */}
-                    <p className="article-cover-caption__text">
-                      {coverCaption}
-                    </p>
+                    {coverCaption}
                   </figcaption>
                 ) : null}
               </figure>
@@ -386,6 +385,7 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                       alt=""
                       className="w-full rounded-xl object-cover"
                       loading="lazy"
+                      decoding="async"
                     />
                   ))}
                 </div>
@@ -407,7 +407,9 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <RelatedArticlesSidebar article={article} />
+            <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-muted" />}>
+              <RelatedArticlesSidebar article={article} />
+            </Suspense>
             {acceptingReviews ? (
               <ArticleTrustFeedbackButton
                 onClick={openManually}

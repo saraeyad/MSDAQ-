@@ -10,15 +10,15 @@ import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { usePermission } from "@/hooks/usePermission";
+import { usePermission } from "@/hooks/auth";
 import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
 import { AdminFilterBar } from "@/features/admin/components/AdminFilterBar";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
 import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { paginateList } from "@/lib/table-pagination";
+import { getApiErrorMessage } from "@/lib/api";
+import { paginateList } from "@/lib/staff";
 import { LibraryFileGlyph } from "@/features/newsroom/library/LibraryFileGlyph";
 import { LibraryItemCard } from "@/features/newsroom/library/LibraryItemCard";
 import { DeleteLibraryItemDialog } from "@/features/newsroom/library/DeleteLibraryItemDialog";
@@ -26,9 +26,9 @@ import { LibraryPreviewDialog } from "@/features/newsroom/library/LibraryPreview
 import {
   FileUploadProgressCard,
   type FileUploadProgressStatus,
-} from "@/features/newsroom/library/FileUploadProgressCard";
-import { downloadLibraryItem, fetchLibraryFile } from "@/lib/library-download";
-import { uploadPercentFromEvent } from "@/lib/upload-progress";
+} from "@/components/ui/file-upload-progress";
+import { downloadLibraryItem, fetchLibraryFile } from "@/lib/library";
+import { uploadPercentFromEvent } from "@/lib/library";
 import { Library_APIs } from "@/services/api/library";
 import { PERMISSIONS } from "@/router/routes";
 import { LIBRARY_PAGE_SIZE, type LibraryItem } from "@/types";

@@ -17,16 +17,16 @@ import {
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
 import { useAuth } from "@/context/auth";
-import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { resolveMediaUrl } from "@/lib/media-url";
-import { validateTtsText } from "@/lib/tts-limits";
+import { useIsSuperAdmin } from "@/hooks/auth";
+import { getApiErrorMessage } from "@/lib/api";
+import { resolveMediaUrl } from "@/lib/media";
+import { validateTtsText } from "@/lib/publishing";
 import {
   canDeleteVoiceAsset,
   canSaveVoiceAsset,
   formatVoiceAssetSavedMeta,
-} from "@/lib/voice-asset-access";
-import { TTS_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
+} from "@/lib/media";
+import { TTS_PROCESSING_STEPS } from "@/lib/publishing";
 import { ROUTES } from "@/router/routes";
 import { ToolsVoice_APIs, Tts_APIs } from "@/services/api/tools";
 import type { GeneratedAudio, TtsVoice } from "@/types";

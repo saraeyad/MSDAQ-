@@ -1,10 +1,11 @@
-import { BrandLogo } from "@/components/brand-logo";
+import "@/styles/staff/staff-app.css";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { RouteErrorBoundary } from "@/components/route-error-boundary";
 import { useAuth } from "@/context/auth";
 import { StaffNavLinks } from "@/features/staff/nav/StaffNavLinks";
 import { StaffShellTopbar } from "@/features/staff/nav/StaffShellTopbar";
 import { getVisibleStaffNav } from "@/features/staff/nav/staff-nav";
-import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { useIsSuperAdmin } from "@/hooks/auth";
 import { useMemo } from "react";
 import { Outlet } from "react-router-dom";
 

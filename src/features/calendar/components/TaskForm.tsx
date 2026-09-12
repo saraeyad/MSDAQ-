@@ -21,9 +21,9 @@ import {
   isoToDatetimeLocal,
   isRecurrenceEndAfterAnchor,
   type RecurrenceKind,
-} from "@/lib/calendar-datetime";
-import { CALENDAR_TYPE_COLORS } from "@/lib/calendar-feed";
-import { getApiErrorMessage } from "@/lib/api-data";
+} from "@/lib/calendar";
+import { CALENDAR_TYPE_COLORS } from "@/lib/calendar";
+import { getApiErrorMessage } from "@/lib/api";
 import { CalendarTasks_APIs } from "@/services/api/calendar-tasks";
 import type {
   CalendarRecurrence,

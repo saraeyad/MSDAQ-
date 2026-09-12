@@ -1,13 +1,13 @@
 import {
   estimateDurationFromSeed,
   formatAudioTime,
-} from "@/lib/waveform";
+} from "@/lib/media";
 import {
   buildSoundCloudWidgetUrl,
   createSoundCloudWidget,
   loadSoundCloudWidgetApi,
-} from "@/lib/soundcloud-widget";
-import type { TrustMediaProgress } from "@/lib/trust-index-labels";
+} from "@/lib/media";
+import type { TrustMediaProgress } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { ArrowUpLeft, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
@@ -75,8 +75,6 @@ interface WaveformPlayerShellProps {
   playDisabled?: boolean;
   onPlayClick: (event: MouseEvent<HTMLButtonElement>) => void;
   onSeek?: (ratio: number) => void;
-  playbackRate?: number;
-  onToggleRate?: () => void;
   hiddenBridge?: ReactNode;
   sourceUrl?: string | null;
 }
@@ -94,8 +92,6 @@ function WaveformPlayerShell({
   playDisabled = false,
   onPlayClick,
   onSeek,
-  playbackRate = 1,
-  onToggleRate,
   hiddenBridge,
   sourceUrl,
 }: WaveformPlayerShellProps) {
@@ -166,30 +162,17 @@ function WaveformPlayerShell({
       {hiddenBridge}
 
       {coverUrl && variant === "embed" ? (
-        <img src={coverUrl} alt="" className="podcast-player__cover" />
+        <img
+          src={coverUrl}
+          alt=""
+          className="podcast-player__cover"
+          loading="lazy"
+          decoding="async"
+        />
       ) : null}
 
       <div className="podcast-player__aside">
         <span className="podcast-player__time">{timeLabel}</span>
-        {onToggleRate ? (
-          <button
-            type="button"
-            className={cn(
-              "podcast-player__rate",
-              playbackRate > 1 && "podcast-player__rate--on",
-            )}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onToggleRate();
-            }}
-            onPointerDown={(event) => event.stopPropagation()}
-            aria-pressed={playbackRate > 1}
-            aria-label={playbackRate > 1 ? "سرعة عادية" : "تسريع الصوت x2"}
-          >
-            x2
-          </button>
-        ) : null}
       </div>
 
       <div className="podcast-player__body">
@@ -314,24 +297,12 @@ function PodcastAudioPlayerFile({
   const [durationSeconds, setDurationSeconds] = useState(
     () => duration ?? estimateDurationFromSeed(seed),
   );
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const playbackRateRef = useRef(1);
-  playbackRateRef.current = playbackRate;
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.defaultPlaybackRate = playbackRate;
-    audio.playbackRate = playbackRate;
-  }, [playbackRate]);
-
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     setCurrentTime(0);
     setIsPlaying(false);
-    audio.playbackRate = playbackRateRef.current;
 
     const syncDuration = () => {
       if (Number.isFinite(audio.duration) && audio.duration > 0) {
@@ -359,7 +330,6 @@ function PodcastAudioPlayerFile({
     };
 
     const onPlay = () => {
-      audio.playbackRate = playbackRateRef.current;
       setIsPlaying(true);
       emit({ currentTime: audio.currentTime, isPlaying: true });
     };
@@ -412,7 +382,6 @@ function PodcastAudioPlayerFile({
       return;
     }
 
-    audio.playbackRate = playbackRate;
     void audio.play().catch(() => {
       /* blocked or missing source */
     });
@@ -438,8 +407,6 @@ function PodcastAudioPlayerFile({
       durationSeconds={durationSeconds}
       onPlayClick={handlePlay}
       onSeek={variant === "cover" ? undefined : handleSeek}
-      playbackRate={playbackRate}
-      onToggleRate={() => setPlaybackRate((rate) => (rate === 2 ? 1 : 2))}
       hiddenBridge={
         <audio
           ref={audioRef}
@@ -478,11 +445,14 @@ function PodcastAudioPlayerSoundCloud({
   );
   const isPlayingRef = useRef(false);
   const pendingPlayRef = useRef(false);
+  const [widgetArmed, setWidgetArmed] = useState(false);
   isPlayingRef.current = isPlaying;
 
   const widgetSrc = buildSoundCloudWidgetUrl(pageUrl);
 
   useEffect(() => {
+    if (!widgetArmed) return;
+
     let cancelled = false;
 
     setIsPlaying(false);
@@ -574,7 +544,7 @@ function PodcastAudioPlayerSoundCloud({
       cancelled = true;
       widgetRef.current = null;
     };
-  }, [pageUrl, widgetSrc]);
+  }, [pageUrl, widgetSrc, widgetArmed]);
 
   useEffect(() => {
     if (duration != null && duration > 0) {
@@ -588,6 +558,7 @@ function PodcastAudioPlayerSoundCloud({
     const widget = widgetRef.current;
     if (!widget) {
       pendingPlayRef.current = !isPlayingRef.current;
+      setWidgetArmed(true);
       return;
     }
     if (isPlayingRef.current) {
@@ -621,14 +592,16 @@ function PodcastAudioPlayerSoundCloud({
       onSeek={variant === "cover" ? undefined : handleSeek}
       sourceUrl={showSourceLink ? pageUrl : null}
       hiddenBridge={
-        <iframe
-          key={widgetSrc}
-          ref={iframeRef}
-          title=""
-          src={widgetSrc}
-          className="podcast-player__soundcloud-bridge"
-          allow="autoplay"
-        />
+        widgetArmed ? (
+          <iframe
+            key={widgetSrc}
+            ref={iframeRef}
+            title=""
+            src={widgetSrc}
+            className="podcast-player__soundcloud-bridge"
+            allow="autoplay"
+          />
+        ) : null
       }
     />
   );

@@ -31,10 +31,10 @@ import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
 import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
-import { usePermission } from "@/hooks/usePermission";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { paginateList } from "@/lib/table-pagination";
-import { countCategories, flattenCategoryRows } from "@/lib/category-tree";
+import { usePermission } from "@/hooks/auth";
+import { getApiErrorMessage } from "@/lib/api";
+import { paginateList } from "@/lib/staff";
+import { countCategories, flattenCategoryRows } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import { PERMISSIONS } from "@/router/routes";
 import { Categories_APIs } from "@/services/api/categories";

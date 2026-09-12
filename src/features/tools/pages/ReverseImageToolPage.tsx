@@ -8,11 +8,11 @@ import {
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
 import { ReverseSearchResults } from "@/features/tools/components/ReverseSearchResults";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { getApiErrorMessage } from "@/lib/api";
 import {
   REVERSE_IMAGE_PROCESSING_STEPS,
   resolveToolImageUrl,
-} from "@/lib/tool-processing-steps";
+} from "@/lib/publishing";
 import { ImageVerification_APIs } from "@/services/api/tools";
 import type { ReverseSearchMatch } from "@/types";
 import { Search } from "lucide-react";

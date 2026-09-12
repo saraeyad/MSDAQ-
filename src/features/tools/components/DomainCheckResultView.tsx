@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { formatDomainDate } from "@/lib/domain-input";
+import { formatDomainDate } from "@/lib/publishing";
 import type { DomainCheckResult, DomainDnsRecord } from "@/types";
 import {
   Calendar,

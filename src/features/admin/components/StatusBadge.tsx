@@ -1,4 +1,4 @@
-import { articleStatusLabel } from "@/lib/media-labels";
+import { articleStatusLabel } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import type { ArticleStatus } from "@/types";
 import {

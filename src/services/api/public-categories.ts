@@ -1,7 +1,7 @@
 import {
   isApiSuccessful,
   parsePublicCategoryDetailResponse,
-} from "@/lib/api-data";
+} from "@/lib/api";
 import type { ApiResponse, PublicCategory, PublicCategoryDetail } from "@/types";
 import API from "./api.repository";
 

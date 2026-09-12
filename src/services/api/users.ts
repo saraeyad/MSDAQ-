@@ -1,4 +1,4 @@
-import { parsePaginatedListResponse } from "@/lib/api-data";
+import { parsePaginatedListResponse } from "@/lib/api";
 import type {
   ApiResponse,
   PaginatedListResult,

@@ -46,6 +46,8 @@ export function PartnerLogo({
       src={partner.logo}
       alt={partner.logoAlt}
       title={partner.title}
+      loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
       className={cn("w-auto object-contain", SIZE[size], className)}
     />

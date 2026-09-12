@@ -6,11 +6,10 @@ import { NextStepButton } from "@/features/publishing-flow/components/NextStepBu
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
-import { useTranscriptStatusPoll } from "@/hooks/useTranscriptStatusPoll";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { resolveMediaUrl } from "@/lib/media-url";
-import { sttInflightArticleKey } from "@/lib/transcript-status-poll";
+import { useFileUploadProgress, useTranscriptStatusPoll } from "@/hooks/publishing";
+import { getApiErrorMessage } from "@/lib/api";
+import { resolveMediaUrl } from "@/lib/media";
+import { sttInflightArticleKey } from "@/lib/publishing";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import type { ArticleImage } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +18,7 @@ import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { getToolBySlug } from "@/features/tools/tool-config";
-import { STT_ACCEPT_ATTR, validateSttAudioFile } from "@/lib/voice-audio";
+import { STT_ACCEPT_ATTR, validateSttAudioFile } from "@/lib/media";
 
 const STT_LABEL =
   getToolBySlug("speech-to-text")?.label ?? "تحويل الصوت إلى نص";
@@ -305,6 +304,8 @@ export function Step3Body({
                   src={resolveMediaUrl(img.thumb) ?? img.thumb}
                   alt=""
                   className="aspect-video w-full rounded-lg object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <Button
                   variant="ghost"

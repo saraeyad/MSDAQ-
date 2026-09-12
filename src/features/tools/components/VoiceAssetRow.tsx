@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { getApiErrorMessage } from "@/lib/api";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";

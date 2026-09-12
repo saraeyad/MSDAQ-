@@ -13,10 +13,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { FieldGroup } from "@/features/publishing-flow/steps/Step1Details/FieldGroup";
 import { FormSection } from "@/features/publishing-flow/steps/Step1Details/FormSection";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { resolveCategoryIntegerId } from "@/lib/category-tree";
-import { mediaTypeLabel } from "@/lib/media-labels";
-import { articleReviewThresholds } from "@/lib/trust-index-labels";
+import { getApiErrorMessage } from "@/lib/api";
+import { resolveCategoryIntegerId } from "@/lib/publishing";
+import { mediaTypeLabel } from "@/lib/media";
+import { articleReviewThresholds } from "@/lib/site";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { Categories_APIs } from "@/services/api/categories";
 import type {

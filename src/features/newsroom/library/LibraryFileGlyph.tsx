@@ -1,4 +1,4 @@
-import { libraryFileExtension, libraryFileKind } from "@/lib/library-labels";
+import { libraryFileExtension, libraryFileKind } from "@/lib/library";
 import { cn } from "@/lib/utils";
 import {
   File,

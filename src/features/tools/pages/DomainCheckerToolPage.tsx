@@ -2,11 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DomainCheckResultView } from "@/features/tools/components/DomainCheckResultView";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { getApiErrorMessage } from "@/lib/api";
 import {
   normalizeDomainInput,
   validateBareDomain,
-} from "@/lib/domain-input";
+} from "@/lib/publishing";
 import { DomainCheck_APIs } from "@/services/api/domain-check";
 import type { DomainCheckResult } from "@/types";
 import { Loader2, Search } from "lucide-react";

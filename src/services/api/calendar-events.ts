@@ -1,4 +1,4 @@
-import { getApiData, unwrapList } from "@/lib/api-data";
+import { getApiData, unwrapList } from "@/lib/api";
 import type {
   ApiResponse,
   CalendarEventListQuery,

@@ -7,8 +7,8 @@ import {
 } from "@/features/tools/components/ToolProcessingDialog";
 import { StandardsHighlightedText } from "@/features/tools/components/StandardsHighlightedText";
 import { StandardsResultCard } from "@/features/tools/components/StandardsResultCard";
-import { getStandardsCheckErrorMessage } from "@/lib/standards-errors";
-import { STANDARDS_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
+import { getStandardsCheckErrorMessage } from "@/lib/publishing";
+import { STANDARDS_PROCESSING_STEPS } from "@/lib/publishing";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import type { StandardsCheckResult } from "@/types";
 import { useState } from "react";

@@ -6,7 +6,7 @@ import {
   permissionGroupAccent,
   permissionGroupLabel,
   permissionLabel,
-} from "@/lib/permission-labels";
+} from "@/lib/staff";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";

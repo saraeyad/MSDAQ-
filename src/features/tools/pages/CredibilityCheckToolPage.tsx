@@ -6,8 +6,8 @@ import {
   runWithToolProcessing,
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
+import { getApiErrorMessage } from "@/lib/api";
+import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/publishing";
 import { ToolsEditorial_APIs } from "@/services/api/tools";
 import type { CredibilityCheckResult } from "@/types";
 import { useState } from "react";

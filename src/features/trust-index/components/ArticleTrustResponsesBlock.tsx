@@ -1,6 +1,6 @@
 import { TrustIndexResponsesTable } from "@/features/trust-index/components/TrustIndexResponsesTable";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { paginateList } from "@/lib/table-pagination";
+import { getApiErrorMessage } from "@/lib/api";
+import { paginateList } from "@/lib/staff";
 import { TrustIndex_APIs } from "@/services/api/trust-index";
 import { ARTICLE_TRUST_RESPONSES_PAGE_SIZE } from "@/types";
 import type { TrustIndexListParams } from "@/types";

@@ -1,4 +1,4 @@
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { usePublicCopy } from "@/context/locale";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/router/routes";

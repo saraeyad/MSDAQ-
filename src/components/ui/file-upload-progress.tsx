@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { LibraryFileGlyph } from "@/features/newsroom/library/LibraryFileGlyph";
-import { formatFileSize } from "@/lib/format-file-size";
-import type { FileUploadProgressStatus } from "@/lib/upload-progress";
+import { formatFileSize } from "@/lib/library";
+import type { FileUploadProgressStatus } from "@/lib/library";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, CloudUpload, Trash2, XCircle } from "lucide-react";
 

@@ -2,8 +2,8 @@ import {
   getApiData,
   isApiSuccessful,
   parsePaginatedListResponse,
-} from "@/lib/api-data";
-import { filenameFromContentDisposition } from "@/lib/blob-download";
+} from "@/lib/api";
+import { filenameFromContentDisposition } from "@/lib/library";
 import type {
   ApiResponse,
   PaginatedListResult,
@@ -15,7 +15,7 @@ import type {
   TrustIndexSubmitPayload,
   TrustIndexSummary,
 } from "@/types";
-import { articleIdParam } from "@/lib/article-id";
+import { articleIdParam } from "@/lib/publishing";
 import API from "./api.repository";
 
 function buildDateParams(params: TrustIndexListParams = {}) {

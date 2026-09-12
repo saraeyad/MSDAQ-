@@ -4,8 +4,8 @@ import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { PermissionPicker } from "@/features/admin/components/PermissionPicker";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { rolePurpose } from "@/lib/role-labels";
+import { getApiErrorMessage } from "@/lib/api";
+import { rolePurpose } from "@/lib/staff";
 import { ROUTES } from "@/router/routes";
 import { AdminRoles_APIs } from "@/services/api/admin";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

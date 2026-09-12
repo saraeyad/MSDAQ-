@@ -1,4 +1,4 @@
-import { getApiData, unwrapList } from "@/lib/api-data";
+import { getApiData, unwrapList } from "@/lib/api";
 import type { ApiResponse, CalendarFeedItem, CalendarFeedQuery } from "@/types";
 import API from "./api.repository";
 

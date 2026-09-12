@@ -1,4 +1,4 @@
-import { articleIdParam } from "@/lib/article-id";
+import { articleIdParam } from "@/lib/publishing";
 
 export const ROUTES = {
   HOME: "/",

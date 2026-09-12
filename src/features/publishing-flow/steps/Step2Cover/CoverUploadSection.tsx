@@ -82,7 +82,13 @@ export function CoverUploadSection({
         />
       ) : (
         <div className="cover-upload-preview">
-          <img src={preview} alt="" className="cover-upload-preview__image" />
+          <img
+            src={preview}
+            alt=""
+            className="cover-upload-preview__image"
+            loading="eager"
+            decoding="async"
+          />
         </div>
       )}
 

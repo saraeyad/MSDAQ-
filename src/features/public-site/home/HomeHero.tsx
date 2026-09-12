@@ -15,6 +15,9 @@ export function HomeHero() {
           src={HERO_IMAGE}
           alt=""
           className="home-cinematic-hero__photo"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
           onError={(event) => {
             const img = event.currentTarget;
             if (img.src.endsWith(HERO_FALLBACK)) return;
@@ -60,6 +63,7 @@ export function HomeHero() {
         <img
           src="/brand/cdmc.png?v=2"
           alt="مركز التنمية والإعلام المجتمعي"
+          loading="lazy"
           decoding="async"
         />
       </div>

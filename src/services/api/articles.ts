@@ -1,14 +1,14 @@
 import {
   getApiData,
   parsePublicArticlesListResponse,
-} from "@/lib/api-data";
+} from "@/lib/api";
 import type {
   PaginatedResponse,
   PublicArticle,
   PublicArticlesListResult,
 } from "@/types";
 import type { ApiResponse } from "@/types";
-import { articleIdParam } from "@/lib/article-id";
+import { articleIdParam } from "@/lib/publishing";
 import API from "./api.repository";
 
 export interface ArticlesQuery {

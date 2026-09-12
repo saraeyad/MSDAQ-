@@ -1,4 +1,4 @@
-import { OliveBranch } from "@/components/ghazawiya/olive-branch";
+import { OliveBranch } from "@/components/brand/olive-branch";
 import { ROUTES } from "@/router/routes";
 import { Link } from "react-router-dom";
 

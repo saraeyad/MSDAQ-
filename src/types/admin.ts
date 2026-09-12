@@ -187,12 +187,14 @@ export interface AdminAnalyticsDevice {
   sessions?: number;
   visitors?: number;
   users?: number;
+  views?: number;
   count?: number;
 }
 
 export interface AdminAnalyticsCountry {
   country?: string;
   name?: string;
+  views?: number;
   sessions?: number;
   visitors?: number;
   users?: number;

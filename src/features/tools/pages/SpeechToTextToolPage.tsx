@@ -5,26 +5,23 @@ import { FileInput } from "@/components/ui/file-input";
 import { FileUploadProgressCard } from "@/components/ui/file-upload-progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
-import { useTranscriptStatusPoll } from "@/hooks/useTranscriptStatusPoll";
+import { useFileUploadProgress, useTranscriptStatusPoll } from "@/hooks/publishing";
 import { Textarea } from "@/components/ui/textarea";
 import { TranscriptProcessingInline } from "@/features/tools/components/TranscriptProcessingInline";
 import { VoiceDraftNotice } from "@/features/tools/components/VoiceDraftNotice";
 import { useAuth } from "@/context/auth";
-import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { useIsSuperAdmin } from "@/hooks/auth";
+import { getApiErrorMessage } from "@/lib/api";
 import {
   STT_INFLIGHT_STANDALONE_KEY,
-} from "@/lib/transcript-status-poll";
+} from "@/lib/publishing";
 import {
   STT_ACCEPT_ATTR,
-  validateSttAudioFile,
-} from "@/lib/voice-audio";
-import {
   canDeleteVoiceAsset,
   canSaveVoiceAsset,
   formatVoiceAssetSavedMeta,
-} from "@/lib/voice-asset-access";
+  validateSttAudioFile,
+} from "@/lib/media";
 import { ROUTES } from "@/router/routes";
 import { Transcripts_APIs } from "@/services/api/transcripts";
 import { ToolsVoice_APIs } from "@/services/api/tools";

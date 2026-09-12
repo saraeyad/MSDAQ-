@@ -7,6 +7,7 @@ export function CenterDefinitionSection({ alt }: { alt: string }) {
         src={COLLAGE_IMAGE}
         alt={alt}
         className="mx-auto h-auto w-full max-w-5xl rounded-2xl object-cover object-center"
+        loading="lazy"
         decoding="async"
       />
     </section>

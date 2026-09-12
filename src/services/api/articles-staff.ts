@@ -1,11 +1,11 @@
-import { getApiData, parseStaffArticlesListResponse } from "@/lib/api-data";
-import { normalizeCredibilityResult } from "@/lib/credibility-normalize";
-import { normalizeStandardsResult } from "@/lib/standards-normalize";
-import { appendSttAudioField } from "@/lib/voice-audio";
+import { getApiData, parseStaffArticlesListResponse } from "@/lib/api";
+import { normalizeCredibilityResult } from "@/lib/publishing";
+import { normalizeStandardsResult } from "@/lib/publishing";
+import { appendSttAudioField } from "@/lib/media";
 import {
   STANDARDS_REQUEST_TIMEOUT_MS,
   TTS_REQUEST_TIMEOUT_MS,
-} from "@/lib/tts-limits";
+} from "@/lib/publishing";
 import type {
   ApiResponse,
   CredibilityCheckResult,
@@ -21,7 +21,7 @@ import type {
   VideoUploadResult,
 } from "@/types";
 import type { CreateSourcePayload, UpdateSourcePayload } from "@/types";
-import { articleIdParam } from "@/lib/article-id";
+import { articleIdParam } from "@/lib/publishing";
 import type { AxiosRequestConfig } from "axios";
 import API from "./api.repository";
 

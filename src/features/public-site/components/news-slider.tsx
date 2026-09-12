@@ -1,6 +1,6 @@
-import { PublicArticleCover } from "@/components/cover-image";
+import { PublicArticleCover } from "@/components/article/cover-image";
 import { useLocale, usePublicCopy } from "@/context/locale";
-import { mediaTypeLabel } from "@/lib/media-labels";
+import { mediaTypeLabel } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import type { PublicArticle } from "@/types";
@@ -90,6 +90,7 @@ export function NewsSlider({
         <Link to={articlePath(current.id)} className="news-rail__story">
           <PublicArticleCover
             article={current}
+            priority
             className="news-rail__thumb"
           />
           <div className="news-rail__copy">
@@ -147,6 +148,7 @@ export function NewsSlider({
       >
         <PublicArticleCover
           article={current}
+          priority
           className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10" />

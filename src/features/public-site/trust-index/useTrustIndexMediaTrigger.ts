@@ -3,7 +3,7 @@ import {
   markTrustIndexDismissed,
   trustMediaThresholdReached,
   type TrustMediaProgress,
-} from "@/lib/trust-index-labels";
+} from "@/lib/site";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseTrustIndexMediaTriggerOptions {

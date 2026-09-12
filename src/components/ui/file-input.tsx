@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { formatFileSize } from "@/lib/format-file-size";
+import { formatFileSize } from "@/lib/library";
 import { cn } from "@/lib/utils";
 import { FileText, ImageIcon, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
@@ -99,6 +99,8 @@ export function FileInput({
               src={previewUrl}
               alt=""
               className="file-input__preview size-14 shrink-0 rounded-md border border-border object-cover"
+              loading="eager"
+              decoding="async"
             />
           ) : (
             <div className="file-input__preview file-input__preview--placeholder flex size-14 shrink-0 items-center justify-center rounded-md border border-border bg-card">

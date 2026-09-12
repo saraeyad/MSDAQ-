@@ -1,14 +1,19 @@
 import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
 import { HomeHero } from "@/features/public-site/home/HomeHero";
-import { NewsSlider } from "@/features/public-site/components/news-slider";
 import { usePublicCopy } from "@/context/locale";
-import { usePublicCategories } from "@/hooks/usePublicCategories";
-import { buildParentSlugMap } from "@/lib/category-tree";
+import { usePublicCategories } from "@/hooks/public";
+import { buildParentSlugMap } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import { Articles_APIs } from "@/services/api/articles";
 import type { PublicArticle } from "@/types";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
+
+const NewsSlider = lazy(() =>
+  import("@/features/public-site/components/news-slider").then((module) => ({
+    default: module.NewsSlider,
+  })),
+);
 
 function matchesFilter(
   article: PublicArticle,
@@ -74,7 +79,9 @@ export default function HomePage() {
           ) : articles.length === 0 ? (
             <div className="news-rail news-rail--empty">{home.noArticles}</div>
           ) : (
-            <NewsSlider articles={articles} variant="rail" />
+            <Suspense fallback={<div className="news-rail news-rail--skeleton" aria-hidden />}>
+              <NewsSlider articles={articles} variant="rail" />
+            </Suspense>
           )}
         </div>
       </section>

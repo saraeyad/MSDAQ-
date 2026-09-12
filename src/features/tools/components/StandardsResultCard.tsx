@@ -4,8 +4,8 @@ import {
   isFushaCriterion,
   isScoredCriterion,
   severityLabel,
-} from "@/lib/standards-normalize";
-import { quoteExistsLiterally } from "@/lib/standards-highlight";
+} from "@/lib/publishing";
+import { quoteExistsLiterally } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import type { StandardsCheckResult, StandardsCriterion } from "@/types";
 import { ScoreDonut } from "@/features/tools/components/ScoreDonut";

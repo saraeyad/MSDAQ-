@@ -6,8 +6,8 @@ import {
   runWithToolProcessing,
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { LOCALIZATION_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
+import { getApiErrorMessage } from "@/lib/api";
+import { LOCALIZATION_PROCESSING_STEPS } from "@/lib/publishing";
 import { ToolsEditorial_APIs } from "@/services/api/tools";
 import type { StandaloneLocalizationResult } from "@/types";
 import { useState } from "react";

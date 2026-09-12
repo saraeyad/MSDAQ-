@@ -30,7 +30,7 @@ import {
   startOfToday,
   toDatetimeLocal,
   type SchedulePeriod,
-} from "@/lib/calendar-datetime";
+} from "@/lib/calendar";
 import { cn } from "@/lib/utils";
 
 interface CalendarScheduleRowProps {

@@ -1,9 +1,9 @@
 import { PageLoading } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { PublicArticleCover } from "@/components/cover-image";
-import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
+import { PublicArticleCover } from "@/components/article/cover-image";
+import { ArticleVerifiedBadge } from "@/components/article/article-verified-badge";
 import { useLocale, usePublicCopy } from "@/context/locale";
-import { publicMediaTypeLabel } from "@/lib/media-labels";
+import { publicMediaTypeLabel } from "@/lib/media";
 import { articlePath } from "@/router/routes";
 import { Articles_APIs } from "@/services/api/articles";
 import { useQuery } from "@tanstack/react-query";
@@ -76,7 +76,7 @@ export default function ArticlesListPage() {
       ) : (
         <>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article) => (
+            {articles.map((article, index) => (
               <Link
                 key={article.id}
                 to={articlePath(article.id)}
@@ -85,6 +85,7 @@ export default function ArticlesListPage() {
                 {article.cover_image || article.images?.length ? (
                   <PublicArticleCover
                     article={article}
+                    priority={index === 0}
                     className="aspect-video w-full object-cover"
                   />
                 ) : null}

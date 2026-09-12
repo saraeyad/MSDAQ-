@@ -20,6 +20,8 @@ export function PlatformFeedbackFab() {
         src={FAB_ART}
         alt=""
         className="platform-feedback-fab__art"
+        loading="lazy"
+        decoding="async"
         draggable={false}
       />
     </button>

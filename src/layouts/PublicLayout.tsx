@@ -1,9 +1,8 @@
-import { LocaleSwitcher } from "@/components/locale-switcher";
+import { LocaleSwitcher } from "@/components/site/locale-switcher";
 import { SiteBrandLink } from "@/features/public-site/components/site-brand-link";
-import { SiteHeaderSearch } from "@/components/site-header-search";
-import { DesktopSiteNav, MobileSiteNav } from "@/components/site-header-nav";
-import { SiteFooter } from "@/components/site-footer";
-import { PartnersStrip } from "@/features/public-site/partners/PartnersStrip";
+import { SiteHeaderSearch } from "@/components/site/site-header-search";
+import { DesktopSiteNav, MobileSiteNav } from "@/components/site/site-header-nav";
+import { SiteFooter } from "@/components/site/site-footer";
 import { PlatformFeedbackProvider } from "@/context/platform-feedback";
 import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/PlatformFeedbackFab";
 import { Button } from "@/components/ui/button";
@@ -13,14 +12,28 @@ import {
   isPublicArticlePath,
   resetArticleViewDedupe,
   trackPageView,
-} from "@/lib/google-analytics";
+} from "@/lib/site";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { cn } from "@/lib/utils";
 import { LogIn } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { HomeToolsSection } from "@/features/public-site/home/HomeToolsSection";
-import { PilotLaunchWelcome } from "@/features/public-site/welcome/PilotLaunchWelcome";
+
+const HomeToolsSection = lazy(() =>
+  import("@/features/public-site/home/HomeToolsSection").then((module) => ({
+    default: module.HomeToolsSection,
+  })),
+);
+const PartnersStrip = lazy(() =>
+  import("@/features/public-site/partners/PartnersStrip").then((module) => ({
+    default: module.PartnersStrip,
+  })),
+);
+const PilotLaunchWelcome = lazy(() =>
+  import("@/features/public-site/welcome/PilotLaunchWelcome").then((module) => ({
+    default: module.PilotLaunchWelcome,
+  })),
+);
 
 function shouldShowHomeSections(pathname: string): boolean {
   if (pathname === ROUTES.ARTICLES || /^\/articles\/[^/]+$/.test(pathname)) {
@@ -132,11 +145,17 @@ export default function PublicLayout() {
         <main className="flex flex-1 flex-col">
           <Outlet />
         </main>
-        {showHomeSections ? <HomeToolsSection /> : null}
-        {showHomeSections ? <PartnersStrip /> : null}
+        {showHomeSections ? (
+          <Suspense fallback={null}>
+            <HomeToolsSection />
+            <PartnersStrip />
+          </Suspense>
+        ) : null}
         <SiteFooter className="mt-auto" />
         <PlatformFeedbackFab />
-        <PilotLaunchWelcome />
+        <Suspense fallback={null}>
+          <PilotLaunchWelcome />
+        </Suspense>
       </div>
     </PlatformFeedbackProvider>
   );

@@ -1,5 +1,5 @@
-import { getApiData } from "@/lib/api-data";
-import { extractPublicMediaUrl } from "@/lib/media-url";
+import { getApiData } from "@/lib/api";
+import { extractPublicMediaUrl } from "@/lib/media";
 import { Library_APIs } from "@/services/api/library";
 import type { AiDetectionResult, ApiResponse, ReverseSearchMatch } from "@/types";
 import type { AxiosRequestConfig } from "axios";

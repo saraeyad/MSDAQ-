@@ -7,14 +7,14 @@ import {
   runWithToolProcessing,
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { getApiErrorMessage } from "@/lib/api";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import type { ArticleSource, CredibilityCheckResult } from "@/types";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
+import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/publishing";
 
 interface Step5CredibilityProps {
   articleId: number | string;

@@ -1,4 +1,4 @@
-import { getApiData } from "@/lib/api-data";
+import { getApiData } from "@/lib/api";
 import type {
   ApiResponse,
   EditorialDetectResult,

@@ -2,7 +2,7 @@ import {
   getApiData,
   parsePaginatedListResponse,
   unwrapList,
-} from "@/lib/api-data";
+} from "@/lib/api";
 import type {
   AdminAnalytics,
   AdminAnalyticsRange,
@@ -161,33 +161,78 @@ export const AdminDashboard_APIs = {
   },
 };
 
-const ANALYTICS_RANGE_ALIASES: Partial<Record<AdminAnalyticsRange, string[]>> = {
-  month: ["last_month", "month"],
-  year: ["year", "last_year"],
-};
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return null;
+}
+
+function pickMetric(row: Record<string, unknown>, keys: string[]): number {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim()) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return 0;
+}
+
+function parseAdminAnalyticsPayload(payload: unknown): AdminAnalytics {
+  const root = asRecord(payload);
+  if (!root) {
+    throw new Error("تعذّر قراءة تحليلات الموقع");
+  }
+
+  if (root.success === false || root.error === true) {
+    throw new Error(
+      typeof root.message === "string" && root.message.trim()
+        ? root.message
+        : "تعذّر تحميل تحليلات الموقع",
+    );
+  }
+
+  const nested = asRecord(root.data);
+  const inner =
+    nested &&
+    ("realtime" in nested ||
+      "summary" in nested ||
+      "top_pages" in nested ||
+      "referrers" in nested)
+      ? nested
+      : root;
+
+  const summaryRow = asRecord(inner.summary) ?? asRecord(inner.today) ?? {};
+
+  return {
+    realtime: pickMetric(inner, ["realtime"]),
+    range: typeof inner.range === "string" ? inner.range : undefined,
+    summary: {
+      visitors: pickMetric(summaryRow, ["visitors", "users"]),
+      pageviews: pickMetric(summaryRow, ["pageviews", "views"]),
+      sessions: pickMetric(summaryRow, ["sessions"]),
+      avg_session_duration_secs: pickMetric(summaryRow, [
+        "avg_session_duration_secs",
+        "averageSessionDuration",
+      ]),
+    },
+    top_pages: Array.isArray(inner.top_pages) ? inner.top_pages : [],
+    referrers: Array.isArray(inner.referrers) ? inner.referrers : [],
+    devices: Array.isArray(inner.devices) ? inner.devices : [],
+    countries: Array.isArray(inner.countries) ? inner.countries : [],
+  };
+}
 
 export const AdminAnalytics_APIs = {
   get: async (
     range: AdminAnalyticsRange = "today",
   ): Promise<AdminAnalytics> => {
-    const candidates =
-      range === "today"
-        ? [undefined]
-        : (ANALYTICS_RANGE_ALIASES[range] ?? [range]);
-
-    let lastError: unknown;
-    for (const value of candidates) {
-      try {
-        const response = await API.get<ApiResponse<AdminAnalytics>>(
-          "/api/platform-feedback/analytics",
-          { params: value ? { range: value } : undefined },
-        );
-        return getApiData(response);
-      } catch (error) {
-        lastError = error;
-      }
-    }
-
-    throw lastError;
+    const response = await API.get<ApiResponse<AdminAnalytics> | AdminAnalytics>(
+      "/api/platform-feedback/analytics",
+      { params: range === "today" ? undefined : { range } },
+    );
+    return parseAdminAnalyticsPayload(response.data);
   },
 };

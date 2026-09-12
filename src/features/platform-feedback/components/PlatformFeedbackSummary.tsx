@@ -6,7 +6,7 @@ import {
   trustBandClass,
   trustBandLabel,
   trustIndexHasData,
-} from "@/lib/trust-index-labels";
+} from "@/lib/site";
 import type { TrustIndexSummary } from "@/types";
 
 interface PlatformFeedbackSummaryProps {

@@ -1,4 +1,4 @@
-import { isStepFilled, stepsForMediaType } from "@/lib/publish-gate";
+import { isStepFilled, stepsForMediaType } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import type { StaffArticle, StaffMediaType } from "@/types";
 import { Check, Send } from "lucide-react";

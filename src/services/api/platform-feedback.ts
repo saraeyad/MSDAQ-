@@ -2,8 +2,8 @@ import {
   getApiData,
   isApiSuccessful,
   parsePaginatedListResponse,
-} from "@/lib/api-data";
-import { filenameFromContentDisposition } from "@/lib/blob-download";
+} from "@/lib/api";
+import { filenameFromContentDisposition } from "@/lib/library";
 import type {
   ApiResponse,
   PaginatedListResult,

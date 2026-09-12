@@ -4,7 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CALENDAR_TYPE_COLORS } from "@/lib/calendar-feed";
+import { CALENDAR_TYPE_COLORS } from "@/lib/calendar";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Pipette } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";

@@ -7,11 +7,11 @@ import {
   runWithToolProcessing,
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { getApiErrorMessage } from "@/lib/api";
 import {
   AI_DETECTION_PROCESSING_STEPS,
   resolveToolImageUrl,
-} from "@/lib/tool-processing-steps";
+} from "@/lib/publishing";
 import { ImageVerification_APIs } from "@/services/api/tools";
 import type { AiDetectionResult } from "@/types";
 import { useState } from "react";

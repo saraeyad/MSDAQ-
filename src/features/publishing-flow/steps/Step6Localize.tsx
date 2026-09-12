@@ -13,10 +13,10 @@ import {
   runWithToolProcessing,
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { resolveMediaUrl } from "@/lib/media-url";
+import { getApiErrorMessage } from "@/lib/api";
+import { resolveMediaUrl } from "@/lib/media";
 import { getToolBySlug } from "@/features/tools/tool-config";
-import { TTS_PROCESSING_STEPS } from "@/lib/tool-processing-steps";
+import { TTS_PROCESSING_STEPS } from "@/lib/publishing";
 
 const LOCALIZATION_LABEL =
   getToolBySlug("localization")?.label ?? "التبسيط واللهجة";

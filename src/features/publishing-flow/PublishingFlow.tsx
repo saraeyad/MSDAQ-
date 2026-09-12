@@ -14,7 +14,7 @@ import {
   inferArticleStep,
   isStepVisible,
   stepsForMediaType,
-} from "@/lib/publish-gate";
+} from "@/lib/publishing";
 import { staffArticleEditPath } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

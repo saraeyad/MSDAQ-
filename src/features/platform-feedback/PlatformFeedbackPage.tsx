@@ -9,14 +9,14 @@ import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { PlatformFeedbackSummary } from "@/features/platform-feedback/components/PlatformFeedbackSummary";
 import { TrustResponseDimensionsCell } from "@/features/trust-index/components/TrustResponseDimensionsCell";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { triggerBlobDownload } from "@/lib/blob-download";
-import { paginateList } from "@/lib/table-pagination";
+import { getApiErrorMessage } from "@/lib/api";
+import { triggerBlobDownload } from "@/lib/library";
+import { paginateList } from "@/lib/staff";
 import {
   PLATFORM_TRUST_DIMENSIONS,
   trustBandClass,
   trustBandLabel,
-} from "@/lib/trust-index-labels";
+} from "@/lib/site";
 import { PlatformFeedback_APIs } from "@/services/api/platform-feedback";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {

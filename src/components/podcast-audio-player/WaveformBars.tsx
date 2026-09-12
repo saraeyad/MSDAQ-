@@ -1,4 +1,4 @@
-import { generateWaveformHeights } from "@/lib/waveform";
+import { generateWaveformHeights } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 

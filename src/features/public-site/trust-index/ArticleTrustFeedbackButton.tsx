@@ -1,4 +1,4 @@
-import { OliveBranch } from "@/components/ghazawiya/olive-branch";
+import { OliveBranch } from "@/components/brand/olive-branch";
 import { MessageSquareQuote } from "lucide-react";
 
 interface ArticleTrustFeedbackButtonProps {

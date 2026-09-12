@@ -1,6 +1,6 @@
-import { getApiData, parsePaginatedListResponse } from "@/lib/api-data";
-import { appendSttAudioField } from "@/lib/voice-audio";
-import { TTS_REQUEST_TIMEOUT_MS } from "@/lib/tts-limits";
+import { getApiData, parsePaginatedListResponse } from "@/lib/api";
+import { appendSttAudioField } from "@/lib/media";
+import { TTS_REQUEST_TIMEOUT_MS } from "@/lib/publishing";
 import type {
   ApiResponse,
   GeneratedAudio,

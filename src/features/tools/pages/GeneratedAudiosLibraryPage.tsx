@@ -1,10 +1,10 @@
 import { useAuth } from "@/context/auth";
-import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
-import { resolveMediaUrl } from "@/lib/media-url";
+import { useIsSuperAdmin } from "@/hooks/auth";
+import { resolveMediaUrl } from "@/lib/media";
 import {
   canDeleteVoiceAsset,
   canSaveVoiceAsset,
-} from "@/lib/voice-asset-access";
+} from "@/lib/media";
 import { ToolsVoice_APIs } from "@/services/api/tools";
 import type { GeneratedAudio } from "@/types";
 import { VoiceAssetLibraryPage } from "../components/VoiceAssetLibraryPage";

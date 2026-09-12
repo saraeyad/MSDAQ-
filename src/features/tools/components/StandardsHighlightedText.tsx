@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { buildHighlightedSegments, spansForBody, spansForHeadline } from "@/lib/standards-highlight";
+import { buildHighlightedSegments, spansForBody, spansForHeadline } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import type { StandardsCriterion, StandardsSpanSeverity } from "@/types";
 

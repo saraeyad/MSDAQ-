@@ -1,13 +1,21 @@
 ﻿<!doctype html>
 <html lang="ar" dir="rtl">
   <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MNNV05NB2B"></script>
+    <!-- Google tag (gtag.js): public production pages only. No auto page_view. -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-MNNV05NB2B');
+      (function () {
+        var host = location.hostname;
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (/^\/(newsroom|admin|login)(\/|$)/.test(location.pathname)) return;
+        var s = document.createElement("script");
+        s.async = true;
+        s.src = "https://www.googletagmanager.com/gtag/js?id=G-MNNV05NB2B";
+        document.head.appendChild(s);
+        gtag("js", new Date());
+        gtag("config", "G-MNNV05NB2B", { send_page_view: false });
+      })();
     </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/brand/sabbara-post-icon.png?v=3" />

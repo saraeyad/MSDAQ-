@@ -1,12 +1,11 @@
-import { BrandLogo } from "@/components/brand-logo";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/context/auth";
+import { normalizeAuthUser, useAuth, type AuthUser } from "@/context/auth";
 import { usePublicCopy } from "@/context/locale";
-import { getApiData, getApiErrorMessage } from "@/lib/api-data";
+import { getApiData, getApiErrorMessage } from "@/lib/api";
 import { Auth_APIs } from "@/services/api/auth";
-import { normalizeAuthUser, type AuthUser } from "@/context/types";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -86,6 +85,9 @@ export default function LoginPage() {
           src={photoSrc}
           alt=""
           className="login-page__backdrop-photo"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
           onError={onPhotoError}
         />
       </div>
@@ -97,6 +99,8 @@ export default function LoginPage() {
             src={photoSrc}
             alt=""
             className="login-panel__photo"
+            loading="lazy"
+            decoding="async"
             onError={onPhotoError}
           />
           <div className="login-panel__scrim" />

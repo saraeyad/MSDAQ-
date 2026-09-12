@@ -1,4 +1,4 @@
-import { paginationItems } from "@/lib/table-pagination";
+import { paginationItems } from "@/lib/staff";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function AdminPagination({

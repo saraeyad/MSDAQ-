@@ -1,7 +1,7 @@
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
-import { PublicArticleCover } from "@/components/cover-image";
-import { ArticleVerifiedBadge } from "@/components/article-verified-badge";
-import { mediaTypeLabel, resolvePublicArticleAudioSource } from "@/lib/media-labels";
+import { PublicArticleCover } from "@/components/article/cover-image";
+import { ArticleVerifiedBadge } from "@/components/article/article-verified-badge";
+import { mediaTypeLabel, resolvePublicArticleAudioSource } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import type { PublicArticle, PublicMediaType } from "@/types";
@@ -67,6 +67,7 @@ export function HomeArticleCard({
         ) : (
           <PublicArticleCover
             article={article}
+            priority={featured || index === 0}
             className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         )}

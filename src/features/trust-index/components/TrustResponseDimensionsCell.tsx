@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import {
   TRUST_DIMENSIONS,
   type TrustDimensionDefinition,
-} from "@/lib/trust-index-labels";
+} from "@/lib/site";
 import type { TrustIndexResponseRow } from "@/types";
 
 interface TrustResponseDimensionsCellProps {

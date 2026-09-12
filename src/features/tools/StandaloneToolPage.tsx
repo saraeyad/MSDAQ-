@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { usePermission } from "@/hooks/usePermission";
+import { usePermission } from "@/hooks/auth";
 import { ROUTES } from "@/router/routes";
 import { Link, useParams } from "react-router-dom";
 import { isSmartEditorSlug } from "./smart-editor/config";

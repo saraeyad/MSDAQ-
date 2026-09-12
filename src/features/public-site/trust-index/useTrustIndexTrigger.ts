@@ -1,7 +1,7 @@
 import {
   isTrustIndexDismissed,
   markTrustIndexDismissed,
-} from "@/lib/trust-index-labels";
+} from "@/lib/site";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseTrustIndexTriggerOptions {

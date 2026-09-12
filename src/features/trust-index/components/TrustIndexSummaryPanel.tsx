@@ -10,7 +10,7 @@ import {
   trustBandLabel,
   trustIndexHasData,
   type TrustDimensionDefinition,
-} from "@/lib/trust-index-labels";
+} from "@/lib/site";
 import type { TrustIndexSummary } from "@/types";
 
 interface TrustIndexSummaryPanelProps {

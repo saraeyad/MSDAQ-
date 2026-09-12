@@ -1,4 +1,4 @@
-import { categoryFilterKey } from "@/lib/category-tree";
+import { categoryFilterKey } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 
 type TrustFilterCategory = {

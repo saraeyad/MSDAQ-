@@ -1,11 +1,11 @@
-import { getApiData } from "@/lib/api-data";
-import { normalizeCredibilityResult } from "@/lib/credibility-normalize";
-import { normalizeLocalizationResult } from "@/lib/localization-normalize";
-import { normalizeStandardsResult } from "@/lib/standards-normalize";
+import { getApiData } from "@/lib/api";
 import {
   CREDIBILITY_REQUEST_TIMEOUT_MS,
   STANDARDS_REQUEST_TIMEOUT_MS,
-} from "@/lib/tts-limits";
+  normalizeCredibilityResult,
+  normalizeLocalizationResult,
+  normalizeStandardsResult,
+} from "@/lib/publishing";
 import type {
   ApiResponse,
   CredibilityCheckResult,

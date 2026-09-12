@@ -1,4 +1,4 @@
-import { getApiData, parsePaginatedListResponse } from "@/lib/api-data";
+import { getApiData, parsePaginatedListResponse } from "@/lib/api";
 import type {
   ApiResponse,
   LibraryItem,

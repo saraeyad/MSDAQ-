@@ -11,12 +11,12 @@ import {
 import {
   renderJsonLdScript,
 } from "@/lib/seo/render-head";
-import { decodeArticleIdParam } from "@/lib/article-id";
+import { decodeArticleIdParam } from "@/lib/publishing";
 import {
   fetchPublicArticle,
   fetchPublicCategory,
   PublicApiNotFoundError,
-} from "@/lib/server-public-api";
+} from "@/lib/api";
 import type { PublicArticle, PublicCategoryDetail } from "@/types";
 import {
   dehydrate,

@@ -1,14 +1,14 @@
-import { OliveBranch } from "@/components/ghazawiya/olive-branch";
+import { OliveBranch } from "@/components/brand/olive-branch";
 import { Button } from "@/components/ui/button";
 import { StarRatingInput } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { getApiErrorMessage } from "@/lib/api";
 import {
   isPublicFeedbackClosed,
   isPublicFeedbackNotFound,
   isPublicFeedbackRateLimited,
-} from "@/lib/public-feedback-errors";
-import { TRUST_DIMENSIONS } from "@/lib/trust-index-labels";
+} from "@/lib/site";
+import { TRUST_DIMENSIONS } from "@/lib/site";
 import { TrustIndex_APIs } from "@/services/api/trust-index";
 import type { TrustIndexSubmitPayload } from "@/types";
 import { useMutation } from "@tanstack/react-query";

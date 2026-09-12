@@ -3,7 +3,7 @@ import { LibraryFileGlyph } from "@/features/newsroom/library/LibraryFileGlyph";
 import {
   canPreviewLibraryFile,
   libraryMimeTypeLabel,
-} from "@/lib/library-labels";
+} from "@/lib/library";
 import type { LibraryItem } from "@/types";
 import { Calendar, Download, Eye, Loader2, Pencil, Trash2, User } from "lucide-react";
 

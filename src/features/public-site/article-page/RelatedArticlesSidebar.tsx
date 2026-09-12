@@ -1,6 +1,6 @@
-import { PublicArticleCover } from "@/components/cover-image";
-import { publicMediaTypeLabel } from "@/lib/media-labels";
-import { sameArticleId } from "@/lib/article-id";
+import { PublicArticleCover } from "@/components/article/cover-image";
+import { publicMediaTypeLabel } from "@/lib/media";
+import { sameArticleId } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import { Articles_APIs } from "@/services/api/articles";

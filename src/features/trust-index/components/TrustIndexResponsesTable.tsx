@@ -3,8 +3,8 @@ import { TrustResponseDimensionsCell } from "@/features/trust-index/components/T
 import {
   TRUST_DIMENSIONS,
   type TrustDimensionDefinition,
-} from "@/lib/trust-index-labels";
-import { trustBandClass, trustBandLabel } from "@/lib/trust-index-labels";
+} from "@/lib/site";
+import { trustBandClass, trustBandLabel } from "@/lib/site";
 import type { TrustIndexResponseRow } from "@/types";
 
 interface TrustIndexResponsesTableProps {

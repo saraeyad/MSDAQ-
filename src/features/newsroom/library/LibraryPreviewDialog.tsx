@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { libraryFileKind } from "@/lib/library-labels";
+import { libraryFileKind } from "@/lib/library";
 import type { LibraryItem } from "@/types";
 
 interface LibraryPreviewDialogProps {
@@ -40,6 +40,8 @@ export function LibraryPreviewDialog({
                 src={blobUrl}
                 alt={title}
                 className="library-preview-dialog__media"
+                loading="eager"
+                decoding="async"
               />
             ) : null}
             {kind === "video" ? (

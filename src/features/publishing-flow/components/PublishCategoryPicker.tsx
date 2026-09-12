@@ -1,4 +1,4 @@
-import { CategoryFlyoutFilter } from "@/components/category-flyout-filter";
+import { CategoryFlyoutFilter } from "@/components/site/category-flyout-filter";
 import type { Category } from "@/types";
 
 interface PublishCategoryPickerProps {

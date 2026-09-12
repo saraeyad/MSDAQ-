@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { sourceDisplayName } from "@/lib/publish-gate";
+import { sourceDisplayName } from "@/lib/publishing";
 import { Shield } from "lucide-react";
 import type { ArticleSource } from "@/types";
 

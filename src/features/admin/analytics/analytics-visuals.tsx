@@ -1,5 +1,4 @@
 import { formatCount } from "./analytics-mappers";
-import type { AnalyticsPageRow } from "./analytics-mappers";
 import type { HorizontalBarChartItem } from "@/features/admin/dashboard/components/HorizontalBarChartCard";
 import { chartColor } from "@/features/admin/dashboard/components/chart-colors";
 import type { ReactNode } from "react";
@@ -85,119 +84,6 @@ function Card({
   );
 }
 
-function niceCeiling(value: number): number {
-  if (value <= 5) return 5;
-  const magnitude = 10 ** Math.floor(Math.log10(value));
-  const step = magnitude >= 100 ? magnitude / 2 : magnitude;
-  return Math.ceil(value / step) * step;
-}
-
-export function AnalyticsArticleRanks({ rows }: { rows: AnalyticsPageRow[] }) {
-  const chartRows = rows.slice(0, 6);
-  const maxValue = Math.max(...chartRows.map((row) => row.views), 1);
-
-  return (
-    <Card title="أكثر المقالات زيارة" note="مشاهدات كل مقال اليوم">
-      {chartRows.length === 0 ? (
-        <p className="analytics-empty">
-          لا زيارات لصفحات مقالات اليوم. يظهر هنا مسار مثل /articles/…
-        </p>
-      ) : (
-        <ol className="analytics-ranks">
-          {chartRows.map((row, index) => {
-            const pct = Math.max(8, (row.views / maxValue) * 100);
-            return (
-              <li key={`${row.path}-${row.label}`} className="analytics-rank">
-                <span className="analytics-rank__n">{formatCount(index + 1)}</span>
-                <div className="analytics-rank__body">
-                  <span className="analytics-rank__title" title={row.label}>
-                    {row.label}
-                  </span>
-                  <div className="analytics-rank__track" aria-hidden>
-                    <div
-                      className="analytics-rank__fill"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-                <span className="analytics-rank__views">
-                  {formatCount(row.views)}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-    </Card>
-  );
-}
-
-export function AnalyticsSkyline({ rows }: { rows: AnalyticsPageRow[] }) {
-  const chartRows = rows.slice(0, 6);
-  const maxValue = niceCeiling(Math.max(...chartRows.map((row) => row.views), 0));
-  const ticks = [0, 1, 2, 3, 4].map((step) => Math.round((maxValue * step) / 4));
-
-  return (
-    <Card title="الصفحات والشاشات" note="الأكثر قراءة اليوم">
-      {chartRows.length === 0 ? (
-        <p className="analytics-empty">لا بيانات بعد.</p>
-      ) : (
-        <div className="admin-vbar-chart" dir="ltr">
-          <div className="admin-vbar-chart__y-axis" aria-hidden>
-            {[...ticks].reverse().map((tick) => (
-              <span key={tick} className="admin-vbar-chart__tick">
-                {tick}
-              </span>
-            ))}
-          </div>
-          <div className="admin-vbar-chart__plot">
-            <div className="admin-vbar-chart__grid" aria-hidden>
-              {ticks.map((tick) => (
-                <div
-                  key={tick}
-                  className="admin-vbar-chart__gridline"
-                  style={{ bottom: `${(tick / maxValue) * 100}%` }}
-                />
-              ))}
-            </div>
-            <div className="admin-vbar-chart__bars">
-              {chartRows.map((row, index) => {
-                const height = Math.max(
-                  row.views > 0 ? 4 : 0,
-                  (row.views / maxValue) * 100,
-                );
-                const color = chartColor(index);
-                return (
-                  <div key={`${row.path}-${row.label}`} className="admin-vbar-chart__column">
-                    <span className="admin-vbar-chart__value">
-                      {formatCount(row.views)}
-                    </span>
-                    <div className="admin-vbar-chart__track">
-                      <div
-                        className="admin-vbar-chart__fill"
-                        style={{
-                          height: `${height}%`,
-                          background: `linear-gradient(180deg, color-mix(in srgb, ${color} 75%, white), ${color})`,
-                        }}
-                      />
-                    </div>
-                    <span className="admin-vbar-chart__label">
-                      <span className="admin-vbar-chart__clip">{row.label}</span>
-                      <span className="admin-vbar-chart__tip" role="tooltip">
-                        {row.label}
-                      </span>
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-    </Card>
-  );
-}
-
 export function AnalyticsReferrerDonut({
   items,
 }: {
@@ -207,7 +93,7 @@ export function AnalyticsReferrerDonut({
   let offset = 0;
 
   return (
-    <Card title="مصادر الزيارات" note="حسب عدد الجلسات">
+    <Card title="مصادر الزيارات" note="حسب عدد المشاهدات">
       {items.length === 0 ? (
         <p className="analytics-empty">لا بيانات بعد.</p>
       ) : (
@@ -248,7 +134,7 @@ export function AnalyticsReferrerDonut({
             </svg>
             <div className="analytics-donut__total">
               <span className="analytics-donut__n">{formatCount(total)}</span>
-              <span className="analytics-donut__t">جلسة</span>
+              <span className="analytics-donut__t">مشاهدة</span>
             </div>
           </div>
           <div className="analytics-legend">

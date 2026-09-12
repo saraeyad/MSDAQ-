@@ -3,7 +3,7 @@ import { ScoreDonut } from "@/features/tools/components/ScoreDonut";
 import {
   credibilityVerdictClass,
   credibilityVerdictLabel,
-} from "@/lib/credibility-normalize";
+} from "@/lib/publishing";
 import type { CredibilityCheckResult } from "@/types";
 
 interface CredibilityResultPanelProps {

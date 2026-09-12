@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { getApiErrorMessage } from "@/lib/api";
 import { ToolPageShell } from "../pages/ToolPageShell";
 
 interface VoiceAssetListResult<T> {

@@ -6,21 +6,21 @@ import { StepActionsRow } from "@/features/publishing-flow/components/StepAction
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useFileUploadProgress } from "@/hooks/useFileUploadProgress";
+import { useFileUploadProgress } from "@/hooks/publishing";
 import {
   runWithToolProcessing,
   ToolProcessingDialog,
 } from "@/features/tools/components/ToolProcessingDialog";
-import { getApiErrorMessage } from "@/lib/api-data";
+import { getApiErrorMessage } from "@/lib/api";
 import {
   AI_DETECTION_PROCESSING_STEPS,
   REVERSE_IMAGE_PROCESSING_STEPS,
-} from "@/lib/tool-processing-steps";
+} from "@/lib/publishing";
 import {
   absoluteMediaUrlForApi,
   resolveMediaUrl,
   resolvePlayableVideoUrl,
-} from "@/lib/media-url";
+} from "@/lib/media";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { ImageVerification_APIs } from "@/services/api/tools";
 import type {

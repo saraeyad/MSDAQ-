@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { StarRatingInput } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
-import { getApiErrorMessage } from "@/lib/api-data";
-import { isPublicFeedbackRateLimited } from "@/lib/public-feedback-errors";
-import { PLATFORM_TRUST_DIMENSIONS } from "@/lib/trust-index-labels";
+import { getApiErrorMessage } from "@/lib/api";
+import { isPublicFeedbackRateLimited } from "@/lib/site";
+import { PLATFORM_TRUST_DIMENSIONS } from "@/lib/site";
 import { PlatformFeedback_APIs } from "@/services/api/platform-feedback";
 import type { PlatformFeedbackSubmitPayload } from "@/types";
 import { useMutation } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-import type { AuthUser } from "@/context/types";
+import type { AuthUser } from "@/context/auth";
 import type { ApiResponse } from "@/types";
 import API from "./api.repository";
 

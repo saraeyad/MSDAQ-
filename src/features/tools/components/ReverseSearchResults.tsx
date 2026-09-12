@@ -74,6 +74,7 @@ export function ReverseSearchResults({
                       alt=""
                       className="reverse-search-results__thumb-img"
                       loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <span className="reverse-search-results__thumb-fallback" aria-hidden>
@@ -91,6 +92,7 @@ export function ReverseSearchResults({
                           alt=""
                           className="reverse-search-results__domain-logo"
                           loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <span className="reverse-search-results__domain-badge">

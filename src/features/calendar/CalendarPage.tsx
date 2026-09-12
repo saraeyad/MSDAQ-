@@ -5,7 +5,7 @@ import { CalendarItemDetail } from "@/features/calendar/components/CalendarItemD
 import { RecurrenceMoveDialog } from "@/features/calendar/components/RecurrenceMoveDialog";
 import { AdminPageHeader } from "@/features/admin/components/AdminPageHeader";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
-import { usePermission } from "@/hooks/usePermission";
+import { usePermission } from "@/hooks/auth";
 import {
   filterFeedByType,
   isEventMeta,
@@ -13,7 +13,7 @@ import {
   TYPE_FALLBACK_COLORS,
   TYPE_LABELS,
   type CalendarTypeFilter,
-} from "@/lib/calendar-feed";
+} from "@/lib/calendar";
 import {
   initialMonthRange,
   isoToDatetimeLocal,
@@ -21,8 +21,8 @@ import {
   openCreateDatetime,
   startOfLocalDay,
   startOfToday,
-} from "@/lib/calendar-datetime";
-import { getApiErrorMessage } from "@/lib/api-data";
+} from "@/lib/calendar";
+import { getApiErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { PERMISSIONS } from "@/router/routes";
 import { Calendar_APIs } from "@/services/api/calendar";

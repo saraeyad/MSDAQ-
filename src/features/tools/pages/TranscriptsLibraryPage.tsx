@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
-import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
+import { useIsSuperAdmin } from "@/hooks/auth";
 import {
   canDeleteVoiceAsset,
   canSaveVoiceAsset,
-} from "@/lib/voice-asset-access";
+} from "@/lib/media";
 import { Transcripts_APIs } from "@/services/api/transcripts";
 import type { Transcript } from "@/types";
 import { ChevronDown } from "lucide-react";

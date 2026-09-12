@@ -1,7 +1,7 @@
 import {
   feedItemToFcEvent,
   isTaskMeta,
-} from "@/lib/calendar-feed";
+} from "@/lib/calendar";
 import { CalendarViewHeader, type CalendarViewType } from "@/features/calendar/components/CalendarViewHeader";
 import { cn } from "@/lib/utils";
 import type { CalendarFeedItem, CalendarItemType } from "@/types";
@@ -16,7 +16,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { endOfMonth, format, getWeek, isValid, startOfMonth } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
-import { calendarRangeToOffsetIso } from "@/lib/calendar-datetime";
+import { calendarRangeToOffsetIso } from "@/lib/calendar";
 
 function EventBlock({ eventInfo }: { eventInfo: EventContentArg }) {
   const item = eventInfo.event.extendedProps.feedItem as
