@@ -152,6 +152,7 @@ export default function PublishingFlow() {
           <Step3Body
             articleId={articleView.id}
             initialBody={articleView.content?.formal}
+            initialEntities={articleView.entities ?? []}
             images={articleView.images ?? []}
             onComplete={advanceStep}
             onBack={goBackStep}

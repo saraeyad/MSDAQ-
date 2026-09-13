@@ -6,6 +6,7 @@ import {
   type Locale,
 } from "@/lib/i18n/types";
 import { getPublicCopy, type PublicCopy } from "@/lib/i18n/public-dictionary";
+import { loadLatinUiFont } from "@/lib/site/optional-fonts";
 import {
   createContext,
   useCallback,
@@ -56,6 +57,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyDocumentLocale(locale);
+    if (locale === "en") loadLatinUiFont();
   }, [locale]);
 
   const value = useMemo<LocaleContextValue>(() => {

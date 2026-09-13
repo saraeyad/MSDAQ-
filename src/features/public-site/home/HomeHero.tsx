@@ -1,5 +1,7 @@
 import { usePublicCopy } from "@/context/locale";
+import { loadDecorativeArabicFont } from "@/lib/site/optional-fonts";
 import { Circle } from "lucide-react";
+import { useEffect } from "react";
 
 const HERO_IMAGE = "/images/hero-people.webp";
 const HERO_FALLBACK = "/images/hero-verification.webp";
@@ -8,6 +10,10 @@ export function HomeHero() {
   const copy = usePublicCopy();
   const hero = copy.hero;
 
+  useEffect(() => {
+    loadDecorativeArabicFont();
+  }, []);
+
   return (
     <section className="home-cinematic-hero" aria-labelledby="home-hero-title">
       <div className="home-cinematic-hero__bg" aria-hidden>
@@ -15,6 +21,9 @@ export function HomeHero() {
           src={HERO_IMAGE}
           alt=""
           className="home-cinematic-hero__photo"
+          width={1600}
+          height={1067}
+          sizes="100vw"
           loading="eager"
           fetchPriority="high"
           decoding="async"

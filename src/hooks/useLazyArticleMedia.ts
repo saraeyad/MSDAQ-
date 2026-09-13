@@ -22,8 +22,9 @@ function fetchArticleMedia(scope: ArticleMediaScope, articleId: number | string)
 export function useLazyArticleMedia(
   articleId: number | string,
   scope: ArticleMediaScope = "public",
+  options?: { requestOnMount?: boolean },
 ) {
-  const [requested, setRequested] = useState(false);
+  const [requested, setRequested] = useState(Boolean(options?.requestOnMount));
 
   const query = useQuery({
     queryKey: articleMediaQueryKey(scope, articleId),

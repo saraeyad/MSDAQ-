@@ -17,6 +17,8 @@ interface PublicArticleAudioPlayerProps {
   coverUrl?: string;
   showSourceLink?: boolean;
   onPlaybackProgress?: (progress: TrustMediaProgress) => void;
+  /** Fetch and start playback as soon as this player mounts. */
+  startOnMount?: boolean;
 }
 
 export function PublicArticleAudioPlayer({
@@ -27,10 +29,12 @@ export function PublicArticleAudioPlayer({
   coverUrl,
   showSourceLink = false,
   onPlaybackProgress,
+  startOnMount = false,
 }: PublicArticleAudioPlayerProps) {
   const { media, isLoading, request, requested } = useLazyArticleMedia(
     articleId,
     scope,
+    { requestOnMount: startOnMount },
   );
   const source = media ? resolvePublicArticleAudioSource(media) : null;
   const narrationUrl = media ? publicArticleNarrationUrl(media) : null;

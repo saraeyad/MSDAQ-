@@ -3,6 +3,7 @@ import { PublishGatePanel } from "@/features/publishing-flow/components/PublishG
 import { SourceConsentBanner } from "@/features/publishing-flow/components/SourceConsentBanner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { ArticleEntityBody } from "@/features/public-site/article-page/ArticleEntityBody";
 import { PublicArticleAudioPlayer } from "@/features/public-site/components/PublicArticleAudioPlayer";
 import { PublicArticleVideoPlayer } from "@/features/public-site/components/PublicArticleVideoPlayer";
 import { ArticleTrustIndexSection } from "@/features/trust-index/components/ArticleTrustIndexSection";
@@ -23,6 +24,7 @@ import {
   ROUTES,
 } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
+import type { StaffArticleEntity } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -42,9 +44,11 @@ import { toast } from "sonner";
 function ContentPreview({
   label,
   text,
+  entities,
 }: {
   label: string;
   text: string | null | undefined;
+  entities?: StaffArticleEntity[];
 }) {
   const [expanded, setExpanded] = useState(false);
   if (!text?.trim()) return null;
@@ -56,7 +60,7 @@ function ContentPreview({
     <article className="staff-article-content-block">
       <h4 className="staff-article-content-block__label">{label}</h4>
       <p className="staff-article-content-block__text">
-        {preview}
+        <ArticleEntityBody text={preview} entities={entities} />
         {!expanded && truncated ? "…" : ""}
       </p>
       {truncated && (
@@ -400,12 +404,21 @@ export default function StaffArticleDetailPage() {
 
           {hasContent ? (
             <SectionPanel icon={FileText} title="المحتوى">
-              <ContentPreview label="الفصحى" text={article.content.formal} />
+              <ContentPreview
+                label="الفصحى"
+                text={article.content.formal}
+                entities={article.entities}
+              />
               <ContentPreview
                 label="مبسّطة"
                 text={article.content.simplified}
+                entities={article.entities}
               />
-              <ContentPreview label="عامية" text={article.content.dialect} />
+              <ContentPreview
+                label="عامية"
+                text={article.content.dialect}
+                entities={article.entities}
+              />
             </SectionPanel>
           ) : null}
 

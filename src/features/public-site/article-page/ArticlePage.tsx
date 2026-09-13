@@ -1,5 +1,6 @@
 import { PageLoading } from "@/components/loading-spinner";
 import type { LangVariant } from "@/features/public-site/article-page/types";
+import { ArticleEntityBody } from "@/features/public-site/article-page/ArticleEntityBody";
 import {
   hasLanguageVariant,
   resolveArticleBody,
@@ -25,6 +26,7 @@ import type { PublicArticle } from "@/types";
 import { articlePath, ROUTES } from "@/router/routes";
 import {
   articleAcceptsPublicReviews,
+  countWords,
   trackArticleView,
   type TrustMediaProgress,
 } from "@/lib/site";
@@ -35,7 +37,7 @@ import { TrustIndexDialog } from "@/features/public-site/trust-index/TrustIndexD
 import { ArticleTrustFeedbackButton } from "@/features/public-site/trust-index/ArticleTrustFeedbackButton";
 import { useTrustIndexMediaTrigger } from "@/features/public-site/trust-index/useTrustIndexMediaTrigger";
 import { useTrustIndexTrigger } from "@/features/public-site/trust-index/useTrustIndexTrigger";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const RelatedArticlesSidebar = lazy(() =>
@@ -46,24 +48,28 @@ const RelatedArticlesSidebar = lazy(() =>
 
 function useArticleTrustSurvey({
   articleId,
+  body,
   mediaEnabled,
   enabled = true,
 }: {
   articleId: number | string;
+  body: string;
   mediaEnabled: boolean;
   enabled?: boolean;
 }) {
-  const [endEl, setEndEl] = useState<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [mediaProgress, setMediaProgress] = useState<TrustMediaProgress | null>(
     null,
   );
   const [manualOpen, setManualOpen] = useState(false);
   const { setTrustIndexOpen } = usePlatformFeedback();
+  const wordCount = useMemo(() => countWords(body), [body]);
 
   const textTrigger = useTrustIndexTrigger({
     articleId,
-    endEl,
-    enabled,
+    wordCount,
+    bodyRef,
+    enabled: enabled && wordCount > 0,
   });
 
   const mediaTrigger = useTrustIndexMediaTrigger({
@@ -96,7 +102,7 @@ function useArticleTrustSurvey({
   }, [open, setTrustIndexOpen]);
 
   return {
-    endRef: setEndEl,
+    bodyRef,
     open,
     dismiss,
     openManually,
@@ -116,25 +122,38 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
   const body = resolveArticleBody(article, lang);
   const queryClient = useQueryClient();
   const acceptingReviews = articleAcceptsPublicReviews(article);
-  const coverUrl = publicArticleCoverUrl(article);
-  const posterUrl = publicArticlePosterUrl(article);
-  const coverCaption = article.cover_description?.trim() ?? "";
+  const { data: articleMedia } = useQuery({
+    queryKey: ["public", "article-media", String(article.id)],
+    queryFn: () => Articles_APIs.getMedia(article.id),
+    staleTime: Infinity,
+  });
+  const coverArticle = {
+    ...article,
+    cover_image: articleMedia?.cover_image ?? article.cover_image,
+    cover_description:
+      articleMedia?.cover_description ?? article.cover_description,
+    images: articleMedia?.images ?? article.images,
+  };
+  const coverUrl = publicArticleCoverUrl(coverArticle);
+  const posterUrl = publicArticleCoverUrl(coverArticle);
+  const coverCaption = coverArticle.cover_description?.trim() ?? "";
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
   const {
-    endRef,
+    bodyRef,
     open,
     dismiss,
     openManually,
     onMediaProgress,
   } = useArticleTrustSurvey({
     articleId: article.id,
+    body,
     mediaEnabled: isAudio || isVideo,
     enabled: acceptingReviews,
   });
   const sources = article.sources ?? [];
   const galleryImages =
-    article.images
+    articleMedia?.images
       ?.map((image) => resolveMediaUrl(image.full))
       .filter(Boolean) ?? [];
   const showLangToggle =
@@ -169,15 +188,15 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                 articleId={article.id}
                 title={article.title}
                 posterUrl={posterUrl}
-                coverImage={article.cover_image}
-                videoPoster={article.video_poster}
+                coverImage={coverArticle.cover_image}
+                videoPoster={null}
                 className="mb-8"
                 onVideoProgress={onMediaProgress}
               />
             ) : coverUrl ? (
               <figure className="article-cover-block mb-8">
                 <PublicArticleCover
-                  article={article}
+                  article={coverArticle}
                   alt={coverCaption || article.title}
                   priority
                   className="article-cover-block__image aspect-[21/9] w-full object-cover"
@@ -268,8 +287,11 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
             ) : null}
 
             {body ? (
-              <div className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed">
-                {body}
+              <div
+                ref={bodyRef}
+                className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed"
+              >
+                <ArticleEntityBody text={body} entities={article.entities} />
               </div>
             ) : article.media_type !== "audio" &&
               article.media_type !== "video" ? (
@@ -324,12 +346,6 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
               </section>
             )}
 
-            <div
-              ref={endRef}
-              className="h-8 w-full"
-              aria-hidden
-              data-trust-index-end
-            />
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">

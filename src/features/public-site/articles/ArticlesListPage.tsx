@@ -82,7 +82,7 @@ export default function ArticlesListPage() {
                 to={articlePath(article.id)}
                 className="content-card overflow-hidden"
               >
-                {article.cover_image || article.images?.length ? (
+                {article.cover_image ? (
                   <PublicArticleCover
                     article={article}
                     priority={index === 0}

@@ -10,6 +10,16 @@ export default defineConfig({
   },
   build: {
     outDir: "dist/client",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/recharts")) return "vendor-charts";
+          if (id.includes("node_modules/@fullcalendar")) return "vendor-calendar";
+          if (id.includes("node_modules/wavesurfer")) return "vendor-audio";
+          return undefined;
+        },
+      },
+    },
   },
   server: {
     port: 1573,

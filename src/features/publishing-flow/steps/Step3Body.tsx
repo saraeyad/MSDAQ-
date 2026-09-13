@@ -2,6 +2,12 @@ import { SmartEditorToolbar } from "@/features/tools/smart-editor/SmartEditorToo
 import { TranscriptProcessingInline } from "@/features/tools/components/TranscriptProcessingInline";
 import { Button } from "@/components/ui/button";
 import { FileUploadProgressCard } from "@/components/ui/file-upload-progress";
+import {
+  EntityTaggingPanel,
+  tagsFromStaffEntities,
+  tagsToWritePayload,
+  type LocalEntityTag,
+} from "@/features/publishing-flow/components/EntityTaggingPanel";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +17,7 @@ import { getApiErrorMessage } from "@/lib/api";
 import { resolveMediaUrl } from "@/lib/media";
 import { sttInflightArticleKey } from "@/lib/publishing";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
-import type { ArticleImage } from "@/types";
+import type { ArticleImage, StaffArticleEntity } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Mic, PenLine, Upload } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
@@ -27,6 +33,7 @@ interface Step3BodyProps {
   articleId: number | string;
   initialBody?: string | null;
   images?: ArticleImage[];
+  initialEntities?: StaffArticleEntity[];
   onComplete: () => void;
   onBack?: () => void;
 }
@@ -35,11 +42,16 @@ export function Step3Body({
   articleId,
   initialBody = "",
   images = [],
+  initialEntities = [],
   onComplete,
   onBack,
 }: Step3BodyProps) {
   const queryClient = useQueryClient();
   const [body, setBody] = useState(initialBody ?? "");
+  const [selection, setSelection] = useState("");
+  const [entityTags, setEntityTags] = useState<LocalEntityTag[]>(() =>
+    tagsFromStaffEntities(initialEntities),
+  );
   const [bodyImages, setBodyImages] = useState(images);
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -79,6 +91,7 @@ export function Step3Body({
     try {
       await ArticlesStaff_APIs.updateArticle(articleId, {
         content_formal: body,
+        entities: tagsToWritePayload(entityTags, body),
       });
       await queryClient.invalidateQueries({
         queryKey: ["staff-article", String(articleId)],
@@ -259,15 +272,26 @@ export function Step3Body({
         </Card>
       )}
 
-      <div className="space-y-2">
-        <p className="text-sm font-medium">٢ · محتوى المقال (فصحى)</p>
+      <EntityTaggingPanel
+        body={body}
+        selection={selection}
+        tags={entityTags}
+        onChange={setEntityTags}
+        onClearSelection={() => setSelection("")}
+      >
         <Textarea
           rows={16}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="font-body text-base leading-relaxed"
+          onSelect={(e) => {
+            const target = e.currentTarget;
+            setSelection(
+              target.value.slice(target.selectionStart, target.selectionEnd),
+            );
+          }}
+          className="entity-studio__textarea font-body text-base leading-relaxed"
         />
-      </div>
+      </EntityTaggingPanel>
 
       <SmartEditorToolbar
         embedded

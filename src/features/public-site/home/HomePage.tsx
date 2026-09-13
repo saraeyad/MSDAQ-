@@ -7,7 +7,20 @@ import { cn } from "@/lib/utils";
 import { Articles_APIs } from "@/services/api/articles";
 import type { PublicArticle } from "@/types";
 import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
+
+const MOBILE_CARD_LIMIT = 6;
+const DESKTOP_CARD_MQ = "(min-width: 768px)";
+
+function subscribeDesktopCards(onChange: () => void) {
+  const media = window.matchMedia(DESKTOP_CARD_MQ);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+
+function desktopCardsSnapshot() {
+  return window.matchMedia(DESKTOP_CARD_MQ).matches;
+}
 
 const NewsSlider = lazy(() =>
   import("@/features/public-site/components/news-slider").then((module) => ({
@@ -37,6 +50,12 @@ function cardLayout(index: number) {
 
 export default function HomePage() {
   const [activeFilter, setActiveFilter] = useState("all");
+  const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
+  const isDesktop = useSyncExternalStore(
+    subscribeDesktopCards,
+    desktopCardsSnapshot,
+    () => false,
+  );
   const { data: categories = [] } = usePublicCategories();
   const { home } = usePublicCopy();
 
@@ -67,6 +86,14 @@ export default function HomePage() {
     () => articles.filter((a) => matchesFilter(a, activeFilter, parentSlugMap)),
     [articles, activeFilter, parentSlugMap],
   );
+
+  const showAllMobile = expandedFilter === activeFilter;
+  const visibleArticles =
+    isDesktop || showAllMobile
+      ? filteredArticles
+      : filteredArticles.slice(0, MOBILE_CARD_LIMIT);
+  const canShowMore =
+    !isDesktop && !showAllMobile && filteredArticles.length > MOBILE_CARD_LIMIT;
 
   return (
     <div>
@@ -158,21 +185,32 @@ export default function HomePage() {
                   : home.noFilterMatch}
               </p>
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredArticles.map((article, index) => {
-                  const layout = cardLayout(index);
-                  return (
-                    <HomeArticleCard
-                      key={article.id}
-                      article={article}
-                      index={index}
-                      featured={layout.featured}
-                      wide={layout.wide}
-                      className={layout.className}
-                    />
-                  );
-                })}
-              </div>
+              <>
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {visibleArticles.map((article, index) => {
+                    const layout = cardLayout(index);
+                    return (
+                      <HomeArticleCard
+                        key={article.id}
+                        article={article}
+                        index={index}
+                        featured={layout.featured}
+                        wide={layout.wide}
+                        className={layout.className}
+                      />
+                    );
+                  })}
+                </div>
+                {canShowMore ? (
+                  <button
+                    type="button"
+                    className="home-latest-more"
+                    onClick={() => setExpandedFilter(activeFilter)}
+                  >
+                    {home.showMore}
+                  </button>
+                ) : null}
+              </>
             )}
           </div>
         </div>

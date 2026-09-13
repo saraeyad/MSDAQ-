@@ -43,7 +43,8 @@ export function NewsSlider({
   );
 
   useEffect(() => {
-    if (slides.length <= 1 || paused) return;
+    if (slides.length <= 1 || paused || autoPlayMs <= 0) return;
+    if (window.matchMedia("(max-width: 767px)").matches) return;
     const timer = window.setInterval(() => goTo(index + 1), autoPlayMs);
     return () => window.clearInterval(timer);
   }, [autoPlayMs, goTo, index, paused, slides.length]);
@@ -90,7 +91,6 @@ export function NewsSlider({
         <Link to={articlePath(current.id)} className="news-rail__story">
           <PublicArticleCover
             article={current}
-            priority
             className="news-rail__thumb"
           />
           <div className="news-rail__copy">

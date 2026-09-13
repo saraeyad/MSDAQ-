@@ -61,6 +61,34 @@ export function normalizePagination(meta: {
   };
 }
 
+function asPageInt(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+/** Laravel paginator fields, either on the object or in nested `meta`. */
+export function readPublicPagination(source: unknown): PublicPagination | undefined {
+  if (!source || typeof source !== "object") return undefined;
+  const record = source as Record<string, unknown>;
+  const nested =
+    record.meta && typeof record.meta === "object"
+      ? (record.meta as Record<string, unknown>)
+      : null;
+  const current_page =
+    asPageInt(record.current_page) ?? asPageInt(nested?.current_page);
+  const last_page = asPageInt(record.last_page) ?? asPageInt(nested?.last_page);
+  const per_page = asPageInt(record.per_page) ?? asPageInt(nested?.per_page);
+  const total = asPageInt(record.total) ?? asPageInt(nested?.total);
+  if (
+    current_page == null ||
+    last_page == null ||
+    per_page == null ||
+    total == null
+  ) {
+    return undefined;
+  }
+  return { current_page, last_page, per_page, total };
+}
+
 type PublicCategoryDetailPayload = {
   category: PublicCategory;
   articles: PublicArticle[];
@@ -77,11 +105,10 @@ export function parsePublicCategoryDetailResponse(
 
   const data = body.data;
   const articles = data.articles ?? [];
-  const pagination = body.meta
-    ? normalizePagination(body.meta)
-    : data.pagination
-      ? normalizePagination(data.pagination)
-      : undefined;
+  const pagination =
+    readPublicPagination(body.meta) ??
+    readPublicPagination(data.pagination) ??
+    readPublicPagination(data);
 
   return {
     category: data.category,
@@ -99,14 +126,16 @@ export function parsePublicCategoryDetailResponse(
 
 /** Unwrap GET /api/public/articles list payloads (latest array or paginated object). */
 export function unwrapPublicArticlesList(
-  data: PublicArticle[] | PaginatedResponse<PublicArticle>,
+  data: PublicArticle[] | PaginatedResponse<PublicArticle> | Record<string, unknown>,
 ): PublicArticlesListResult {
   if (Array.isArray(data)) {
     return { items: data };
   }
+  const record = data as { data?: PublicArticle[] };
+  const items = Array.isArray(record.data) ? record.data : [];
   return {
-    items: data.data ?? [],
-    pagination: data.meta ? normalizePagination(data.meta) : undefined,
+    items,
+    pagination: readPublicPagination(data),
   };
 }
 
@@ -120,10 +149,14 @@ export function parsePublicArticlesListResponse(
   if (Array.isArray(body.data)) {
     return {
       items: body.data,
-      pagination: body.meta ? normalizePagination(body.meta) : undefined,
+      pagination: readPublicPagination(body.meta) ?? readPublicPagination(body),
     };
   }
-  return unwrapPublicArticlesList(body.data);
+  const nested = unwrapPublicArticlesList(body.data);
+  return {
+    items: nested.items,
+    pagination: nested.pagination ?? readPublicPagination(body.meta),
+  };
 }
 
 /** Parse full envelope for GET /api/articles staff list (meta may sit beside data array). */

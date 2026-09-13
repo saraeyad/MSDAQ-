@@ -29,9 +29,10 @@ export function PilotLaunchWelcome() {
   useEffect(() => {
     if (hasSeenWelcome()) return;
 
+    const delay = window.matchMedia("(max-width: 767px)").matches ? 2200 : 800;
     const timer = window.setTimeout(() => {
       setOpen(true);
-    }, 420);
+    }, delay);
 
     return () => window.clearTimeout(timer);
   }, []);

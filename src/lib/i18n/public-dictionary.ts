@@ -49,6 +49,7 @@ export type PublicCopy = {
     noArticles: string;
     noFilterMatch: string;
     filterEmpty: (label: string) => string;
+    showMore: string;
     toolsKicker: [string, string, string];
     toolsTitleLine: string;
     toolsTitleAccent: string;
@@ -68,13 +69,11 @@ export type PublicCopy = {
     location: string;
     mapHeading: string;
     mapTitle: string;
-    shareFeedback: string;
     copyright: (year: number) => string;
     aboutUs: string;
     partners: string;
     sitePolicy: string;
     terms: string;
-    verificationTools: string;
     home: string;
     vision: string;
     publicationsStudies: string;
@@ -179,6 +178,7 @@ const ar: PublicCopy = {
     noArticles: "لا توجد مقالات منشورة حالياً.",
     noFilterMatch: "لا توجد مقالات مطابقة لهذا الفلتر.",
     filterEmpty: (label) => `لا توجد مقالات في «${label}».`,
+    showMore: "عرض المزيد",
     toolsKicker: ["تحقق", "صور", "صوت"],
     toolsTitleLine: "أدواتنا.",
     toolsTitleAccent: "للتحقق من الأخبار.",
@@ -200,13 +200,11 @@ const ar: PublicCopy = {
     location: "غزة، فلسطين",
     mapHeading: "موقعنا",
     mapTitle: "موقع صبارة بوست على الخريطة",
-    shareFeedback: "شاركنا رأيك",
     copyright: (year) => `© ${year} صبارة بوست — جميع الحقوق محفوظة`,
     aboutUs: "من نحن",
     partners: "شركاؤنا",
     sitePolicy: "سياسة الموقع",
     terms: "الشروط والأحكام",
-    verificationTools: "أدوات التحقق",
     home: "الرئيسية",
     vision: "رؤيا",
     publicationsStudies: "إصدارات ودراسات",
@@ -337,6 +335,7 @@ const en: PublicCopy = {
     noArticles: "No published articles yet.",
     noFilterMatch: "No articles match this filter.",
     filterEmpty: (label) => `No articles in “${label}”.`,
+    showMore: "Show more",
     toolsKicker: ["Verify", "Images", "Audio"],
     toolsTitleLine: "Our tools.",
     toolsTitleAccent: "For checking the news.",
@@ -359,13 +358,11 @@ const en: PublicCopy = {
     location: "Gaza, Palestine",
     mapHeading: "Our location",
     mapTitle: "SABBARA POST on the map",
-    shareFeedback: "Share your feedback",
     copyright: (year) => `© ${year} SABBARA POST — All rights reserved`,
     aboutUs: "About us",
     partners: "Partners",
     sitePolicy: "Site policy",
     terms: "Terms & conditions",
-    verificationTools: "Verification tools",
     home: "Home",
     vision: "Vision",
     publicationsStudies: "Publications & studies",

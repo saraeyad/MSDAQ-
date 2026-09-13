@@ -27,6 +27,8 @@ interface PublicArticleVideoPlayerProps {
   fill?: boolean;
   videoRef?: Ref<HTMLVideoElement>;
   onVideoProgress?: (progress: TrustMediaProgress) => void;
+  /** Fetch and start playback as soon as this player mounts. */
+  startOnMount?: boolean;
 }
 
 export function PublicArticleVideoPlayer({
@@ -40,10 +42,12 @@ export function PublicArticleVideoPlayer({
   fill = false,
   videoRef,
   onVideoProgress,
+  startOnMount = false,
 }: PublicArticleVideoPlayerProps) {
   const { media, isLoading, isError, request, requested } = useLazyArticleMedia(
     articleId,
     scope,
+    { requestOnMount: startOnMount },
   );
   const source = media
     ? resolvePublicArticleVideoSource(media, { coverImage, videoPoster })

@@ -40,6 +40,15 @@ function gtag(...args: unknown[]): void {
   window.gtag?.(...args);
 }
 
+function scheduleIdle(task: () => void): void {
+  if (typeof window === "undefined") return;
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(task, { timeout: 2500 });
+    return;
+  }
+  window.setTimeout(task, 1200);
+}
+
 function ensureGtagConfigured(): void {
   if (typeof window === "undefined" || gtagConfigured) return;
 
@@ -68,12 +77,14 @@ export function trackPageView(path: string, title?: string): void {
   if (lastPagePath === pagePath) return;
   lastPagePath = pagePath;
 
-  ensureGtagConfigured();
-  gtag("event", "page_view", {
-    send_to: MEASUREMENT_ID,
-    page_path: pagePath,
-    page_location: `${window.location.origin}${pagePath}`,
-    page_title: title || document.title,
+  scheduleIdle(() => {
+    ensureGtagConfigured();
+    gtag("event", "page_view", {
+      send_to: MEASUREMENT_ID,
+      page_path: pagePath,
+      page_location: `${window.location.origin}${pagePath}`,
+      page_title: title || document.title,
+    });
   });
 }
 
@@ -88,14 +99,16 @@ export function trackArticleView(input: {
 
   if (lastArticleId !== id) {
     lastArticleId = id;
-    ensureGtagConfigured();
-    gtag("event", "article_view", {
-      send_to: MEASUREMENT_ID,
-      article_id: id,
-      page_path: pagePath,
-      page_location: `${window.location.origin}${pagePath}`,
-      page_title: input.title,
-      content_group: "article",
+    scheduleIdle(() => {
+      ensureGtagConfigured();
+      gtag("event", "article_view", {
+        send_to: MEASUREMENT_ID,
+        article_id: id,
+        page_path: pagePath,
+        page_location: `${window.location.origin}${pagePath}`,
+        page_title: input.title,
+        content_group: "article",
+      });
     });
   }
 

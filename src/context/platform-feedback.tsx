@@ -1,12 +1,19 @@
-import { PlatformFeedbackDialog } from "@/features/public-site/platform-feedback/PlatformFeedbackDialog";
 import {
   createContext,
+  lazy,
+  Suspense,
   useCallback,
   useContext,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+
+const PlatformFeedbackDialog = lazy(() =>
+  import("@/features/public-site/platform-feedback/PlatformFeedbackDialog").then(
+    (module) => ({ default: module.PlatformFeedbackDialog }),
+  ),
+);
 
 interface PlatformFeedbackContextType {
   feedbackOpen: boolean;
@@ -40,7 +47,14 @@ export function PlatformFeedbackProvider({ children }: { children: ReactNode }) 
   return (
     <PlatformFeedbackContext.Provider value={value}>
       {children}
-      <PlatformFeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      {feedbackOpen ? (
+        <Suspense fallback={null}>
+          <PlatformFeedbackDialog
+            open={feedbackOpen}
+            onOpenChange={setFeedbackOpen}
+          />
+        </Suspense>
+      ) : null}
     </PlatformFeedbackContext.Provider>
   );
 }

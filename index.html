@@ -1,31 +1,24 @@
 ﻿<!doctype html>
 <html lang="ar" dir="rtl">
   <head>
-    <!-- Google tag (gtag.js): public production pages only. No auto page_view. -->
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      (function () {
-        var host = location.hostname;
-        if (host === "localhost" || host === "127.0.0.1") return;
-        if (/^\/(newsroom|admin|login)(\/|$)/.test(location.pathname)) return;
-        var s = document.createElement("script");
-        s.async = true;
-        s.src = "https://www.googletagmanager.com/gtag/js?id=G-MNNV05NB2B";
-        document.head.appendChild(s);
-        gtag("js", new Date());
-        gtag("config", "G-MNNV05NB2B", { send_page_view: false });
-      })();
-    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/webp" href="/brand/sabbara-post-icon.webp?v=4" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.sabbarapost.org" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa+Ink:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap"
       rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;700&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;700&display=swap"
+      />
+    </noscript>
     <!--ssr-head-->
   </head>
   <body>

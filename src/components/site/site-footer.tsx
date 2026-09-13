@@ -7,7 +7,7 @@ import {
 import { usePublicCategories } from "@/hooks/public";
 import { ROUTES } from "@/router/routes";
 import { cn } from "@/lib/utils";
-import { Mail, MapPin, Phone, Share2 } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const SOCIAL_LINKS = [
@@ -19,7 +19,6 @@ const SOCIAL_LINKS = [
 const CONTACT = {
   email: "cdmc@cdmcgaza.ps",
   phone: "00970592432020",
-  address: "Gaza — Al-Naser St.",
 } as const;
 
 const MAP_EMBED =
@@ -42,33 +41,28 @@ export function SiteFooter({ className }: { className?: string }) {
   ];
 
   return (
-    <footer className={cn("site-footer mt-16 text-white", className)}>
-      <div className="container-page grid gap-6 py-7 lg:grid-cols-12">
-        <div className="lg:col-span-3">
-          <BrandLogo linkToHome size="lg" onDark />
-          <p className="mt-2 text-xs leading-relaxed text-white/70">
-            {footer.tagline}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
+    <footer id="site-footer" className={cn("site-footer", className)}>
+      <div className="site-footer__inner container-page">
+        <div className="site-footer__brand">
+          <BrandLogo linkToHome size="md" onDark />
+          <p className="site-footer__tagline">{footer.tagline}</p>
+          <div className="site-footer__social">
             {SOCIAL_LINKS.map((social) => (
               <a
                 key={social.label}
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/20 px-2.5 py-1 text-xs text-white/80 transition-colors hover:border-primary hover:bg-primary hover:text-white"
+                className="site-footer__social-link"
               >
-                <Share2 className="size-3" />
                 {social.label}
               </a>
             ))}
           </div>
         </div>
 
-        <div className="lg:col-span-4">
-          <h4 className="font-headline text-base font-semibold">
-            {footer.sections}
-          </h4>
+        <nav className="site-footer__col" aria-label={footer.sections}>
+          <h4 className="site-footer__heading">{footer.sections}</h4>
           {sections.length > 0 ? (
             <div className="site-footer-sections">
               {sections.map((section) => (
@@ -81,10 +75,7 @@ export function SiteFooter({ className }: { className?: string }) {
                       {section.children.map((child, index) => (
                         <span key={child.to}>
                           {index > 0 ? (
-                            <span
-                              className="site-footer-section__dot"
-                              aria-hidden
-                            >
+                            <span className="site-footer-section__dot" aria-hidden>
                               ·
                             </span>
                           ) : null}
@@ -97,62 +88,51 @@ export function SiteFooter({ className }: { className?: string }) {
               ))}
             </div>
           ) : (
-            <ul className="mt-3 space-y-1.5">
+            <ul className="site-footer__list">
               {staticLinks.map((link) => (
                 <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    className="text-sm text-white/70 transition-colors hover:text-primary"
-                  >
-                    {link.label}
-                  </Link>
+                  <Link to={link.to}>{link.label}</Link>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </nav>
 
-        <div className="lg:col-span-2">
-          <h4 className="font-headline text-base font-semibold">
-            {footer.info}
-          </h4>
-          <ul className="mt-3 space-y-1.5">
+        <div className="site-footer__col">
+          <h4 className="site-footer__heading">{footer.info}</h4>
+          <ul className="site-footer__list">
             {policyLinks.map((link) => (
               <li key={link.to}>
-                <Link
-                  to={link.to}
-                  className="text-sm text-white/70 transition-colors hover:text-primary"
-                >
-                  {link.label}
-                </Link>
+                <Link to={link.to}>{link.label}</Link>
               </li>
             ))}
           </ul>
-          <div className="mt-3 space-y-1.5 text-xs text-white/70">
-            <p className="flex items-center gap-2">
-              <MapPin className="size-4 shrink-0 text-primary" />
-              {footer.location}
-            </p>
-            <p className="flex items-center gap-2">
-              <Mail className="size-4 shrink-0 text-primary" />
-              {CONTACT.email}
-            </p>
-            <p className="flex items-center gap-2">
-              <Phone className="size-4 shrink-0 text-primary" />
-              {CONTACT.phone}
-            </p>
-          </div>
+          <ul className="site-footer__contact">
+            <li>
+              <MapPin className="size-4" aria-hidden />
+              <span>{footer.location}</span>
+            </li>
+            <li>
+              <Mail className="size-4" aria-hidden />
+              <a href={`mailto:${CONTACT.email}`} dir="ltr">
+                {CONTACT.email}
+              </a>
+            </li>
+            <li>
+              <Phone className="size-4" aria-hidden />
+              <a href={`tel:${CONTACT.phone}`} dir="ltr">
+                {CONTACT.phone}
+              </a>
+            </li>
+          </ul>
         </div>
 
-        <div className="lg:col-span-3">
-          <h4 className="font-headline text-base font-semibold">
-            {footer.mapHeading}
-          </h4>
-          <div className="mt-3 overflow-hidden rounded-xl border border-white/10">
+        <div className="site-footer__map">
+          <h4 className="site-footer__heading">{footer.mapHeading}</h4>
+          <div className="site-footer__map-frame">
             <iframe
               title={footer.mapTitle}
               src={MAP_EMBED}
-              className="h-36 w-full grayscale-[30%] contrast-[1.1] md:h-40"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               allowFullScreen
@@ -161,10 +141,9 @@ export function SiteFooter({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="border-t border-white/10">
-        <div className="container-page flex flex-col items-center justify-between gap-1 py-2.5 text-center text-xs text-white/50 sm:flex-row sm:text-start">
-          <p>© {new Date().getFullYear()} صبّارة بوست — جميع الحقوق محفوظة</p>
-          <p>صبّارة بوست</p>
+      <div className="site-footer__legal">
+        <div className="container-page site-footer__legal-inner">
+          <p>{footer.copyright(new Date().getFullYear())}</p>
         </div>
       </div>
     </footer>

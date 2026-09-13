@@ -1,14 +1,23 @@
-import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { PublicArticleCover } from "@/components/article/cover-image";
 import { ArticleVerifiedBadge } from "@/components/article/article-verified-badge";
-import { PublicArticleAudioPlayer } from "@/features/public-site/components/PublicArticleAudioPlayer";
-import { PublicArticleVideoPlayer } from "@/features/public-site/components/PublicArticleVideoPlayer";
-import { mediaTypeLabel, publicArticlePosterUrl } from "@/lib/media";
+import { mediaTypeLabel, publicArticleCoverUrl } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import type { PublicArticle, PublicMediaType } from "@/types";
-import { ArrowLeft, FileText, Mic, Video } from "lucide-react";
+import { ArrowLeft, FileText, Mic, Play, Video } from "lucide-react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
+
+const PublicArticleAudioPlayer = lazy(() =>
+  import("@/features/public-site/components/PublicArticleAudioPlayer").then(
+    (module) => ({ default: module.PublicArticleAudioPlayer }),
+  ),
+);
+const PublicArticleVideoPlayer = lazy(() =>
+  import("@/features/public-site/components/PublicArticleVideoPlayer").then(
+    (module) => ({ default: module.PublicArticleVideoPlayer }),
+  ),
+);
 
 const MEDIA_ICONS: Record<PublicMediaType, typeof FileText> = {
   text: FileText,
@@ -31,15 +40,13 @@ export function HomeArticleCard({
   index = 0,
   className,
 }: HomeArticleCardProps) {
+  const [mediaStarted, setMediaStarted] = useState(false);
   const Icon = MEDIA_ICONS[article.media_type] ?? FileText;
   const badge = article.category?.name_ar ?? mediaTypeLabel(article.media_type);
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
-  const hasCover = Boolean(
-    article.video_poster || article.cover_image || article.images?.length,
-  );
   const articleHref = articlePath(article.id);
-  const posterUrl = publicArticlePosterUrl(article);
+  const posterUrl = publicArticleCoverUrl(article);
 
   return (
     <article
@@ -57,32 +64,50 @@ export function HomeArticleCard({
           wide ? "h-44 lg:h-auto lg:w-2/5" : featured ? "h-48" : "h-36",
         )}
       >
-        {isVideo ? (
-          <PublicArticleVideoPlayer
-            articleId={article.id}
-            title={article.title}
-            posterUrl={posterUrl}
-            coverImage={article.cover_image}
-            videoPoster={article.video_poster}
-            fill
-            className="size-full"
-          />
-        ) : (
-          <Link to={articleHref} className="absolute inset-0 block">
-            {isAudio && !hasCover ? (
-              <PodcastAudioPlayer
-                seed={article.id}
-                variant="cover"
-                interactive={false}
-                className="size-full"
-              />
-            ) : (
+        {isVideo && mediaStarted ? (
+          <Suspense
+            fallback={
               <PublicArticleCover
                 article={article}
                 priority={featured || index === 0}
-                className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className="size-full object-cover"
               />
-            )}
+            }
+          >
+            <PublicArticleVideoPlayer
+              articleId={article.id}
+              title={article.title}
+              posterUrl={posterUrl}
+              coverImage={article.cover_image}
+              fill
+              startOnMount
+              className="size-full"
+            />
+          </Suspense>
+        ) : isVideo ? (
+          <button
+            type="button"
+            className="article-media-poster absolute inset-0 h-full aspect-auto rounded-none"
+            onClick={() => setMediaStarted(true)}
+            aria-label={`تشغيل فيديو: ${article.title}`}
+          >
+            <PublicArticleCover
+              article={article}
+              priority={featured || index === 0}
+              className="article-media-poster__image size-full object-cover"
+            />
+            <span className="article-media-poster__scrim" aria-hidden />
+            <span className="article-media-poster__play" aria-hidden>
+              <Play className="size-7 fill-current" />
+            </span>
+          </button>
+        ) : (
+          <Link to={articleHref} className="absolute inset-0 block">
+            <PublicArticleCover
+              article={article}
+              priority={featured || index === 0}
+              className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
           </Link>
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
@@ -128,11 +153,32 @@ export function HomeArticleCard({
 
         {isAudio ? (
           <div className="relative z-10 mt-auto pt-3">
-            <PublicArticleAudioPlayer
-              articleId={article.id}
-              variant="inline"
-              className="w-full"
-            />
+            {mediaStarted ? (
+              <Suspense
+                fallback={
+                  <div className="home-card-listen" aria-hidden>
+                    <Play className="size-4 fill-current" />
+                    <span>جاري التحميل…</span>
+                  </div>
+                }
+              >
+                <PublicArticleAudioPlayer
+                  articleId={article.id}
+                  variant="inline"
+                  startOnMount
+                  className="w-full"
+                />
+              </Suspense>
+            ) : (
+              <button
+                type="button"
+                className="home-card-listen"
+                onClick={() => setMediaStarted(true)}
+              >
+                <Play className="size-4 fill-current" />
+                استمع الآن
+              </button>
+            )}
           </div>
         ) : null}
 

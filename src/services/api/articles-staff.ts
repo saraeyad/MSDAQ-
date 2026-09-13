@@ -21,7 +21,11 @@ import type {
   TtsResult,
   VideoUploadResult,
 } from "@/types";
-import type { CreateSourcePayload, UpdateSourcePayload } from "@/types";
+import type {
+  CreateSourcePayload,
+  EntityWritePayload,
+  UpdateSourcePayload,
+} from "@/types";
 import { articleIdParam } from "@/lib/publishing";
 import type { AxiosRequestConfig } from "axios";
 import API from "./api.repository";
@@ -39,6 +43,7 @@ export interface CreateArticlePayload {
   category_id: number;
   media_url?: string | null;
   sources: CreateSourcePayload[];
+  entities?: EntityWritePayload[];
   review_target?: number;
   review_limit?: number;
 }
@@ -53,6 +58,8 @@ export interface UpdateArticlePayload {
   content_simplified?: string;
   content_dialect?: string;
   sources?: UpdateSourcePayload[];
+  /** Omit to leave tags untouched. Include (even `[]`) for a full replace. */
+  entities?: EntityWritePayload[];
   review_target?: number | null;
   review_limit?: number | null;
 }

@@ -83,8 +83,23 @@ export function trustIndexHasData(summary: TrustIndexSummary | undefined): boole
   return (summary?.count ?? 0) > 0;
 }
 
-export const TRUST_MEDIA_DURATION_RATIO = 0.5;
-/** Used when duration is unknown (YouTube/SoundCloud not ready yet). */
+export function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/** Spec §1.4 — 75% of estimated reading time at 180 wpm, minimum 45s. */
+export function trustReadingThresholdSeconds(wordCount: number): number {
+  const readingSeconds = (wordCount / 180) * 60 * 0.75;
+  return Math.max(45, Math.round(readingSeconds));
+}
+
+/** Tab is visible and focused — Trust Index §1.4 (Page Visibility API). */
+export function isTrustIndexTabActive(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.visibilityState === "visible" && document.hasFocus();
+}
+
+export const TRUST_MEDIA_DURATION_RATIO = 0.75;
 export const TRUST_MEDIA_MIN_PLAY_SECONDS = 45;
 
 export interface TrustMediaProgress {
@@ -101,19 +116,11 @@ export function trustMediaThresholdReached(progress: {
   ended?: boolean;
 }): boolean {
   if (progress.ended) return true;
+  if (progress.playedSeconds >= TRUST_MEDIA_MIN_PLAY_SECONDS) return true;
   if (
     progress.duration > 0 &&
     progress.currentTime / progress.duration >= TRUST_MEDIA_DURATION_RATIO
   ) {
-    return true;
-  }
-  if (
-    progress.duration > 0 &&
-    progress.playedSeconds / progress.duration >= TRUST_MEDIA_DURATION_RATIO
-  ) {
-    return true;
-  }
-  if (progress.duration <= 0 && progress.playedSeconds >= TRUST_MEDIA_MIN_PLAY_SECONDS) {
     return true;
   }
   return false;

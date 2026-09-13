@@ -64,34 +64,19 @@ function buildStaticNavTail(nav: PublicCopy["nav"]): PublicNavItem[] {
   ];
 }
 
-function buildStaticFooterLinks(nav: PublicCopy["footer"]) {
+export function buildStaticFooterLinksFromCopy(
+  footer: Pick<
+    PublicCopy["footer"],
+    "home" | "vision" | "publicationsStudies" | "dataInfo"
+  >,
+) {
   return [
-    { to: ROUTES.HOME, label: nav.home },
-    { to: ROUTES.RUYA, label: nav.vision },
-    { to: ROUTES.PUBLICATIONS, label: nav.publicationsStudies },
-    { to: ROUTES.DATA_INFO, label: nav.dataInfo },
+    { to: ROUTES.HOME, label: footer.home },
+    { to: ROUTES.RUYA, label: footer.vision },
+    { to: ROUTES.PUBLICATIONS, label: footer.publicationsStudies },
+    { to: ROUTES.DATA_INFO, label: footer.dataInfo },
   ];
 }
-
-const STATIC_FOOTER_LINKS = buildStaticFooterLinks({
-  home: "الرئيسية",
-  vision: "رؤيا",
-  publicationsStudies: "إصدارات ودراسات",
-  dataInfo: "معلومات وبيانات",
-  tagline: "",
-  sections: "",
-  info: "",
-  location: "",
-  mapHeading: "",
-  mapTitle: "",
-  shareFeedback: "",
-  copyright: () => "",
-  aboutUs: "",
-  partners: "",
-  sitePolicy: "",
-  terms: "",
-  verificationTools: "",
-});
 
 function buildCategoriesDropdown(
   categories: PublicCategory[],
@@ -160,10 +145,6 @@ export function buildPublicNavItems(
   ];
 }
 
-export function buildStaticFooterLinksFromCopy(footer: PublicCopy["footer"]) {
-  return buildStaticFooterLinks(footer);
-}
-
 export function isPublicNavLinkActive(
   item: PublicNavLinkItem,
   pathname: string,
@@ -213,5 +194,3 @@ export function buildPublicFooterSections(
     })),
   }));
 }
-
-export { STATIC_FOOTER_LINKS };

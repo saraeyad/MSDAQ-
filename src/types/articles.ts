@@ -32,6 +32,40 @@ export interface ArticleImage {
   full: string;
 }
 
+export type EntityLinkType = "internal" | "external";
+
+/** Public article tag — no entity id (plain numeric, never exposed). */
+export interface PublicArticleEntity {
+  match_text: string;
+  link_type: EntityLinkType;
+  url: string;
+}
+
+/** Staff article tag — includes entity id so the editor can re-select it. */
+export interface StaffArticleEntity {
+  id: number;
+  name: string;
+  link_type: EntityLinkType;
+  url: string;
+  match_text: string;
+}
+
+export interface EntitySearchResult {
+  id: number;
+  name: string;
+  link_type: EntityLinkType;
+  url: string;
+}
+
+export type EntityWritePayload =
+  | { id: number; match_text: string }
+  | {
+      match_text: string;
+      name: string;
+      link_type: EntityLinkType;
+      url: string;
+    };
+
 export interface ArticleSource {
   id: number;
   article_id: number | string;
@@ -80,6 +114,7 @@ export interface StaffArticle {
   author: { id: number; name: string };
   category: PublicArticleCategory;
   sources: ArticleSource[];
+  entities?: StaffArticleEntity[];
   cover_image: string | null;
   cover_description?: string | null;
   images: ArticleImage[];
@@ -108,7 +143,7 @@ export interface SeoBreadcrumb {
 }
 
 export interface ArticleSeo {
-  article_section: string;
+  article_section: string | null;
   breadcrumbs: SeoBreadcrumb[];
 }
 
@@ -138,7 +173,8 @@ export interface PublicCategory {
   /** Collection docs name for nav count badges. */
   published_articles_count?: number;
   seo?: CategorySeo;
-  children: PublicCategory[];
+  /** Present on the category tree. Omitted on GET /categories/{slug}. */
+  children?: PublicCategory[];
 }
 
 export interface PublicCategoryDetail {
@@ -198,12 +234,16 @@ export interface StaffArticlesListResult {
   pagination?: PublicPagination;
 }
 
-/** Playable sources from GET /articles/{id}/media or /public/articles/{id}/media. */
+/** Playable sources + gallery from GET /articles/{id}/media or /public/articles/{id}/media. */
 export interface ArticleMedia {
   media_url: string | null;
   source_audio: string | null;
   generated_audio: string | null;
   video: string | null;
+  cover_image?: string | null;
+  cover_thumb?: string | null;
+  cover_description?: string | null;
+  images?: ArticleImage[];
 }
 
 /** @deprecated Use ArticleMedia — same payload on public and staff. */
@@ -215,24 +255,25 @@ export interface PublicArticle {
   title: string;
   description: string | null;
   media_type: PublicMediaType;
-  content: ArticleContent;
+  /** Only on GET /public/articles/{id}. List/category cards omit the body. */
+  content?: ArticleContent;
   author?: { id: number; name: string };
+  entities?: PublicArticleEntity[];
   category?: PublicArticleCategory;
-  /** Thumb on index, full on show. */
+  /** Cover thumb on list/show. Full-size cover + caption live on GET .../media. */
   cover_image: string | null;
-  cover_description?: string | null;
-  images: ArticleImage[];
-  sources?: ArticleSource[];
-  /** Static preview image for audio/video — not the playable file. */
-  video_poster?: string | null;
   published_at: string;
   seo?: ArticleSeo;
+  has_reached_review_limit?: boolean;
+  /** @deprecated Prefer `has_reached_review_limit`. */
+  hasReachedLimit?: boolean;
+  /** Not on public list/show — use GET .../media. */
+  cover_description?: string | null;
+  images?: ArticleImage[];
+  video_poster?: string | null;
+  sources?: ArticleSource[];
   gate?: ArticleGate;
   verification?: ArticleVerification;
-  /** True when public review submissions have hit `review_limit`. */
-  hasReachedLimit?: boolean;
-  /** Legacy snake_case alias some responses still send. */
-  has_reached_review_limit?: boolean;
 }
 
 export interface PublishGateCheck {
