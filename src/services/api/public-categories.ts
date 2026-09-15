@@ -33,9 +33,10 @@ function normalizePublicCategoryTree(
 }
 
 export const PublicCategories_APIs = {
-  list: async (): Promise<PublicCategory[]> => {
+  list: async (lang: Locale = "ar"): Promise<PublicCategory[]> => {
     const response = await API.get<ApiResponse<PublicCategory[]>>(
       "/api/public/categories",
+      { params: { lang } },
     );
     const body = response.data;
     if (!isApiSuccessful(body)) {

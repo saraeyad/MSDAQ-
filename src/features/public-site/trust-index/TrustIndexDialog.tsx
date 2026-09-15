@@ -108,7 +108,7 @@ export function TrustIndexDialog({
       aria-modal="false"
       aria-labelledby={titleId}
     >
-      <header className="trust-index-dock__banner">
+      <header className="trust-index-dock__banner ghazawiya-pattern">
         <div className="trust-index-dock__seal" aria-hidden>
           <OliveBranch className="trust-index-dock__branch" />
           <span className="trust-index-dock__stamp">{trustIndex.stamp}</span>

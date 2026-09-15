@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { StarRatingInput } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
-import { usePublicCopy } from "@/context/locale";
+import { useLocale, usePublicCopy } from "@/context/locale";
 import { getApiErrorMessage } from "@/lib/api";
 import { isPublicFeedbackRateLimited } from "@/lib/site";
 import { PlatformFeedback_APIs } from "@/services/api/platform-feedback";
@@ -41,6 +41,7 @@ export function PlatformFeedbackDialog({
   open,
   onOpenChange,
 }: PlatformFeedbackDialogProps) {
+  const { dir } = useLocale();
   const { common, feedback, trustIndex } = usePublicCopy();
   const dimensions = trustIndex.platformDimensions;
   const [scores, setScores] = useState(INITIAL_SCORES);
@@ -79,16 +80,13 @@ export function PlatformFeedbackDialog({
   ).length;
   const allScoresSet = filledCount === dimensions.length;
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      onOpenChange(false);
-    }
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="trust-index-dialog gap-0 p-0 sm:max-w-md">
-        <DialogHeader className="trust-index-dialog__banner !grid !grid-cols-[1fr_auto] !items-center !gap-2.5 !text-start">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        dir={dir}
+        className="trust-index-dialog gap-0 p-0 sm:max-w-md"
+      >
+        <DialogHeader className="trust-index-dialog__banner ghazawiya-pattern !grid !text-start">
           <div className="trust-index-dialog__intro">
             <p className="trust-index-dialog__kicker">
               {feedback.platformKicker}

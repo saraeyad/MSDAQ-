@@ -253,8 +253,12 @@ export function SpeechToTextToolPage() {
           )}
 
           <Button onClick={transcribe} disabled={isProcessing || !file}>
-            {isUploadBusy && <Loader2 className="size-4 animate-spin" />}
-            تفريغ (إنشاء مسودة)
+            {isProcessing && <Loader2 className="size-4 animate-spin" />}
+            {isPollActive
+              ? "جاري التفريغ…"
+              : isUploadBusy
+                ? "جاري الرفع…"
+                : "تفريغ (إنشاء مسودة)"}
           </Button>
         </CardContent>
       </Card>

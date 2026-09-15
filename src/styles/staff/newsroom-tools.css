@@ -1116,4 +1116,178 @@
     background: #ecfdf5;
   }
 
+  /* ── Voice tools processing ── */
+  .voice-processing {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    overflow: hidden;
+    border-radius: 1.05rem;
+    border: 1px solid rgba(249, 140, 52, 0.22);
+    background: linear-gradient(135deg, #fffaf5 0%, #ffffff 68%);
+    padding: 1rem 1.05rem 1.05rem;
+    box-shadow: 0 1px 2px rgba(26, 26, 26, 0.04);
+  }
+
+  .voice-processing--timeout {
+    border-color: rgba(217, 119, 6, 0.28);
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 72%);
+  }
+
+  .voice-processing--failed {
+    border-color: rgba(220, 38, 38, 0.22);
+    background: linear-gradient(135deg, #fef2f2 0%, #ffffff 72%);
+  }
+
+  .voice-processing__row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .voice-processing__eq,
+  .voice-processing__icon {
+    display: inline-flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1.5px solid color-mix(in srgb, var(--primary) 40%, white);
+    background: color-mix(in srgb, var(--primary) 10%, white);
+    color: var(--primary);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 8%, transparent);
+  }
+
+  .voice-processing__eq {
+    gap: 0.16rem;
+    align-items: flex-end;
+    padding-block: 0.7rem;
+  }
+
+  .voice-processing__eq-bar {
+    width: 0.2rem;
+    height: 0.95rem;
+    border-radius: 9999px;
+    background: var(--primary);
+    transform-origin: center bottom;
+    animation: voice-eq 0.9s ease-in-out infinite;
+  }
+
+  .voice-processing__icon[data-variant="timed_out"] {
+    border-color: color-mix(in srgb, #d97706 38%, white);
+    background: color-mix(in srgb, #d97706 10%, white);
+    color: #b45309;
+    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.08);
+  }
+
+  .voice-processing__icon[data-variant="failed"] {
+    border-color: color-mix(in srgb, #dc2626 38%, white);
+    background: color-mix(in srgb, #dc2626 10%, white);
+    color: #dc2626;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.08);
+  }
+
+  .voice-processing__copy {
+    min-width: 0;
+  }
+
+  .voice-processing__title {
+    margin: 0;
+    font-family: var(--font-headline);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .voice-processing__hint {
+    margin: 0.2rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    color: #6b7280;
+  }
+
+  .voice-processing--failed .voice-processing__hint {
+    color: #b91c1c;
+  }
+
+  .voice-processing__bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .voice-processing__track {
+    position: relative;
+    height: 0.4rem;
+    flex: 1;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--primary) 12%, #f3f4f6);
+  }
+
+  .voice-processing__fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      var(--primary),
+      color-mix(in srgb, var(--primary) 75%, white)
+    );
+    transition: width 0.35s ease;
+  }
+
+  .voice-processing__fill--indeterminate {
+    width: 32%;
+    animation: tool-processing-slide 1.6s ease-in-out infinite;
+  }
+
+  .voice-processing__metric {
+    min-width: 3.25rem;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: start;
+  }
+
+  .voice-processing__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem 0.75rem;
+    font-size: 0.6875rem;
+    color: #9ca3af;
+  }
+
+  .voice-processing__action {
+    align-self: flex-start;
+  }
+
+  @keyframes voice-eq {
+    0%,
+    100% {
+      transform: scaleY(0.32);
+      opacity: 0.45;
+    }
+    50% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .voice-processing__eq-bar,
+    .voice-processing__fill--indeterminate {
+      animation: none;
+    }
+
+    .voice-processing__eq-bar {
+      transform: scaleY(0.7);
+      opacity: 0.8;
+    }
+  }
+
 }

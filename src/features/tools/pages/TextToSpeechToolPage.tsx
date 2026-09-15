@@ -239,9 +239,10 @@ export function TextToSpeechToolPage() {
             disabled={isBusy}
           />
 
-          {showInlineStatus && (
+          {(starting || showInlineStatus) && (
             <TtsProcessingInline
               state={ttsPoll.uiState}
+              pending={starting}
               onRecheck={() => void ttsPoll.manualRecheck()}
               rechecking={ttsPoll.rechecking}
             />
@@ -255,7 +256,7 @@ export function TextToSpeechToolPage() {
               {(starting || ttsPoll.isProcessing) && (
                 <Loader2 className="size-4 animate-spin" />
               )}
-              إنشاء (مسودة)
+              {isBusy ? "جاري التوليد…" : "إنشاء (مسودة)"}
             </Button>
             {ttsPoll.uiState.kind === "failed" && (
               <Button

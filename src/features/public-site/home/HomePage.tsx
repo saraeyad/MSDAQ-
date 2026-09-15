@@ -6,6 +6,7 @@ import { usePublicCategories } from "@/hooks/public";
 import { buildParentSlugMap } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import { Articles_APIs } from "@/services/api/articles";
+import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type { PublicArticle } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
@@ -35,10 +36,14 @@ function matchesFilter(
   slugSets: Map<string, Set<string>>,
 ): boolean {
   if (filterId === "all") return true;
-  const articleSlug = article.category?.slug;
-  if (!articleSlug) return false;
-  const allowedSlugs = slugSets.get(filterId);
-  return allowedSlugs?.has(articleSlug) ?? articleSlug === filterId;
+  const articleSlug = article.category?.slug?.trim();
+  if (articleSlug) {
+    const allowedSlugs = slugSets.get(filterId);
+    if (allowedSlugs?.has(articleSlug) || articleSlug === filterId) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function cardLayout(index: number) {
@@ -77,17 +82,29 @@ export default function HomePage() {
     [categories],
   );
 
-  const { data, isLoading } = useQuery({
+  const { data: latestData, isLoading: latestLoading } = useQuery({
     queryKey: ["home-articles", locale],
     queryFn: () => Articles_APIs.list({ latest: true, lang: locale }),
   });
 
-  const articles = data?.items ?? [];
+  const { data: categoryFeed, isLoading: categoryLoading } = useQuery({
+    queryKey: ["public-category", locale, activeFilter, 1],
+    queryFn: () => PublicCategories_APIs.getBySlug(activeFilter, 1, locale),
+    enabled: activeFilter !== "all",
+  });
 
-  const filteredArticles = useMemo(
-    () => articles.filter((a) => matchesFilter(a, activeFilter, parentSlugMap)),
-    [articles, activeFilter, parentSlugMap],
-  );
+  const articles = latestData?.items ?? [];
+  const categoryArticles = categoryFeed?.articles ?? [];
+  const isGridLoading =
+    activeFilter === "all" ? latestLoading : categoryLoading;
+
+  const filteredArticles = useMemo(() => {
+    if (activeFilter === "all") return articles;
+    if (categoryArticles.length > 0) return categoryArticles;
+    return articles.filter((article) =>
+      matchesFilter(article, activeFilter, parentSlugMap),
+    );
+  }, [activeFilter, articles, categoryArticles, parentSlugMap]);
 
   const showAllMobile = expandedFilter === activeFilter;
   const visibleArticles =
@@ -103,7 +120,7 @@ export default function HomePage() {
 
       <section className="home-news-rail" aria-label={home.nowLabel}>
         <div className="container-page">
-          {isLoading ? (
+          {latestLoading ? (
             <div className="news-rail news-rail--skeleton" aria-hidden />
           ) : articles.length === 0 ? (
             <div className="news-rail news-rail--empty">{home.noArticles}</div>
@@ -150,7 +167,10 @@ export default function HomePage() {
                   <button
                     key={filter.id}
                     type="button"
-                    onClick={() => setActiveFilter(filter.id)}
+                    onClick={() => {
+                      setActiveFilter(filter.id);
+                      setExpandedFilter(null);
+                    }}
                     className={cn(
                       "home-latest-filters__item",
                       active && "home-latest-filters__item--active",
@@ -164,7 +184,7 @@ export default function HomePage() {
           )}
 
           <div className="mt-10">
-            {isLoading ? (
+            {isGridLoading ? (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div

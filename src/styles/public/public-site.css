@@ -838,33 +838,7 @@
     align-items: center;
     gap: 0.65rem;
     padding: 0.75rem 0.7rem 0.7rem 0.85rem;
-    background-color: #ece6dc;
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M0 24 Q12 18 24 24 T48 24' fill='none' stroke='%232d4a2d' stroke-width='0.6' opacity='0.12'/%3E%3C/svg%3E"),
-      repeating-linear-gradient(
-        45deg,
-        rgba(45, 74, 45, 0.07) 0,
-        rgba(45, 74, 45, 0.07) 1px,
-        transparent 1px,
-        transparent 7px
-      );
     text-align: start;
-  }
-
-  .trust-index-dock__banner::after {
-    content: "";
-    position: absolute;
-    inset-inline: 0.75rem;
-    bottom: 0;
-    height: 2px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      #c41e3a 20%,
-      #c41e3a 80%,
-      transparent
-    );
-    opacity: 0.7;
   }
 
   .trust-index-dock__seal {
@@ -896,7 +870,8 @@
     transform: rotate(-8deg);
   }
 
-  .trust-index-dock__intro {
+  .trust-index-dock__intro,
+  .trust-index-dialog__intro {
     min-width: 0;
   }
 
@@ -956,31 +931,12 @@
     align-items: center;
     gap: 0.65rem;
     overflow: hidden;
-    padding: 0.7rem 2.4rem 0.7rem 0.85rem;
-    background-color: #ece6dc;
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M0 24 Q12 18 24 24 T48 24' fill='none' stroke='%232d4a2d' stroke-width='0.6' opacity='0.12'/%3E%3Cpath d='M0 32 Q12 26 24 32 T48 32' fill='none' stroke='%232d4a2d' stroke-width='0.6' opacity='0.1'/%3E%3C/svg%3E"),
-      repeating-linear-gradient(
-        45deg,
-        rgba(45, 74, 45, 0.07) 0,
-        rgba(45, 74, 45, 0.07) 1px,
-        transparent 1px,
-        transparent 7px
-      ),
-      repeating-linear-gradient(
-        -45deg,
-        rgba(45, 74, 45, 0.07) 0,
-        rgba(45, 74, 45, 0.07) 1px,
-        transparent 1px,
-        transparent 7px
-      );
-    background-size:
-      48px 48px,
-      auto,
-      auto;
+    padding-block: 0.7rem;
+    padding-inline: 0.85rem 2.4rem;
     text-align: start;
   }
 
+  .trust-index-dock__banner::after,
   .trust-index-dialog__banner::after {
     content: "";
     position: absolute;
@@ -995,10 +951,6 @@
       transparent
     );
     opacity: 0.7;
-  }
-
-  .trust-index-dialog__intro {
-    min-width: 0;
   }
 
   .trust-index-dialog__kicker {
@@ -1049,7 +1001,8 @@
 
   .trust-index-dialog__card {
     position: relative;
-    padding: 0.55rem 0.7rem 0.55rem 1.85rem;
+    padding-block: 0.55rem;
+    padding-inline: 1.85rem 0.7rem;
     border: 1px solid rgba(45, 74, 45, 0.12);
     border-radius: 0.7rem;
     background: rgba(255, 252, 246, 0.86);
@@ -1058,7 +1011,7 @@
   .trust-index-dialog__index {
     position: absolute;
     top: 0.55rem;
-    left: 0.5rem;
+    inset-inline-start: 0.5rem;
     font-family: var(--font-headline);
     font-size: 0.62rem;
     font-weight: 800;
@@ -1093,6 +1046,7 @@
   }
 
   .trust-index-dialog .star-rating__row {
+    display: flex;
     gap: 0.25rem;
   }
 
@@ -1169,7 +1123,6 @@
   @media (min-width: 640px) {
     .trust-index-dialog__footer {
       flex-direction: row !important;
-      align-items: center !important;
     }
   }
 
@@ -1186,13 +1139,13 @@
   }
 
   .article-entity-link {
-    color: #c41e3a;
+    color: #2563eb;
     font-weight: 700;
     text-decoration: none;
     background-image: linear-gradient(
       120deg,
-      rgba(196, 30, 58, 0.16) 0%,
-      rgba(196, 30, 58, 0.08) 100%
+      rgba(37, 99, 235, 0.18) 0%,
+      rgba(37, 99, 235, 0.08) 100%
     );
     background-position: 0 88%;
     background-repeat: no-repeat;
@@ -1205,7 +1158,7 @@
   }
 
   .article-entity-link:hover {
-    color: #9f1830;
+    color: #1d4ed8;
     background-size: 100% 0.55em;
   }
 
@@ -1217,14 +1170,6 @@
 
   .article-entity-link--heading:hover {
     background-size: 100% 0.36em;
-  }
-
-  .article-entity-link__ext {
-    display: inline-block;
-    margin-inline-start: 0.15em;
-    font-size: 0.72em;
-    font-weight: 800;
-    opacity: 0.7;
   }
 
   .article-media-poster {
@@ -1334,8 +1279,6 @@
   }
 
   .article-translate {
-    position: relative;
-    z-index: 2;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -2870,7 +2813,7 @@
 
   .home-cinematic-hero__copy {
     width: min(100%, 36rem);
-    margin-left: 1.5rem;
+    margin-left: 0;
     margin-right: auto;
     text-align: start;
     text-shadow: 0 8px 28px rgba(17, 17, 17, 0.35);

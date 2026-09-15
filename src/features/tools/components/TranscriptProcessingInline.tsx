@@ -1,54 +1,56 @@
-import { Button } from "@/components/ui/button";
 import type { TranscriptPollUiState } from "@/hooks/publishing";
-import { Loader2 } from "lucide-react";
+import { VoiceProcessingCard } from "./VoiceProcessingCard";
 
 interface TranscriptProcessingInlineProps {
   state: TranscriptPollUiState;
+  pending?: boolean;
   onRecheck?: () => void;
   rechecking?: boolean;
 }
 
 export function TranscriptProcessingInline({
   state,
+  pending = false,
   onRecheck,
   rechecking = false,
 }: TranscriptProcessingInlineProps) {
-  if (state.kind === "idle" || state.kind === "completed") {
+  const effective: TranscriptPollUiState =
+    pending && (state.kind === "idle" || state.kind === "completed")
+      ? { kind: "processing", transcriptId: 0 }
+      : state;
+
+  if (effective.kind === "idle" || effective.kind === "completed") {
     return null;
   }
 
-  if (state.kind === "processing") {
+  if (effective.kind === "processing") {
     return (
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="size-4 animate-spin" aria-hidden />
-        جارٍ تحويل الصوت إلى نص...
-      </p>
+      <VoiceProcessingCard
+        variant="processing"
+        title="جاري تحويل الصوت إلى نص"
+        hint="يُفرَّغ الملف الآن — لا تغلق الصفحة."
+      />
     );
   }
 
-  if (state.kind === "timed_out") {
+  if (effective.kind === "timed_out") {
     return (
-      <div className="space-y-2 text-sm">
-        <p className="text-amber-800 dark:text-amber-200">
-          يستغرق أكثر من المعتاد — قد يكون التفريغ ما زال قيد التنفيذ.
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onRecheck}
-          disabled={rechecking}
-        >
-          {rechecking && <Loader2 className="size-4 animate-spin" />}
-          تحقق مرة أخرى
-        </Button>
-      </div>
+      <VoiceProcessingCard
+        variant="timed_out"
+        title="التفريغ يستغرق أكثر من المعتاد"
+        hint="قد يكون التحويل ما زال قيد التنفيذ. يمكنك التحقق مرة أخرى دون إعادة الرفع."
+        onRecheck={onRecheck}
+        rechecking={rechecking}
+      />
     );
   }
 
   return (
-    <p className="text-sm text-destructive">
-      {state.errorMessage?.trim() || "فشل التفريغ"}
-    </p>
+    <VoiceProcessingCard
+      variant="failed"
+      title="فشل التفريغ"
+      hint="فشل التفريغ"
+      errorMessage={effective.errorMessage}
+    />
   );
 }

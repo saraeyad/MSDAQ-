@@ -7,7 +7,7 @@ export function usePublicCategories() {
 
   return useQuery({
     queryKey: ["public-categories", locale],
-    queryFn: () => PublicCategories_APIs.list(),
+    queryFn: () => PublicCategories_APIs.list(locale),
     staleTime: 5 * 60_000,
   });
 }

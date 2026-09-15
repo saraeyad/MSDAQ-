@@ -308,8 +308,7 @@ export function Step3Body({
         tags={entityTags}
         onChange={setEntityTags}
         onClearSelection={() => setSelection("")}
-        hint="حدّد اسماً في النص ثم اربطه. الروابط تظهر أيضاً في العنوان والوصف إن وُجد نفس الاسم."
-        previewBlocks={[{ label: "المحتوى", text: body }]}
+        hint="حدّد اسماً في النص ثم اضغط «اربط النص». الروابط تظهر أيضاً في العنوان والوصف إن وُجد نفس الاسم."
       >
         <Textarea
           rows={16}

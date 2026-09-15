@@ -1,4 +1,3 @@
-import { ArticleEntityBody } from "@/features/public-site/article-page/ArticleEntityBody";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getApiErrorMessage } from "@/lib/api";
+import { entityInternalPath } from "@/lib/articles/entity-links";
 import { cn } from "@/lib/utils";
 import { Entities_APIs } from "@/services/api/entities";
 import type {
@@ -30,7 +30,6 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 export interface LocalEntityTag {
@@ -85,9 +84,12 @@ export function readTextSelection(target: EventTarget | null): string {
   return target.value.slice(start, end);
 }
 
-export interface EntityPreviewBlock {
-  label?: string;
-  text: string;
+function tagTestHref(tag: LocalEntityTag): string {
+  if (tag.link_type === "internal") {
+    return entityInternalPath(tag.url);
+  }
+  if (/^https?:\/\//i.test(tag.url)) return tag.url;
+  return `https://${tag.url}`;
 }
 
 interface EntityTaggingPanelProps {
@@ -99,7 +101,6 @@ interface EntityTaggingPanelProps {
   heading?: string;
   hint?: string;
   dockHint?: string;
-  previewBlocks?: EntityPreviewBlock[];
   variant?: "studio" | "embedded";
   children: ReactNode;
 }
@@ -111,45 +112,23 @@ export function EntityTaggingPanel({
   onChange,
   onClearSelection,
   heading = "٢ · محتوى المقال والروابط",
-  hint = "حدّد اسماً في النص ثم اربطه. النص يبقى عادياً — الروابط تُرسم عند القراءة فقط.",
-  dockHint = "حدّد اسماً أو جملة في النص — ستظهر بطاقة الربط فوراً",
-  previewBlocks,
+  hint = "حدّد اسماً في النص ثم اضغط «اربط النص». النص يبقى عادياً — الروابط تُرسم عند القراءة فقط.",
+  dockHint = "حدّد اسماً أو جملة ثم اضغط الزر لربطه",
   variant = "studio",
   children,
 }: EntityTaggingPanelProps) {
   const [open, setOpen] = useState(false);
-  const [pickOpen, setPickOpen] = useState(false);
-  const [showPreview, setShowPreview] = useState(tags.length > 0);
   const [pinned, setPinned] = useState("");
 
   const liveSelection = selection.trim();
-  const hasLiveSelection =
-    liveSelection.length > 0 && corpus.includes(liveSelection);
-
-  useEffect(() => {
-    if (!hasLiveSelection || open) return;
-    const timer = window.setTimeout(() => {
-      setPinned(liveSelection);
-      setPickOpen(true);
-    }, 70);
-    return () => window.clearTimeout(timer);
-  }, [hasLiveSelection, liveSelection, open]);
-
-  const matchText = liveSelection || pinned;
-  const canOpen = matchText.length > 0 && corpus.includes(matchText);
-  const blocks =
-    previewBlocks ??
-    (corpus.trim() ? [{ text: corpus }] : []);
-  const hasPreviewText = blocks.some((block) => block.text.trim());
-
-  const closePick = () => {
-    setPickOpen(false);
-    onClearSelection?.();
-  };
+  const matchText = open ? pinned || liveSelection : liveSelection;
+  const canOpen = liveSelection.length > 0 && corpus.includes(liveSelection);
+  const clipped =
+    matchText.length > 42 ? `${matchText.slice(0, 42).trim()}…` : matchText;
 
   const openDialog = () => {
     if (!canOpen) return;
-    setPickOpen(false);
+    setPinned(liveSelection);
     setOpen(true);
   };
 
@@ -175,6 +154,22 @@ export function EntityTaggingPanel({
         </span>
       </header>
 
+      <div className="entity-studio__toolbar">
+        <button
+          type="button"
+          className="entity-studio__link-btn"
+          disabled={!canOpen}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={openDialog}
+        >
+          <Link2 className="size-4" />
+          {canOpen ? `اربط «${clipped}»` : "اربط النص المحدد"}
+        </button>
+        <p className="entity-studio__toolbar-hint">
+          {canOpen ? "المحدد جاهز — اضغط الزر لربطه" : dockHint}
+        </p>
+      </div>
+
       <div
         className={cn(
           "entity-studio__editor",
@@ -183,26 +178,14 @@ export function EntityTaggingPanel({
         )}
       >
         {children}
-
-        <div className="entity-studio__dock">
-          <p className="entity-studio__dock-idle">{dockHint}</p>
-        </div>
       </div>
-
-      {pickOpen && canOpen && !open ? (
-        <EntitySelectModal
-          matchText={matchText}
-          onLink={openDialog}
-          onClose={closePick}
-        />
-      ) : null}
 
       <section className="entity-studio__tags" aria-label="الروابط المضافة">
         {tags.length === 0 ? (
           <div className="entity-studio__empty">
             <Link2 className="size-5" />
             <p>
-              لا روابط بعد — حدّد اسماً في العنوان أو الوصف أو النص ثم اربطه.
+              لا روابط بعد — حدّد اسماً ثم اضغط «اربط النص المحدد».
             </p>
           </div>
         ) : (
@@ -218,13 +201,21 @@ export function EntityTaggingPanel({
                     missing && "entity-chip--missing",
                   )}
                 >
-                  <span className="entity-chip__text">{tag.match_text}</span>
-                  <span className="entity-chip__kind">
-                    {tag.link_type === "internal" ? "داخل المنصة" : "خارجي"}
-                  </span>
-                  <span className="entity-chip__url" dir="ltr">
-                    {tag.url}
-                  </span>
+                  <a
+                    className="entity-chip__open"
+                    href={tagTestHref(tag)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`تجربة الرابط: ${tag.url}`}
+                  >
+                    <span className="entity-chip__text">{tag.match_text}</span>
+                    <span className="entity-chip__kind">
+                      {tag.link_type === "internal" ? "داخل المنصة" : "خارجي"}
+                    </span>
+                    <span className="entity-chip__url" dir="ltr">
+                      {tag.url}
+                    </span>
+                  </a>
                   {missing ? (
                     <span className="entity-chip__warn">لم يعد في النص</span>
                   ) : null}
@@ -245,109 +236,21 @@ export function EntityTaggingPanel({
         )}
       </section>
 
-      <div className="entity-studio__preview-wrap">
-        <button
-          type="button"
-          className="entity-studio__preview-toggle"
-          onClick={() => setShowPreview((openPreview) => !openPreview)}
-        >
-          {showPreview ? "إخفاء معاينة القارئ" : "معاينة كيف سيراها القارئ"}
-        </button>
-        {showPreview ? (
-          <div className="entity-studio__preview">
-            {hasPreviewText ? (
-              blocks.map((block, index) =>
-                block.text.trim() ? (
-                  <div key={`${block.label ?? "block"}-${index}`}>
-                    {block.label ? (
-                      <p className="entity-studio__preview-label">
-                        {block.label}
-                      </p>
-                    ) : null}
-                    <ArticleEntityBody text={block.text} entities={tags} />
-                  </div>
-                ) : null,
-              )
-            ) : (
-              <p className="entity-studio__preview-empty">
-                اكتب النص أولاً لتظهر المعاينة.
-              </p>
-            )}
-          </div>
-        ) : null}
-      </div>
-
       <EntityTagDialog
         open={open}
         matchText={matchText}
-        onOpenChange={setOpen}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) setPinned("");
+        }}
         onConfirm={(tag) => {
           onChange([...tags, tag]);
-          setShowPreview(true);
           setOpen(false);
+          setPinned("");
+          onClearSelection?.();
         }}
       />
     </div>
-  );
-}
-
-function EntitySelectModal({
-  matchText,
-  onLink,
-  onClose,
-}: {
-  matchText: string;
-  onLink: () => void;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return createPortal(
-    <div className="entity-select" role="presentation">
-      <button
-        type="button"
-        className="entity-select__backdrop"
-        aria-label="إغلاق"
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={onClose}
-      />
-      <div
-        className="entity-select__card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="entity-select-title"
-      >
-        <button
-          type="button"
-          className="entity-select__close"
-          aria-label="إغلاق"
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={onClose}
-        >
-          <X className="size-4" />
-        </button>
-        <p id="entity-select-title" className="entity-select__kicker">
-          المحدد
-        </p>
-        <blockquote className="entity-select__quote">«{matchText}»</blockquote>
-        <button
-          type="button"
-          className="entity-select__cta"
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={onLink}
-        >
-          <Link2 className="size-4" />
-          اربط هذا النص
-        </button>
-      </div>
-    </div>,
-    document.body,
   );
 }
 

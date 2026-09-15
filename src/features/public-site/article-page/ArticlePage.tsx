@@ -26,10 +26,7 @@ import { useLocale, usePublicCopy } from "@/context/locale";
 import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import type { Locale } from "@/lib/i18n/types";
 import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
-import {
-  publicArticleCoverUrl,
-  resolveMediaUrl,
-} from "@/lib/media";
+import { publicArticleCoverUrl, resolveMediaUrl } from "@/lib/media";
 import { buildArticleJsonLd, buildArticleSeoHead } from "@/lib/seo/article-seo";
 import { loadLatinUiFont } from "@/lib/site/optional-fonts";
 import { useSiteOrigin } from "@/context/site-origin";
@@ -50,7 +47,15 @@ import { TrustIndexDialog } from "@/features/public-site/trust-index/TrustIndexD
 import { ArticleTrustFeedbackButton } from "@/features/public-site/trust-index/ArticleTrustFeedbackButton";
 import { useTrustIndexMediaTrigger } from "@/features/public-site/trust-index/useTrustIndexMediaTrigger";
 import { useTrustIndexTrigger } from "@/features/public-site/trust-index/useTrustIndexTrigger";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const RelatedArticlesSidebar = lazy(() =>
@@ -143,7 +148,11 @@ function ArticlePageContent({
     parseArticleContentLang(searchParams.get(ARTICLE_CONTENT_LANG_PARAM)) ??
     locale;
   const needsLocalizedFetch = contentLang !== locale;
-  const { data: localizedArticle, isPending: isContentPending, isError: isContentError } = useQuery({
+  const {
+    data: localizedArticle,
+    isPending: isContentPending,
+    isError: isContentError,
+  } = useQuery({
     queryKey: ["public-article", contentLang, articleUrlId],
     queryFn: () => Articles_APIs.get(articleUrlId, contentLang),
     enabled: needsLocalizedFetch,
@@ -153,11 +162,10 @@ function ArticlePageContent({
     contentLang === "en" &&
     Boolean(localizedArticle) &&
     isEnglishArticlePending(localizedArticle!, "en");
-  const keepOriginalWhileEnglishPending = englishFetchPending && locale === "ar";
+  const keepOriginalWhileEnglishPending =
+    englishFetchPending && locale === "ar";
   const displayArticle =
-    keepOriginalWhileEnglishPending ||
-    !needsLocalizedFetch ||
-    !localizedArticle
+    keepOriginalWhileEnglishPending || !needsLocalizedFetch || !localizedArticle
       ? article
       : localizedArticle;
   const contentLoading = needsLocalizedFetch && isContentPending;
@@ -213,19 +221,16 @@ function ArticlePageContent({
   const coverCaption = article.cover_description?.trim() ?? "";
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
-  const {
-    bodyRef,
-    open,
-    dismiss,
-    openManually,
-    onMediaProgress,
-  } = useArticleTrustSurvey({
-    articleId: article.id,
-    body,
-    mediaEnabled: isAudio || isVideo,
-    enabled: acceptingReviews && !englishPending,
-  });
-  const sources = englishPending ? [] : (displayArticle.sources ?? article.sources ?? []);
+  const { bodyRef, open, dismiss, openManually, onMediaProgress } =
+    useArticleTrustSurvey({
+      articleId: article.id,
+      body,
+      mediaEnabled: isAudio || isVideo,
+      enabled: acceptingReviews && !englishPending,
+    });
+  const sources = englishPending
+    ? []
+    : (displayArticle.sources ?? article.sources ?? []);
   const galleryImages =
     articleMedia?.images
       ?.map((image) => resolveMediaUrl(image.full))
@@ -307,13 +312,17 @@ function ArticlePageContent({
                 </span>
                 <span>•</span>
                 <span>
-                  {new Date(article.published_at).toLocaleDateString(dateLocale)}
+                  {new Date(article.published_at).toLocaleDateString(
+                    dateLocale,
+                  )}
                 </span>
               </div>
               <ArticleTranslateButton
                 contentLang={contentLang}
                 loading={contentLoading}
-                onToggle={() => setContentLang(otherArticleContentLang(contentLang))}
+                onToggle={() =>
+                  setContentLang(otherArticleContentLang(contentLang))
+                }
               />
             </div>
             {isContentError ? (
@@ -331,91 +340,94 @@ function ArticlePageContent({
               dir={contentDir}
               lang={contentLang}
             >
-            {englishPending ? (
-              <PublicArticleEnglishPendingPanel className="mt-6" />
-            ) : (
-              <>
-            <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
-              <span className="inline-flex flex-wrap items-center gap-2.5">
-                <span>
-                  <ArticleEntityBody
-                    text={displayArticle.title}
-                    entities={displayArticle.entities}
-                    tone="heading"
+              {englishPending ? (
+                <PublicArticleEnglishPendingPanel className="mt-6" />
+              ) : (
+                <>
+                  <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
+                    <span className="inline-flex flex-wrap items-center gap-2.5">
+                      <span>
+                        <ArticleEntityBody
+                          text={displayArticle.title}
+                          entities={displayArticle.entities}
+                          tone="heading"
+                        />
+                      </span>
+                      <ArticleVerifiedBadge article={article} />
+                    </span>
+                  </h1>
+
+                  {displayArticle.description &&
+                  body !== displayArticle.description ? (
+                    <p className="mt-4 text-lg text-muted-foreground">
+                      <ArticleEntityBody
+                        text={displayArticle.description}
+                        entities={displayArticle.entities}
+                      />
+                    </p>
+                  ) : null}
+                </>
+              )}
+
+              {showLangToggle && (
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant={lang === "formal" ? "default" : "outline"}
+                    onClick={() => setLang("formal")}
+                  >
+                    {articleCopy.langFormal}
+                  </Button>
+                  {hasLanguageVariant(displayArticle, "simplified") && (
+                    <Button
+                      size="sm"
+                      variant={lang === "simplified" ? "default" : "outline"}
+                      onClick={() => setLang("simplified")}
+                    >
+                      {articleCopy.langSimplified}
+                    </Button>
+                  )}
+                  {hasLanguageVariant(displayArticle, "dialect") && (
+                    <Button
+                      size="sm"
+                      variant={lang === "dialect" ? "default" : "outline"}
+                      onClick={() => setLang("dialect")}
+                    >
+                      {articleCopy.langDialect}
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {isAudio ? (
+                <div className="mt-6">
+                  <PublicArticleAudioPlayer
+                    articleId={article.id}
+                    variant="embed"
+                    coverUrl={coverUrl ?? undefined}
+                    showSourceLink
+                    onPlaybackProgress={onMediaProgress}
                   />
-                </span>
-                <ArticleVerifiedBadge article={article} />
-              </span>
-            </h1>
+                </div>
+              ) : null}
 
-            {displayArticle.description &&
-            body !== displayArticle.description ? (
-              <p className="mt-4 text-lg text-muted-foreground">
-                <ArticleEntityBody
-                  text={displayArticle.description}
-                  entities={displayArticle.entities}
-                />
-              </p>
-            ) : null}
-              </>
-            )}
-
-            {showLangToggle && (
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant={lang === "formal" ? "default" : "outline"}
-                  onClick={() => setLang("formal")}
+              {!englishPending && body ? (
+                <div
+                  ref={bodyRef}
+                  className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed"
                 >
-                  {articleCopy.langFormal}
-                </Button>
-                {hasLanguageVariant(displayArticle, "simplified") && (
-                  <Button
-                    size="sm"
-                    variant={lang === "simplified" ? "default" : "outline"}
-                    onClick={() => setLang("simplified")}
-                  >
-                    {articleCopy.langSimplified}
-                  </Button>
-                )}
-                {hasLanguageVariant(displayArticle, "dialect") && (
-                  <Button
-                    size="sm"
-                    variant={lang === "dialect" ? "default" : "outline"}
-                    onClick={() => setLang("dialect")}
-                  >
-                    {articleCopy.langDialect}
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {isAudio ? (
-              <div className="mt-6">
-                <PublicArticleAudioPlayer
-                  articleId={article.id}
-                  variant="embed"
-                  coverUrl={coverUrl ?? undefined}
-                  showSourceLink
-                  onPlaybackProgress={onMediaProgress}
-                />
-              </div>
-            ) : null}
-
-            {!englishPending && body ? (
-              <div
-                ref={bodyRef}
-                className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed"
-              >
-                <ArticleEntityBody text={body} entities={displayArticle.entities} />
-              </div>
-            ) : !englishPending &&
-              article.media_type !== "audio" &&
-              article.media_type !== "video" ? (
-              <p className="mt-8 text-muted-foreground">
-                {articleCopy.noTextContent}
-              </p>
-            ) : null}
+                  <ArticleEntityBody
+                    text={body}
+                    entities={displayArticle.entities}
+                  />
+                </div>
+              ) : !englishPending &&
+                article.media_type !== "audio" &&
+                article.media_type !== "video" ? (
+                <p className="mt-8 text-muted-foreground">
+                  {articleCopy.noTextContent}
+                </p>
+              ) : null}
             </div>
 
             {acceptingReviews ? (
@@ -465,11 +477,14 @@ function ArticlePageContent({
                 </ul>
               </section>
             )}
-
           </div>
 
           <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-muted" />}>
+            <Suspense
+              fallback={
+                <div className="h-40 animate-pulse rounded-xl bg-muted" />
+              }
+            >
               <RelatedArticlesSidebar article={article} />
             </Suspense>
             {acceptingReviews ? (

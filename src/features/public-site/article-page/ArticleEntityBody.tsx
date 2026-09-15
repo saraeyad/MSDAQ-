@@ -55,11 +55,6 @@ export function ArticleEntityBody({
             title={piece.entity.url}
           >
             {piece.value}
-            {heading ? null : (
-              <span className="article-entity-link__ext" aria-hidden>
-                ↗
-              </span>
-            )}
           </a>
         );
       })}
