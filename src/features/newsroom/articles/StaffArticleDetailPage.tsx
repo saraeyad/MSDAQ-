@@ -9,9 +9,8 @@ import { PublicArticleVideoPlayer } from "@/features/public-site/components/Publ
 import { ArticleTrustIndexSection } from "@/features/trust-index/components/ArticleTrustIndexSection";
 import { ArticleStatusActions } from "@/features/newsroom/articles/ArticleStatusActions";
 import { usePermission } from "@/hooks/auth";
-import { useStaffArticleMedia } from "@/hooks/publishing";
 import { getApiErrorMessage } from "@/lib/api";
-import { mediaTypeLabel, mergeArticleMedia, resolveMediaUrl } from "@/lib/media";
+import { mediaTypeLabel, resolveMediaUrl } from "@/lib/media";
 import { derivePublishGate } from "@/lib/publishing";
 import {
   articleAcceptsPublicReviews,
@@ -33,6 +32,7 @@ import {
   ExternalLink,
   FileText,
   ImageIcon,
+  Languages,
   Loader2,
   Trash2,
   User,
@@ -127,10 +127,7 @@ export default function StaffArticleDetailPage() {
     queryFn: () => ArticlesStaff_APIs.getArticle(id!),
     enabled: !!id,
   });
-  const { data: articleMedia } = useStaffArticleMedia(id, !!id);
-  const article = articleData
-    ? mergeArticleMedia(articleData, articleMedia)
-    : articleData;
+  const article = articleData;
 
   const deleteMutation = useMutation({
     mutationFn: () => ArticlesStaff_APIs.deleteArticle(id!),
@@ -148,6 +145,15 @@ export default function StaffArticleDetailPage() {
       toast.success("تم إخفاء المقال عن الجمهور وإرجاعه إلى مسودة");
       setConfirmRevert(false);
       void queryClient.invalidateQueries({ queryKey: ["staff-articles"] });
+      void queryClient.invalidateQueries({ queryKey: ["staff-article", id] });
+    },
+    onError: (err) => toast.error(getApiErrorMessage(err)),
+  });
+
+  const translateMutation = useMutation({
+    mutationFn: () => ArticlesStaff_APIs.translate(id!),
+    onSuccess: () => {
+      toast.success("تم طلب إعادة الترجمة — قد تستغرق بضع ثوانٍ");
       void queryClient.invalidateQueries({ queryKey: ["staff-article", id] });
     },
     onError: (err) => toast.error(getApiErrorMessage(err)),
@@ -285,7 +291,13 @@ export default function StaffArticleDetailPage() {
             ) : null}
           </div>
 
-          <h1 className="staff-article-hero__title">{article.title}</h1>
+          <h1 className="staff-article-hero__title">
+            <ArticleEntityBody
+              text={article.title}
+              entities={article.entities}
+              tone="heading"
+            />
+          </h1>
 
           <div className="staff-article-hero__meta">
             <span className="staff-article-meta-item">
@@ -317,12 +329,73 @@ export default function StaffArticleDetailPage() {
 
       {article.description ? (
         <div className="staff-article-lead">
-          <p>{article.description}</p>
+          <p>
+            <ArticleEntityBody
+              text={article.description}
+              entities={article.entities}
+            />
+          </p>
         </div>
       ) : null}
 
       <div className="staff-article-layout">
         <div className="staff-article-main">
+          <SectionPanel icon={Languages} title="الترجمة الإنجليزية (DeepL)">
+            {article.translation?.translated_at ? (
+              <p className="text-sm text-muted-foreground">
+                آخر ترجمة:{" "}
+                {new Date(article.translation.translated_at).toLocaleString(
+                  "ar",
+                )}
+              </p>
+            ) : (
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                لم تُترجم بعد — تُطلَق تلقائياً عند النشر.
+              </p>
+            )}
+            {canEdit &&
+            article.status === "published" &&
+            !article.translation?.translated_at ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                disabled={translateMutation.isPending}
+                onClick={() => translateMutation.mutate()}
+              >
+                {translateMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : null}
+                إعادة الترجمة
+              </Button>
+            ) : null}
+            {article.translation?.title ||
+            article.translation?.description ||
+            article.translation?.content ? (
+              <div className="mt-4 space-y-3 border-t border-border pt-4">
+                {article.translation.title ? (
+                  <ContentPreview
+                    label="العنوان (EN)"
+                    text={article.translation.title}
+                  />
+                ) : null}
+                {article.translation.description ? (
+                  <ContentPreview
+                    label="الوصف (EN)"
+                    text={article.translation.description}
+                  />
+                ) : null}
+                {article.translation.content ? (
+                  <ContentPreview
+                    label="المحتوى (EN)"
+                    text={article.translation.content}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+          </SectionPanel>
+
           <SourceConsentBanner sources={article.sources} />
 
           {hasMedia ? (

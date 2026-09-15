@@ -58,15 +58,30 @@ export interface StandaloneLocalizationResult {
 export interface GeneratedAudio {
   id: number;
   name: string | null;
-  audio_url: string;
+  status: "processing" | "completed" | "failed";
+  audio_url: string | null;
   voice: string;
   style: string | null;
+  chunks_total: number | null;
+  chunks_done: number;
+  progress_percent?: number | null;
+  error_message?: string | null;
   is_saved: boolean;
   saved_at: string | null;
   saved_by?: string | null;
   user_id?: number | null;
   created_by?: Pick<User, "id" | "name"> | null;
   created_at: string;
+}
+
+export interface GeneratedAudioStatus {
+  id: number;
+  status: "processing" | "completed" | "failed";
+  chunks_total: number | null;
+  chunks_done: number;
+  progress_percent?: number | null;
+  audio_url: string | null;
+  error_message?: string | null;
 }
 
 export interface Transcript {
@@ -136,11 +151,6 @@ export interface TtsVoice {
   name: string;
   description: string;
   style: string;
-}
-
-export interface TtsResult {
-  article_id: number | string;
-  audio_url: string;
 }
 
 export interface VideoUploadResult {

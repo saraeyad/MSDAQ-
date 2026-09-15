@@ -8,5 +8,6 @@ export * from "./credibility-normalize";
 export * from "./localization-normalize";
 export * from "./tool-processing-steps";
 export * from "./transcript-status-poll";
+export * from "./tts-status-poll";
 export * from "./tts-limits";
 export * from "./domain-input";

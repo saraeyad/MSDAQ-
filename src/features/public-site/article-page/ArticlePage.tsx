@@ -1,6 +1,12 @@
 import { PageLoading } from "@/components/loading-spinner";
 import type { LangVariant } from "@/features/public-site/article-page/types";
 import { ArticleEntityBody } from "@/features/public-site/article-page/ArticleEntityBody";
+import { ArticleTranslateButton } from "@/features/public-site/article-page/ArticleTranslateButton";
+import {
+  ARTICLE_CONTENT_LANG_PARAM,
+  otherArticleContentLang,
+  parseArticleContentLang,
+} from "@/features/public-site/article-page/article-content-lang";
 import {
   hasLanguageVariant,
   resolveArticleBody,
@@ -10,15 +16,22 @@ import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import { PublicArticleCover } from "@/components/article/cover-image";
 import { ArticleVerifiedBadge } from "@/components/article/article-verified-badge";
+import {
+  isEnglishArticlePending,
+  PublicArticleEnglishPendingPanel,
+} from "@/features/public-site/components/PublicArticleEnglishPending";
 import { PublicArticleAudioPlayer } from "@/features/public-site/components/PublicArticleAudioPlayer";
 import { PublicArticleVideoPlayer } from "@/features/public-site/components/PublicArticleVideoPlayer";
+import { useLocale, usePublicCopy } from "@/context/locale";
+import { localizedCategoryName } from "@/lib/i18n/localized-category";
+import type { Locale } from "@/lib/i18n/types";
+import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
 import {
   publicArticleCoverUrl,
-  publicArticlePosterUrl,
-  publicMediaTypeLabel,
   resolveMediaUrl,
 } from "@/lib/media";
 import { buildArticleJsonLd, buildArticleSeoHead } from "@/lib/seo/article-seo";
+import { loadLatinUiFont } from "@/lib/site/optional-fonts";
 import { useSiteOrigin } from "@/context/site-origin";
 import { Button } from "@/components/ui/button";
 import { Articles_APIs } from "@/services/api/articles";
@@ -31,7 +44,7 @@ import {
   type TrustMediaProgress,
 } from "@/lib/site";
 import { ArrowLeft } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { usePlatformFeedback } from "@/context/platform-feedback";
 import { TrustIndexDialog } from "@/features/public-site/trust-index/TrustIndexDialog";
 import { ArticleTrustFeedbackButton } from "@/features/public-site/trust-index/ArticleTrustFeedbackButton";
@@ -114,12 +127,80 @@ interface ArticlePageProps {
   initialArticle?: PublicArticle;
 }
 
-function ArticlePageContent({ article }: { article: PublicArticle }) {
+function ArticlePageContent({
+  article,
+  articleUrlId,
+}: {
+  article: PublicArticle;
+  articleUrlId: string;
+}) {
   const [lang, setLang] = useState<LangVariant>("formal");
+  const { locale } = useLocale();
+  const copy = usePublicCopy();
+  const { article: articleCopy } = copy;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const contentLang: Locale =
+    parseArticleContentLang(searchParams.get(ARTICLE_CONTENT_LANG_PARAM)) ??
+    locale;
+  const needsLocalizedFetch = contentLang !== locale;
+  const { data: localizedArticle, isPending: isContentPending, isError: isContentError } = useQuery({
+    queryKey: ["public-article", contentLang, articleUrlId],
+    queryFn: () => Articles_APIs.get(articleUrlId, contentLang),
+    enabled: needsLocalizedFetch,
+    staleTime: 5 * 60 * 1000,
+  });
+  const englishFetchPending =
+    contentLang === "en" &&
+    Boolean(localizedArticle) &&
+    isEnglishArticlePending(localizedArticle!, "en");
+  const keepOriginalWhileEnglishPending = englishFetchPending && locale === "ar";
+  const displayArticle =
+    keepOriginalWhileEnglishPending ||
+    !needsLocalizedFetch ||
+    !localizedArticle
+      ? article
+      : localizedArticle;
+  const contentLoading = needsLocalizedFetch && isContentPending;
+  const [translationNotice, setTranslationNotice] = useState(false);
+  const dateLocale = locale === "ar" ? "ar" : "en-GB";
   const origin = useSiteOrigin();
   const seoHead = buildArticleSeoHead(article, origin);
   const jsonLd = buildArticleJsonLd(article, origin);
-  const body = resolveArticleBody(article, lang);
+  const englishPending =
+    !contentLoading &&
+    !keepOriginalWhileEnglishPending &&
+    isEnglishArticlePending(displayArticle, contentLang);
+  const displayTitle = englishPending
+    ? articleCopy.englishPendingTitle
+    : displayArticle.title;
+  const body = englishPending ? "" : resolveArticleBody(displayArticle, lang);
+  const contentDir = contentLang === "en" ? "ltr" : "rtl";
+
+  const setContentLang = useCallback(
+    (next: Locale) => {
+      setLang("formal");
+      setSearchParams(
+        (current) => {
+          const nextParams = new URLSearchParams(current);
+          if (next === locale) nextParams.delete(ARTICLE_CONTENT_LANG_PARAM);
+          else nextParams.set(ARTICLE_CONTENT_LANG_PARAM, next);
+          return nextParams;
+        },
+        { replace: true },
+      );
+    },
+    [locale, setSearchParams],
+  );
+
+  useEffect(() => {
+    setTranslationNotice(false);
+  }, [article.id]);
+
+  useEffect(() => {
+    if (!keepOriginalWhileEnglishPending) return;
+    setTranslationNotice(true);
+    setContentLang("ar");
+  }, [keepOriginalWhileEnglishPending, setContentLang]);
   const queryClient = useQueryClient();
   const acceptingReviews = articleAcceptsPublicReviews(article);
   const { data: articleMedia } = useQuery({
@@ -127,16 +208,9 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
     queryFn: () => Articles_APIs.getMedia(article.id),
     staleTime: Infinity,
   });
-  const coverArticle = {
-    ...article,
-    cover_image: articleMedia?.cover_image ?? article.cover_image,
-    cover_description:
-      articleMedia?.cover_description ?? article.cover_description,
-    images: articleMedia?.images ?? article.images,
-  };
-  const coverUrl = publicArticleCoverUrl(coverArticle);
-  const posterUrl = publicArticleCoverUrl(coverArticle);
-  const coverCaption = coverArticle.cover_description?.trim() ?? "";
+  const coverUrl = publicArticleCoverUrl(article);
+  const posterUrl = publicArticleCoverUrl(article);
+  const coverCaption = article.cover_description?.trim() ?? "";
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
   const {
@@ -149,16 +223,21 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
     articleId: article.id,
     body,
     mediaEnabled: isAudio || isVideo,
-    enabled: acceptingReviews,
+    enabled: acceptingReviews && !englishPending,
   });
-  const sources = article.sources ?? [];
+  const sources = englishPending ? [] : (displayArticle.sources ?? article.sources ?? []);
   const galleryImages =
     articleMedia?.images
       ?.map((image) => resolveMediaUrl(image.full))
       .filter(Boolean) ?? [];
   const showLangToggle =
-    hasLanguageVariant(article, "simplified") ||
-    hasLanguageVariant(article, "dialect");
+    contentLang === "ar" &&
+    (hasLanguageVariant(displayArticle, "simplified") ||
+      hasLanguageVariant(displayArticle, "dialect"));
+
+  useEffect(() => {
+    if (contentLang === "en") loadLatinUiFont();
+  }, [contentLang]);
 
   useEffect(() => {
     trackArticleView({
@@ -177,7 +256,7 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
         <Button asChild variant="ghost" size="sm" className="mb-6 gap-2">
           <Link to={ROUTES.ARTICLES}>
             <ArrowLeft className="size-4" />
-            العودة للمقالات
+            {articleCopy.backToArticles}
           </Link>
         </Button>
 
@@ -186,9 +265,9 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
             {isVideo ? (
               <PublicArticleVideoPlayer
                 articleId={article.id}
-                title={article.title}
+                title={displayTitle}
                 posterUrl={posterUrl}
-                coverImage={coverArticle.cover_image}
+                coverImage={article.cover_image}
                 videoPoster={null}
                 className="mb-8"
                 onVideoProgress={onMediaProgress}
@@ -196,8 +275,8 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
             ) : coverUrl ? (
               <figure className="article-cover-block mb-8">
                 <PublicArticleCover
-                  article={coverArticle}
-                  alt={coverCaption || article.title}
+                  article={article}
+                  alt={coverCaption || displayTitle}
                   priority
                   className="article-cover-block__image aspect-[21/9] w-full object-cover"
                 />
@@ -218,31 +297,68 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
               </div>
             ) : null}
 
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <span className="text-primary">
-                {article.category?.name_ar ??
-                  publicMediaTypeLabel(article.media_type)}
-              </span>
-              <span>•</span>
-              <span>
-                {new Date(article.published_at).toLocaleDateString("ar")}
-              </span>
+            <div className="article-meta-row">
+              <div className="article-meta-row__facts">
+                <span className="text-primary">
+                  {(article.category
+                    ? localizedCategoryName(article.category, locale)
+                    : null) ??
+                    publicMediaTypeLabelFromCopy(copy, article.media_type)}
+                </span>
+                <span>•</span>
+                <span>
+                  {new Date(article.published_at).toLocaleDateString(dateLocale)}
+                </span>
+              </div>
+              <ArticleTranslateButton
+                contentLang={contentLang}
+                loading={contentLoading}
+                onToggle={() => setContentLang(otherArticleContentLang(contentLang))}
+              />
             </div>
+            {isContentError ? (
+              <p className="article-translate-error" role="alert">
+                {articleCopy.translateFailed}
+              </p>
+            ) : translationNotice ? (
+              <p className="article-translate-error" role="status">
+                {articleCopy.englishPendingLead}
+              </p>
+            ) : null}
 
+            <div
+              className="article-content"
+              dir={contentDir}
+              lang={contentLang}
+            >
+            {englishPending ? (
+              <PublicArticleEnglishPendingPanel className="mt-6" />
+            ) : (
+              <>
             <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
               <span className="inline-flex flex-wrap items-center gap-2.5">
-                {article.title}
+                <span>
+                  <ArticleEntityBody
+                    text={displayArticle.title}
+                    entities={displayArticle.entities}
+                    tone="heading"
+                  />
+                </span>
                 <ArticleVerifiedBadge article={article} />
               </span>
             </h1>
 
-            {article.description &&
-            body !== article.description &&
-            article.media_type !== "audio" ? (
+            {displayArticle.description &&
+            body !== displayArticle.description ? (
               <p className="mt-4 text-lg text-muted-foreground">
-                {article.description}
+                <ArticleEntityBody
+                  text={displayArticle.description}
+                  entities={displayArticle.entities}
+                />
               </p>
             ) : null}
+              </>
+            )}
 
             {showLangToggle && (
               <div className="mt-6 flex flex-wrap gap-2">
@@ -251,24 +367,24 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
                   variant={lang === "formal" ? "default" : "outline"}
                   onClick={() => setLang("formal")}
                 >
-                  فصحى
+                  {articleCopy.langFormal}
                 </Button>
-                {hasLanguageVariant(article, "simplified") && (
+                {hasLanguageVariant(displayArticle, "simplified") && (
                   <Button
                     size="sm"
                     variant={lang === "simplified" ? "default" : "outline"}
                     onClick={() => setLang("simplified")}
                   >
-                    مبسّط
+                    {articleCopy.langSimplified}
                   </Button>
                 )}
-                {hasLanguageVariant(article, "dialect") && (
+                {hasLanguageVariant(displayArticle, "dialect") && (
                   <Button
                     size="sm"
                     variant={lang === "dialect" ? "default" : "outline"}
                     onClick={() => setLang("dialect")}
                   >
-                    عامية
+                    {articleCopy.langDialect}
                   </Button>
                 )}
               </div>
@@ -286,19 +402,21 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
               </div>
             ) : null}
 
-            {body ? (
+            {!englishPending && body ? (
               <div
                 ref={bodyRef}
                 className="prose prose-lg mt-8 max-w-none whitespace-pre-wrap leading-relaxed"
               >
-                <ArticleEntityBody text={body} entities={article.entities} />
+                <ArticleEntityBody text={body} entities={displayArticle.entities} />
               </div>
-            ) : article.media_type !== "audio" &&
+            ) : !englishPending &&
+              article.media_type !== "audio" &&
               article.media_type !== "video" ? (
               <p className="mt-8 text-muted-foreground">
-                لا يوجد محتوى نصي لهذا المقال.
+                {articleCopy.noTextContent}
               </p>
             ) : null}
+            </div>
 
             {acceptingReviews ? (
               <TrustIndexDialog
@@ -316,7 +434,7 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
             {galleryImages.length > 0 && (
               <section className="mt-10">
                 <h2 className="font-headline text-xl font-semibold">
-                  معرض الصور
+                  {articleCopy.galleryHeading}
                 </h2>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   {galleryImages.map((imageUrl, index) => (
@@ -335,7 +453,9 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
 
             {sources.length > 0 && (
               <section className="mt-12 rounded-xl border border-border bg-card p-6">
-                <h2 className="font-headline text-xl font-semibold">المصادر</h2>
+                <h2 className="font-headline text-xl font-semibold">
+                  {articleCopy.sourcesHeading}
+                </h2>
                 <ul className="mt-4 space-y-2">
                   {sources.map((source) => (
                     <li key={source.id} className="text-sm">
@@ -367,14 +487,16 @@ function ArticlePageContent({ article }: { article: PublicArticle }) {
 
 export default function ArticlePage({ initialArticle }: ArticlePageProps) {
   const { id } = useParams();
+  const { locale } = useLocale();
+  const { article: articleCopy } = usePublicCopy();
 
   const {
     data: article,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["public-article", id],
-    queryFn: () => Articles_APIs.get(id!),
+    queryKey: ["public-article", locale, id],
+    queryFn: () => Articles_APIs.get(id!, locale),
     enabled: Boolean(id),
     initialData: initialArticle,
     retry: false,
@@ -391,10 +513,10 @@ export default function ArticlePage({ initialArticle }: ArticlePageProps) {
   if (isError || !article) {
     return (
       <div className="container-page py-10">
-        <p>المقال غير موجود.</p>
+        <p>{articleCopy.notFound}</p>
       </div>
     );
   }
 
-  return <ArticlePageContent article={article} />;
+  return <ArticlePageContent article={article} articleUrlId={id!} />;
 }

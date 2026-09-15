@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { StarRatingInput } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api";
+import { usePublicCopy } from "@/context/locale";
 import {
   isPublicFeedbackClosed,
   isPublicFeedbackNotFound,
   isPublicFeedbackRateLimited,
 } from "@/lib/site";
-import { TRUST_DIMENSIONS } from "@/lib/site";
 import { TrustIndex_APIs } from "@/services/api/trust-index";
 import type { TrustIndexSubmitPayload } from "@/types";
 import { useMutation } from "@tanstack/react-query";
@@ -39,6 +39,8 @@ export function TrustIndexDialog({
   onSubmitted,
 }: TrustIndexDialogProps) {
   const titleId = useId();
+  const { common, feedback, trustIndex } = usePublicCopy();
+  const dimensions = trustIndex.dimensions;
   const [scores, setScores] = useState(INITIAL_SCORES);
 
   const submitMutation = useMutation({
@@ -54,7 +56,7 @@ export function TrustIndexDialog({
       return TrustIndex_APIs.submitPublic(articleId, payload);
     },
     onSuccess: () => {
-      toast.success("شكراً — تم تسجيل تقييمك");
+      toast.success(feedback.thanks);
       onSubmitted?.();
       onDismiss();
       setScores(INITIAL_SCORES);
@@ -65,12 +67,12 @@ export function TrustIndexDialog({
         return;
       }
       if (isPublicFeedbackNotFound(error)) {
-        toast.error("هذا المقال لم يعد متاحاً");
+        toast.error(trustIndex.articleUnavailable);
         onDismiss();
         return;
       }
       if (isPublicFeedbackClosed(error)) {
-        toast.error("اكتمل عدد التقييمات لهذا المقال");
+        toast.error(trustIndex.reviewLimit);
         onSubmitted?.();
         onDismiss();
         return;
@@ -79,12 +81,12 @@ export function TrustIndexDialog({
     },
   });
 
-  const filledCount = TRUST_DIMENSIONS.filter(
+  const filledCount = dimensions.filter(
     (dimension) =>
       (scores[`${dimension.key}_score` as keyof TrustIndexSubmitPayload] as number) >=
       1,
   ).length;
-  const allScoresSet = filledCount === TRUST_DIMENSIONS.length;
+  const allScoresSet = filledCount === dimensions.length;
 
   useEffect(() => {
     if (!open) return;
@@ -109,30 +111,28 @@ export function TrustIndexDialog({
       <header className="trust-index-dock__banner">
         <div className="trust-index-dock__seal" aria-hidden>
           <OliveBranch className="trust-index-dock__branch" />
-          <span className="trust-index-dock__stamp">رأيك</span>
+          <span className="trust-index-dock__stamp">{trustIndex.stamp}</span>
           <OliveBranch flip className="trust-index-dock__branch" />
         </div>
         <div className="trust-index-dock__intro">
-          <p className="trust-index-dialog__kicker">مؤشر ثقة الجمهور</p>
+          <p className="trust-index-dialog__kicker">{trustIndex.kicker}</p>
           <h2 id={titleId} className="trust-index-dialog__title">
-            ما مدى ثقتك بهذا المحتوى؟
+            {trustIndex.title}
           </h2>
-          <p className="trust-index-dialog__lead">
-            وصلت للنهاية — أربعة أسئلة سريعة، هويتك غير مسجّلة
-          </p>
+          <p className="trust-index-dialog__lead">{trustIndex.lead}</p>
         </div>
         <button
           type="button"
           className="trust-index-dock__close"
           onClick={onDismiss}
-          aria-label="إغلاق التقييم"
+          aria-label={trustIndex.close}
         >
           <X />
         </button>
       </header>
 
       <div className="trust-index-dialog__body">
-        {TRUST_DIMENSIONS.map((dimension, index) => (
+        {dimensions.map((dimension, index) => (
           <section key={dimension.key} className="trust-index-dialog__card">
             <span className="trust-index-dialog__index">
               {String(index + 1).padStart(2, "0")}
@@ -158,8 +158,8 @@ export function TrustIndexDialog({
 
         <div className="trust-index-dialog__note">
           <label htmlFor="trust-index-comment">
-            في جملة واحدة، ما أكثر شيء أثر على تقييمك؟
-            <span> اختياري</span>
+            {trustIndex.commentLabel}
+            <span>{trustIndex.commentOptional}</span>
           </label>
           <Textarea
             id="trust-index-comment"
@@ -167,7 +167,7 @@ export function TrustIndexDialog({
             maxLength={2000}
             rows={2}
             disabled={submitMutation.isPending}
-            placeholder="مثلاً: وضوح المصادر، أو نبرة الخبر..."
+            placeholder={trustIndex.commentPlaceholder}
             onChange={(event) =>
               setScores((current) => ({
                 ...current,
@@ -185,7 +185,7 @@ export function TrustIndexDialog({
             disabled={submitMutation.isPending}
             onClick={onDismiss}
           >
-            لاحقاً
+            {common.later}
           </Button>
           <Button
             disabled={!allScoresSet || submitMutation.isPending}
@@ -194,7 +194,7 @@ export function TrustIndexDialog({
             {submitMutation.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : null}
-            إرسال التقييم
+            {common.submitRating}
           </Button>
         </div>
       </footer>

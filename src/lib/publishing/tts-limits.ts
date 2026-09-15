@@ -1,12 +1,19 @@
 /** Minimum text length before TTS generate. */
 export const TTS_MIN_CHARS = 5;
 
+/** Hard ceiling for standalone TTS text (API validation). */
+export const TTS_MAX_CHARS = 50_000;
+
 /** Client abort — avoid hanging indefinitely on slow responses. */
 export const TTS_REQUEST_TIMEOUT_MS = 120_000;
 
 export function validateTtsText(text: string): string | null {
-  if (text.trim().length < TTS_MIN_CHARS) {
+  const trimmed = text.trim();
+  if (trimmed.length < TTS_MIN_CHARS) {
     return `أدخل ${TTS_MIN_CHARS} أحرف على الأقل`;
+  }
+  if (trimmed.length > TTS_MAX_CHARS) {
+    return `النص يتجاوز الحد الأقصى (${TTS_MAX_CHARS.toLocaleString("ar")} حرف)`;
   }
   return null;
 }

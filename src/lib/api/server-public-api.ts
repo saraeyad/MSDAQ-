@@ -9,6 +9,7 @@ import type {
   PublicCategoryDetail,
 } from "@/types";
 
+import type { Locale } from "@/lib/i18n/types";
 import { articleIdParam } from "../publishing/article-id";
 import { apiBaseUrl } from "./api-origin";
 
@@ -19,12 +20,15 @@ export class PublicApiNotFoundError extends Error {
   }
 }
 
-async function fetchPublicApi<T>(path: string): Promise<T> {
+async function fetchPublicApi<T>(
+  path: string,
+  locale: Locale = "ar",
+): Promise<T> {
   const url = `${apiBaseUrl().replace(/\/$/, "")}${path}`;
   const response = await fetch(url, {
     headers: {
       Accept: "application/json",
-      "Accept-Language": "ar",
+      "Accept-Language": locale,
     },
   });
 
@@ -46,12 +50,13 @@ async function fetchPublicApi<T>(path: string): Promise<T> {
 
 async function fetchPublicApiEnvelope<T>(
   path: string,
+  locale: Locale = "ar",
 ): Promise<ApiResponse<T>> {
   const url = `${apiBaseUrl().replace(/\/$/, "")}${path}`;
   const response = await fetch(url, {
     headers: {
       Accept: "application/json",
-      "Accept-Language": "ar",
+      "Accept-Language": locale,
     },
   });
 
@@ -73,9 +78,11 @@ async function fetchPublicApiEnvelope<T>(
 
 export async function fetchPublicArticle(
   id: number | string,
+  locale: Locale = "ar",
 ): Promise<PublicArticle> {
   return fetchPublicApi<PublicArticle>(
-    `/api/public/articles/${articleIdParam(id)}`,
+    `/api/public/articles/${articleIdParam(id)}?lang=${locale}`,
+    locale,
   );
 }
 
@@ -88,10 +95,13 @@ type PublicCategoryDetailPayload = {
 export async function fetchPublicCategory(
   slug: string,
   page = 1,
+  locale: Locale = "ar",
 ): Promise<PublicCategoryDetail> {
-  const query = page > 1 ? `?page=${page}` : "";
+  const search = new URLSearchParams({ lang: locale });
+  if (page > 1) search.set("page", String(page));
   const body = await fetchPublicApiEnvelope<PublicCategoryDetailPayload>(
-    `/api/public/categories/${slug}${query}`,
+    `/api/public/categories/${slug}?${search.toString()}`,
+    locale,
   );
   return parsePublicCategoryDetailResponse(body);
 }

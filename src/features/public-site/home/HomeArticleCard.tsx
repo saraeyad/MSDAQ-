@@ -1,10 +1,18 @@
 import { PublicArticleCover } from "@/components/article/cover-image";
 import { ArticleVerifiedBadge } from "@/components/article/article-verified-badge";
-import { mediaTypeLabel, publicArticleCoverUrl } from "@/lib/media";
+import {
+  isEnglishArticlePending,
+  PublicArticleEnglishPendingBadge,
+} from "@/features/public-site/components/PublicArticleEnglishPending";
+import { ArticleTranslateButton } from "@/features/public-site/article-page/ArticleTranslateButton";
+import { useLocale, usePublicCopy } from "@/context/locale";
+import { localizedCategoryName } from "@/lib/i18n/localized-category";
+import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
+import { publicArticleCoverUrl } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import type { PublicArticle, PublicMediaType } from "@/types";
-import { ArrowLeft, FileText, Mic, Play, Video } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Mic, Play, Video } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -41,8 +49,17 @@ export function HomeArticleCard({
   className,
 }: HomeArticleCardProps) {
   const [mediaStarted, setMediaStarted] = useState(false);
+  const { locale, dir } = useLocale();
+  const CtaArrow = dir === "rtl" ? ArrowLeft : ArrowRight;
+  const copy = usePublicCopy();
+  const { common, article: articleCopy } = copy;
+  const dateLocale = locale === "ar" ? "ar" : "en-GB";
   const Icon = MEDIA_ICONS[article.media_type] ?? FileText;
-  const badge = article.category?.name_ar ?? mediaTypeLabel(article.media_type);
+  const badge =
+    (article.category
+      ? localizedCategoryName(article.category, locale)
+      : null) ?? publicMediaTypeLabelFromCopy(copy, article.media_type);
+  const englishPending = isEnglishArticlePending(article, locale);
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
   const articleHref = articlePath(article.id);
@@ -89,7 +106,9 @@ export function HomeArticleCard({
             type="button"
             className="article-media-poster absolute inset-0 h-full aspect-auto rounded-none"
             onClick={() => setMediaStarted(true)}
-            aria-label={`تشغيل فيديو: ${article.title}`}
+            aria-label={articleCopy.playVideo(
+              englishPending ? articleCopy.englishPendingTitle : article.title,
+            )}
           >
             <PublicArticleCover
               article={article}
@@ -130,13 +149,17 @@ export function HomeArticleCard({
               featured ? "text-xl md:text-2xl" : "text-base md:text-lg",
             )}
           >
-            <span className="inline-flex flex-wrap items-center gap-2">
-              {article.title}
-              <ArticleVerifiedBadge article={article} />
-            </span>
+            {englishPending ? (
+              <PublicArticleEnglishPendingBadge />
+            ) : (
+              <span className="inline-flex flex-wrap items-center gap-2">
+                {article.title}
+                <ArticleVerifiedBadge article={article} />
+              </span>
+            )}
           </h3>
 
-          {article.description && (
+          {!englishPending && article.description && (
             <p
               className={cn(
                 "mt-2 leading-relaxed text-muted-foreground",
@@ -158,7 +181,7 @@ export function HomeArticleCard({
                 fallback={
                   <div className="home-card-listen" aria-hidden>
                     <Play className="size-4 fill-current" />
-                    <span>جاري التحميل…</span>
+                    <span>{common.loading}…</span>
                   </div>
                 }
               >
@@ -176,24 +199,31 @@ export function HomeArticleCard({
                 onClick={() => setMediaStarted(true)}
               >
                 <Play className="size-4 fill-current" />
-                استمع الآن
+                {common.listenNow}
               </button>
             )}
           </div>
         ) : null}
 
-        <Link
-          to={articleHref}
-          className="mt-4 flex items-center justify-between border-t border-border/60 pt-4"
-        >
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/60 pt-4">
           <time className="text-xs text-muted-foreground">
-            {new Date(article.published_at).toLocaleDateString("ar")}
+            {new Date(article.published_at).toLocaleDateString(dateLocale)}
           </time>
-          <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-all duration-300 group-hover:opacity-100">
-            {isAudio ? "استمع الآن" : "اقرأ المزيد"}
-            <ArrowLeft className="size-3.5" />
-          </span>
-        </Link>
+          <div className="flex items-center gap-2">
+            <ArticleTranslateButton
+              articleId={article.id}
+              contentLang={locale}
+              compact
+            />
+            <Link
+              to={articleHref}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-all duration-300 group-hover:opacity-100"
+            >
+              {isAudio ? common.listenNow : common.readMore}
+              <CtaArrow className="size-3.5" />
+            </Link>
+          </div>
+        </div>
       </div>
     </article>
   );

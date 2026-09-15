@@ -1,9 +1,17 @@
 import { usePlatformFeedback } from "@/context/platform-feedback";
+import { useLocale, usePublicCopy } from "@/context/locale";
+import { cn } from "@/lib/utils";
 
-const FAB_ART = "/brand/sabbara-feedback-fab.webp?v=2";
+const FAB_ART = {
+  ar: "/brand/sabbara-feedback-fab.webp?v=2",
+  en: "/brand/sabbara-feedback-fab-en.png?v=1",
+} as const;
 
 export function PlatformFeedbackFab() {
   const { feedbackOpen, openFeedback, trustIndexOpen } = usePlatformFeedback();
+  const { locale } = useLocale();
+  const { feedback } = usePublicCopy();
+  const isEnglish = locale === "en";
 
   if (trustIndexOpen || feedbackOpen) {
     return null;
@@ -12,12 +20,15 @@ export function PlatformFeedbackFab() {
   return (
     <button
       type="button"
-      className="platform-feedback-fab"
+      className={cn(
+        "platform-feedback-fab",
+        isEnglish && "platform-feedback-fab--en",
+      )}
       onClick={openFeedback}
-      aria-label="شاركنا رأيك في منصة صبارة بوست"
+      aria-label={feedback.fabAria}
     >
       <img
-        src={FAB_ART}
+        src={FAB_ART[locale]}
         alt=""
         className="platform-feedback-fab__art"
         loading="lazy"

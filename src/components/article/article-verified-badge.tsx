@@ -1,3 +1,4 @@
+import { usePublicCopy } from "@/context/locale";
 import { articlePassedEditorialVerification } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import type { ArticleStatus } from "@/types";
@@ -64,6 +65,8 @@ export function ArticleVerifiedBadge({
   className,
   compact = false,
 }: ArticleVerifiedBadgeProps) {
+  const { article: articleCopy } = usePublicCopy();
+
   if (!articlePassedEditorialVerification(article)) return null;
 
   return (
@@ -73,13 +76,15 @@ export function ArticleVerifiedBadge({
         compact && "article-verified-badge--compact",
         className,
       )}
-      title="مقال منشور"
+      title={articleCopy.verifiedTitle}
     >
       <VerifiedSeal className="article-verified-badge__icon" />
       {compact ? (
-        <span className="sr-only">موثّق</span>
+        <span className="sr-only">{articleCopy.verifiedLabel}</span>
       ) : (
-        <span className="article-verified-badge__label">موثّق</span>
+        <span className="article-verified-badge__label">
+          {articleCopy.verifiedLabel}
+        </span>
       )}
     </span>
   );

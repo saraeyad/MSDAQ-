@@ -1,5 +1,6 @@
 import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
 import { Button } from "@/components/ui/button";
+import { useLocale, usePublicCopy } from "@/context/locale";
 import { cn } from "@/lib/utils";
 import { categoryPath } from "@/router/routes";
 import type { PublicArticle, PublicPagination } from "@/types";
@@ -37,9 +38,17 @@ export function CategoryFeedView({
   isLoading,
   page,
   onPageChange,
-  emptyTitle = "لا يوجد محتوى منشور حالياً",
-  emptyDescription = "تابعنا للاطلاع على المحتوى القادم.",
+  emptyTitle,
+  emptyDescription,
 }: CategoryFeedViewProps) {
+  const { dir } = useLocale();
+  const { common, categories: categoriesCopy } = usePublicCopy();
+  const resolvedEmptyTitle = emptyTitle ?? categoriesCopy.emptyFeedTitle;
+  const resolvedEmptyDescription =
+    emptyDescription ?? categoriesCopy.emptyFeedDescription;
+  const PrevIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
+  const NextIcon = dir === "rtl" ? ChevronLeft : ChevronRight;
+
   return (
     <div className="pb-16">
       <section className="public-page-hero border-b border-border py-12 md:py-16">
@@ -94,10 +103,10 @@ export function CategoryFeedView({
           <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
             <Sparkles className="mx-auto size-8 text-primary" />
             <p className="mt-4 font-headline text-lg font-semibold">
-              {emptyTitle}
+              {resolvedEmptyTitle}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              {emptyDescription}
+              {resolvedEmptyDescription}
             </p>
           </div>
         ) : (
@@ -122,11 +131,11 @@ export function CategoryFeedView({
                   disabled={page <= 1}
                   onClick={() => onPageChange(page - 1)}
                 >
-                  <ChevronRight className="size-4" />
-                  السابق
+                  <PrevIcon className="size-4" />
+                  {common.previous}
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  صفحة {pagination.current_page} من {pagination.last_page}
+                  {common.pageOf(pagination.current_page, pagination.last_page)}
                 </span>
                 <Button
                   variant="outline"
@@ -134,8 +143,8 @@ export function CategoryFeedView({
                   disabled={page >= pagination.last_page}
                   onClick={() => onPageChange(page + 1)}
                 >
-                  التالي
-                  <ChevronLeft className="size-4" />
+                  {common.next}
+                  <NextIcon className="size-4" />
                 </Button>
               </div>
             )}

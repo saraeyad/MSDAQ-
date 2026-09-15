@@ -1,5 +1,5 @@
 import { BrandLogo } from "@/components/brand/brand-logo";
-import { usePublicCopy } from "@/context/locale";
+import { useLocale, usePublicCopy } from "@/context/locale";
 import {
   buildPublicFooterSections,
   buildStaticFooterLinksFromCopy,
@@ -11,7 +11,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const SOCIAL_LINKS = [
-  { href: "https://cdmcgaza.ps/ar/", label: "الموقع" },
+  { href: "https://cdmcgaza.ps/ar/", labelKey: "website" as const },
   { href: "https://www.instagram.com/cdmcgaza/", label: "Instagram" },
   { href: "https://www.facebook.com/cdmcgaza/?locale=ar_AR", label: "Facebook" },
 ];
@@ -26,10 +26,11 @@ const MAP_EMBED =
 
 export function SiteFooter({ className }: { className?: string }) {
   const { data: categories } = usePublicCategories();
-  const { footer } = usePublicCopy();
+  const { locale } = useLocale();
+  const { footer, footerSocial } = usePublicCopy();
   const sections =
     categories && categories.length > 0
-      ? buildPublicFooterSections(categories)
+      ? buildPublicFooterSections(categories, locale)
       : [];
   const staticLinks = buildStaticFooterLinksFromCopy(footer);
 
@@ -49,13 +50,15 @@ export function SiteFooter({ className }: { className?: string }) {
           <div className="site-footer__social">
             {SOCIAL_LINKS.map((social) => (
               <a
-                key={social.label}
+                key={social.href}
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="site-footer__social-link"
               >
-                {social.label}
+                {"labelKey" in social
+                  ? footerSocial.website
+                  : social.label}
               </a>
             ))}
           </div>

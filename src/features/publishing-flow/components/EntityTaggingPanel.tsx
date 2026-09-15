@@ -29,13 +29,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
@@ -63,10 +57,10 @@ export function tagsFromStaffEntities(
 
 export function tagsToWritePayload(
   tags: LocalEntityTag[],
-  body: string,
+  corpus: string,
 ): EntityWritePayload[] {
   return tags
-    .filter((tag) => tag.match_text && body.includes(tag.match_text))
+    .filter((tag) => tag.match_text && corpus.includes(tag.match_text))
     .map((tag) =>
       tag.id
         ? { id: tag.id, match_text: tag.match_text }
@@ -79,21 +73,48 @@ export function tagsToWritePayload(
     );
 }
 
+export function readTextSelection(target: EventTarget | null): string {
+  if (
+    !(target instanceof HTMLTextAreaElement) &&
+    !(target instanceof HTMLInputElement)
+  ) {
+    return "";
+  }
+  const start = target.selectionStart ?? 0;
+  const end = target.selectionEnd ?? 0;
+  return target.value.slice(start, end);
+}
+
+export interface EntityPreviewBlock {
+  label?: string;
+  text: string;
+}
+
 interface EntityTaggingPanelProps {
-  body: string;
+  corpus: string;
   selection: string;
   tags: LocalEntityTag[];
   onChange: (tags: LocalEntityTag[]) => void;
   onClearSelection?: () => void;
+  heading?: string;
+  hint?: string;
+  dockHint?: string;
+  previewBlocks?: EntityPreviewBlock[];
+  variant?: "studio" | "embedded";
   children: ReactNode;
 }
 
 export function EntityTaggingPanel({
-  body,
+  corpus,
   selection,
   tags,
   onChange,
   onClearSelection,
+  heading = "٢ · محتوى المقال والروابط",
+  hint = "حدّد اسماً في النص ثم اربطه. النص يبقى عادياً — الروابط تُرسم عند القراءة فقط.",
+  dockHint = "حدّد اسماً أو جملة في النص — ستظهر بطاقة الربط فوراً",
+  previewBlocks,
+  variant = "studio",
   children,
 }: EntityTaggingPanelProps) {
   const [open, setOpen] = useState(false);
@@ -103,7 +124,7 @@ export function EntityTaggingPanel({
 
   const liveSelection = selection.trim();
   const hasLiveSelection =
-    liveSelection.length > 0 && body.includes(liveSelection);
+    liveSelection.length > 0 && corpus.includes(liveSelection);
 
   useEffect(() => {
     if (!hasLiveSelection || open) return;
@@ -115,7 +136,11 @@ export function EntityTaggingPanel({
   }, [hasLiveSelection, liveSelection, open]);
 
   const matchText = liveSelection || pinned;
-  const canOpen = matchText.length > 0 && body.includes(matchText);
+  const canOpen = matchText.length > 0 && corpus.includes(matchText);
+  const blocks =
+    previewBlocks ??
+    (corpus.trim() ? [{ text: corpus }] : []);
+  const hasPreviewText = blocks.some((block) => block.text.trim());
 
   const closePick = () => {
     setPickOpen(false);
@@ -129,18 +154,20 @@ export function EntityTaggingPanel({
   };
 
   return (
-    <div className="entity-studio">
+    <div
+      className={cn(
+        "entity-studio",
+        variant === "embedded" && "entity-studio--embedded",
+      )}
+    >
       <header className="entity-studio__head">
         <div className="entity-studio__intro">
           <span className="entity-studio__mark" aria-hidden>
             <Sparkles className="size-3.5" />
           </span>
           <div>
-            <p className="entity-studio__title">٢ · محتوى المقال والروابط</p>
-            <p className="entity-studio__hint">
-              حدّد اسماً في النص ثم اربطه. النص يبقى عادياً — الروابط تُرسم عند
-              القراءة فقط.
-            </p>
+            <p className="entity-studio__title">{heading}</p>
+            <p className="entity-studio__hint">{hint}</p>
           </div>
         </div>
         <span className="entity-studio__count">
@@ -151,15 +178,14 @@ export function EntityTaggingPanel({
       <div
         className={cn(
           "entity-studio__editor",
+          variant === "embedded" && "entity-studio__editor--fields",
           canOpen && "entity-studio__editor--ready",
         )}
       >
         {children}
 
         <div className="entity-studio__dock">
-          <p className="entity-studio__dock-idle">
-            حدّد اسماً أو جملة في النص — ستظهر بطاقة الربط فوراً
-          </p>
+          <p className="entity-studio__dock-idle">{dockHint}</p>
         </div>
       </div>
 
@@ -175,12 +201,14 @@ export function EntityTaggingPanel({
         {tags.length === 0 ? (
           <div className="entity-studio__empty">
             <Link2 className="size-5" />
-            <p>لا روابط بعد — حدّد «معاذ الهمص» أو «المنصة» مثلاً ثم اربطها.</p>
+            <p>
+              لا روابط بعد — حدّد اسماً في العنوان أو الوصف أو النص ثم اربطه.
+            </p>
           </div>
         ) : (
           <ul className="entity-studio__list">
             {tags.map((tag) => {
-              const missing = !body.includes(tag.match_text);
+              const missing = !corpus.includes(tag.match_text);
               return (
                 <li
                   key={tag.key}
@@ -227,8 +255,19 @@ export function EntityTaggingPanel({
         </button>
         {showPreview ? (
           <div className="entity-studio__preview">
-            {body.trim() ? (
-              <ArticleEntityBody text={body} entities={tags} />
+            {hasPreviewText ? (
+              blocks.map((block, index) =>
+                block.text.trim() ? (
+                  <div key={`${block.label ?? "block"}-${index}`}>
+                    {block.label ? (
+                      <p className="entity-studio__preview-label">
+                        {block.label}
+                      </p>
+                    ) : null}
+                    <ArticleEntityBody text={block.text} entities={tags} />
+                  </div>
+                ) : null,
+              )
             ) : (
               <p className="entity-studio__preview-empty">
                 اكتب النص أولاً لتظهر المعاينة.
@@ -296,9 +335,7 @@ function EntitySelectModal({
         <p id="entity-select-title" className="entity-select__kicker">
           المحدد
         </p>
-        <blockquote className="entity-select__quote">
-          «{matchText}»
-        </blockquote>
+        <blockquote className="entity-select__quote">«{matchText}»</blockquote>
         <button
           type="button"
           className="entity-select__cta"
@@ -410,7 +447,8 @@ function EntityTagDialog({
         <DialogHeader>
           <DialogTitle>إلى أين يشير هذا الاسم؟</DialogTitle>
           <DialogDescription>
-            اختر جهة موجودة أو أنشئ وجهة جديدة. النص في المقال لن يتغيّر.
+            اختر جهة موجودة أو أنشئ وجهة جديدة. النص في العنوان أو الوصف أو
+            المحتوى لن يتغيّر.
           </DialogDescription>
         </DialogHeader>
 
@@ -480,7 +518,11 @@ function EntityTagDialog({
               />
             </div>
 
-            <div className="entity-dialog__types" role="radiogroup" aria-label="نوع الرابط">
+            <div
+              className="entity-dialog__types"
+              role="radiogroup"
+              aria-label="نوع الرابط"
+            >
               <button
                 type="button"
                 role="radio"

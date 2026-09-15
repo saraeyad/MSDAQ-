@@ -42,7 +42,7 @@ function ToolPlate({
 }
 
 export function HomeToolsSection() {
-  const { home } = usePublicCopy();
+  const { home, publicToolLabels } = usePublicCopy();
   const { dir } = useLocale();
   const { token, hasPermission } = useAuth();
   const canOpenTools = Boolean(token) && hasPermission(PERMISSIONS.ACCESS_TOOLS);
@@ -69,10 +69,14 @@ export function HomeToolsSection() {
               index={index}
               canOpenTools={canOpenTools}
               label={
-                tool.slug === "speech-to-text" ? home.toolsVoiceTitle : undefined
+                tool.slug === "speech-to-text"
+                  ? home.toolsVoiceTitle
+                  : publicToolLabels[tool.slug]?.label
               }
               description={
-                tool.slug === "speech-to-text" ? home.toolsVoiceLead : undefined
+                tool.slug === "speech-to-text"
+                  ? home.toolsVoiceLead
+                  : publicToolLabels[tool.slug]?.description
               }
             />
           ))}

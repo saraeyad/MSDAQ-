@@ -11,28 +11,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { TtsProcessingInline } from "@/features/tools/components/TtsProcessingInline";
 import { VoiceDraftNotice } from "@/features/tools/components/VoiceDraftNotice";
-import {
-  runWithToolProcessing,
-  ToolProcessingDialog,
-} from "@/features/tools/components/ToolProcessingDialog";
 import { useAuth } from "@/context/auth";
 import { useIsSuperAdmin } from "@/hooks/auth";
+import { useTtsStatusPoll } from "@/hooks/publishing";
 import { getApiErrorMessage } from "@/lib/api";
 import { resolveMediaUrl } from "@/lib/media";
-import { validateTtsText } from "@/lib/publishing";
 import {
   canDeleteVoiceAsset,
   canSaveVoiceAsset,
   formatVoiceAssetSavedMeta,
 } from "@/lib/media";
-import { TTS_PROCESSING_STEPS } from "@/lib/publishing";
+import { TTS_INFLIGHT_STANDALONE_KEY, validateTtsText } from "@/lib/publishing";
 import { ROUTES } from "@/router/routes";
 import { ToolsVoice_APIs, Tts_APIs } from "@/services/api/tools";
 import type { GeneratedAudio, TtsVoice } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ToolPageShell } from "./ToolPageShell";
@@ -46,7 +43,7 @@ export function TextToSpeechToolPage() {
   const [name, setName] = useState("");
   const [draft, setDraft] = useState<GeneratedAudio | null>(null);
   const [ownedDraftId, setOwnedDraftId] = useState<number | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -57,6 +54,54 @@ export function TextToSpeechToolPage() {
   });
 
   const voices = voicesQuery.data ?? [];
+
+  const handlePollCompleted = useCallback((completed: GeneratedAudio) => {
+    setDraft(completed);
+    setOwnedDraftId(completed.id);
+    toast.success("تم إنشاء المسودة — استمع ثم احفظها بالاسم");
+  }, []);
+
+  const handlePollProcessing = useCallback((audioId: number) => {
+    setDraft((prev) =>
+      prev?.id === audioId
+        ? prev
+        : {
+            id: audioId,
+            name: null,
+            status: "processing",
+            audio_url: null,
+            voice,
+            style: style.trim() || null,
+            chunks_total: null,
+            chunks_done: 0,
+            is_saved: false,
+            saved_at: null,
+            created_at: "",
+          },
+    );
+    setOwnedDraftId(audioId);
+  }, [voice, style]);
+
+  const handlePollFailed = useCallback((errorMessage: string | null) => {
+    setDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: "failed",
+            error_message: errorMessage,
+          }
+        : prev,
+    );
+    toast.error(errorMessage?.trim() || "فشل تحويل النص إلى صوت");
+  }, []);
+
+  const ttsPoll = useTtsStatusPoll({
+    storageKey: TTS_INFLIGHT_STANDALONE_KEY,
+    onCompleted: handlePollCompleted,
+    onFailed: handlePollFailed,
+    onProcessing: handlePollProcessing,
+  });
+
   const isSessionOwner =
     draft != null &&
     (ownedDraftId === draft.id ||
@@ -67,7 +112,10 @@ export function TextToSpeechToolPage() {
     ? canDeleteVoiceAsset(draft, user, isSuperAdmin, isSessionOwner)
     : false;
 
-  const generate = async () => {
+  const isBusy = starting || ttsPoll.isProcessing;
+  const draftReady = draft?.status === "completed";
+
+  const startGeneration = async () => {
     const validationError = validateTtsText(text);
     if (validationError) {
       toast.error(validationError);
@@ -78,27 +126,34 @@ export function TextToSpeechToolPage() {
       return;
     }
 
+    ttsPoll.resetPoll();
     setDraft(null);
     setOwnedDraftId(null);
     setName("");
+    setStarting(true);
+
     try {
-      await runWithToolProcessing(setGenerating, async () => {
-        const data = await ToolsVoice_APIs.textToSpeech({
-          text: text.trim(),
-          voice,
-          style: style.trim() || undefined,
-        });
-        setDraft(data);
-        setOwnedDraftId(data.id);
-        toast.success("تم إنشاء المسودة — استمع ثم احفظها بالاسم");
+      const data = await ToolsVoice_APIs.textToSpeech({
+        text: text.trim(),
+        voice,
+        style: style.trim() || undefined,
       });
+      setDraft(data);
+      setOwnedDraftId(data.id);
+      ttsPoll.trackAudio(data);
+
+      if (data.status === "processing") {
+        toast.success("بدأ التوليد — سيتم عرض الصوت عند الانتهاء");
+      }
     } catch (err) {
       toast.error(getApiErrorMessage(err));
+    } finally {
+      setStarting(false);
     }
   };
 
   const save = async () => {
-    if (!draft || !canSave) return;
+    if (!draft || !canSave || !draftReady) return;
     if (!name.trim()) {
       toast.error("أدخل اسماً للملف");
       return;
@@ -122,6 +177,7 @@ export function TextToSpeechToolPage() {
     setDiscarding(true);
     try {
       await ToolsVoice_APIs.deleteGeneratedAudio(draft.id);
+      ttsPoll.resetPoll();
       setDraft(null);
       setOwnedDraftId(null);
       setName("");
@@ -134,27 +190,24 @@ export function TextToSpeechToolPage() {
     }
   };
 
-  const audioUrl = draft
-    ? (resolveMediaUrl(draft.audio_url) ?? draft.audio_url)
-    : null;
+  const audioUrl =
+    draft?.audio_url != null
+      ? (resolveMediaUrl(draft.audio_url) ?? draft.audio_url)
+      : null;
   const savedMeta = draft?.is_saved ? formatVoiceAssetSavedMeta(draft) : null;
+  const showInlineStatus =
+    ttsPoll.uiState.kind !== "idle" &&
+    (ttsPoll.uiState.kind !== "completed" || !draft);
 
   return (
     <ToolPageShell title="تحويل النص إلى صوت">
-      <ToolProcessingDialog
-        open={generating}
-        title="جاري تحويل النص إلى صوت"
-        steps={TTS_PROCESSING_STEPS}
-        description="قد يستغرق التوليد بعض الوقت — لا تغلق الصفحة."
-      />
-
       <VoiceDraftNotice generateLabel="إنشاء" saveLabel="حفظ في المكتبة" />
 
       <Card>
         <CardContent className="space-y-4 p-6">
           <div className="space-y-2">
             <Label>الصوت</Label>
-            <Select value={voice} onValueChange={setVoice}>
+            <Select value={voice} onValueChange={setVoice} disabled={isBusy}>
               <SelectTrigger>
                 <SelectValue placeholder="اختر صوتاً" />
               </SelectTrigger>
@@ -175,6 +228,7 @@ export function TextToSpeechToolPage() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={6}
+              disabled={isBusy}
             />
           </div>
 
@@ -182,32 +236,60 @@ export function TextToSpeechToolPage() {
             placeholder="أسلوب اختياري (style)"
             value={style}
             onChange={(e) => setStyle(e.target.value)}
+            disabled={isBusy}
           />
 
-          <Button
-            onClick={generate}
-            disabled={generating || voicesQuery.isLoading}
-          >
-            {voicesQuery.isLoading && (
-              <Loader2 className="size-4 animate-spin" />
+          {showInlineStatus && (
+            <TtsProcessingInline
+              state={ttsPoll.uiState}
+              onRecheck={() => void ttsPoll.manualRecheck()}
+              rechecking={ttsPoll.rechecking}
+            />
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => void startGeneration()}
+              disabled={isBusy || voicesQuery.isLoading}
+            >
+              {(starting || ttsPoll.isProcessing) && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              إنشاء (مسودة)
+            </Button>
+            {ttsPoll.uiState.kind === "failed" && (
+              <Button
+                variant="outline"
+                onClick={() => void startGeneration()}
+                disabled={isBusy || voicesQuery.isLoading}
+              >
+                إعادة المحاولة
+              </Button>
             )}
-            إنشاء (مسودة)
-          </Button>
+          </div>
         </CardContent>
       </Card>
 
       {draft && (
         <Card>
           <CardContent className="space-y-4 p-6">
-            {!draft.is_saved && (
+            {!draft.is_saved && draftReady && (
               <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-200">
                 مسودة #{draft.id} — غير محفوظة. احفظها بالاسم قبل المغادرة.
               </p>
             )}
 
+            {draft.status === "processing" && !showInlineStatus && (
+              <TtsProcessingInline
+                state={ttsPoll.uiState}
+                onRecheck={() => void ttsPoll.manualRecheck()}
+                rechecking={ttsPoll.rechecking}
+              />
+            )}
+
             {audioUrl && <audio controls src={audioUrl} className="w-full" />}
 
-            {!draft.is_saved && canSave && (
+            {!draft.is_saved && draftReady && canSave && (
               <>
                 <Input
                   placeholder="اسم الملف في المكتبة"
@@ -238,6 +320,22 @@ export function TextToSpeechToolPage() {
               </>
             )}
 
+            {!draftReady && canDiscard && (
+              <Button
+                variant="outline"
+                onClick={() => setConfirmDiscard(true)}
+                disabled={discarding}
+                className="text-destructive hover:text-destructive"
+              >
+                {discarding ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Trash2 className="size-4" />
+                )}
+                حذف المسودة
+              </Button>
+            )}
+
             {draft.is_saved && (
               <p className="text-sm text-success">
                 تم الحفظ في المكتبة
@@ -245,13 +343,15 @@ export function TextToSpeechToolPage() {
               </p>
             )}
 
-            <Button asChild variant="outline" size="sm">
-              <Link
-                to={ROUTES.NEWSROOM_TOOL.replace(":tool", "generated-audios")}
-              >
-                الانتقال إلى مكتبة الملفات الصوتية
-              </Link>
-            </Button>
+            {draftReady && (
+              <Button asChild variant="outline" size="sm">
+                <Link
+                  to={ROUTES.NEWSROOM_TOOL.replace(":tool", "generated-audios")}
+                >
+                  الانتقال إلى مكتبة الملفات الصوتية
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

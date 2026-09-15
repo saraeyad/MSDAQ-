@@ -85,7 +85,7 @@ async function createServer() {
       }
 
       try {
-        const result = await handleSsrRequest(url, origin);
+        const result = await handleSsrRequest(url, origin, req.headers.cookie);
 
         if (result) {
           res

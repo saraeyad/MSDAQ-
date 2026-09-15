@@ -1,12 +1,14 @@
+import { persistPublicLocale } from "@/lib/i18n/locale-request";
+import { invalidatePublicQueries } from "@/lib/i18n/invalidate-public-queries";
 import {
   LOCALE_META,
-  LOCALE_STORAGE_KEY,
   LOCALE_SWITCH_READY,
   readStoredLocale,
   type Locale,
 } from "@/lib/i18n/types";
 import { getPublicCopy, type PublicCopy } from "@/lib/i18n/public-dictionary";
 import { loadLatinUiFont } from "@/lib/site/optional-fonts";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   useCallback,
@@ -38,18 +40,28 @@ function applyDocumentLocale(locale: Locale) {
   if (root) root.dir = meta.dir;
 }
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => readStoredLocale());
+export function LocaleProvider({
+  children,
+  initialLocale,
+}: {
+  children: ReactNode;
+  initialLocale?: Locale;
+}) {
+  const queryClient = useQueryClient();
+  const [locale, setLocaleState] = useState<Locale>(
+    () => initialLocale ?? readStoredLocale(),
+  );
 
-  const setLocale = useCallback((next: Locale) => {
-    if (!LOCALE_SWITCH_READY) return;
-    setLocaleState(next);
-    try {
-      localStorage.setItem(LOCALE_STORAGE_KEY, next);
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const setLocale = useCallback(
+    (next: Locale) => {
+      if (!LOCALE_SWITCH_READY) return;
+      if (next === locale) return;
+      setLocaleState(next);
+      persistPublicLocale(next);
+      invalidatePublicQueries(queryClient);
+    },
+    [locale, queryClient],
+  );
 
   const toggleLocale = useCallback(() => {
     setLocale(locale === "ar" ? "en" : "ar");

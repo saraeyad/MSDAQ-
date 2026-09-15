@@ -1,6 +1,11 @@
 import { PublicArticleCover } from "@/components/article/cover-image";
+import {
+  isEnglishArticlePending,
+  PublicArticleEnglishPendingBadge,
+} from "@/features/public-site/components/PublicArticleEnglishPending";
 import { useLocale, usePublicCopy } from "@/context/locale";
-import { mediaTypeLabel } from "@/lib/media";
+import { localizedCategoryName } from "@/lib/i18n/localized-category";
+import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import type { PublicArticle } from "@/types";
@@ -27,7 +32,8 @@ export function NewsSlider({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const { locale, dir } = useLocale();
-  const { home } = usePublicCopy();
+  const copy = usePublicCopy();
+  const { home, article } = copy;
 
   const isRail = variant === "rail";
   const isBanner = variant === "banner";
@@ -70,11 +76,15 @@ export function NewsSlider({
 
   const current = slides[index];
   const category =
-    current.category?.name_ar ?? mediaTypeLabel(current.media_type);
+    (current.category
+      ? localizedCategoryName(current.category, locale)
+      : null) ??
+    publicMediaTypeLabelFromCopy(copy, current.media_type);
   const published = new Date(current.published_at).toLocaleDateString(
     locale === "ar" ? "ar" : "en-GB",
     { day: "numeric", month: "short" },
   );
+  const englishPending = isEnglishArticlePending(current, locale);
 
   if (isRail) {
     return (
@@ -99,7 +109,13 @@ export function NewsSlider({
               <span aria-hidden>·</span>
               <time dateTime={current.published_at}>{published}</time>
             </p>
-            <h2 className="news-rail__title">{current.title}</h2>
+            <h2 className="news-rail__title">
+              {englishPending ? (
+                <PublicArticleEnglishPendingBadge />
+              ) : (
+                current.title
+              )}
+            </h2>
           </div>
         </Link>
 
@@ -110,7 +126,7 @@ export function NewsSlider({
             </span>
             <button
               type="button"
-              aria-label={locale === "ar" ? "الخبر السابق" : "Previous story"}
+              aria-label={article.prevStory}
               onClick={() => goTo(index - 1)}
               className="news-rail__nav"
             >
@@ -118,7 +134,7 @@ export function NewsSlider({
             </button>
             <button
               type="button"
-              aria-label={locale === "ar" ? "الخبر التالي" : "Next story"}
+              aria-label={article.nextStory}
               onClick={() => goTo(index + 1)}
               className="news-rail__nav"
             >
@@ -157,9 +173,13 @@ export function NewsSlider({
             {category}
           </span>
           <h2 className="mt-3 max-w-3xl font-headline text-xl font-bold leading-snug text-white md:text-3xl">
-            {current.title}
+            {englishPending ? (
+              <PublicArticleEnglishPendingBadge className="border-white/30 bg-white/10 text-white" />
+            ) : (
+              current.title
+            )}
           </h2>
-          {current.description && (
+          {!englishPending && current.description && (
             <p className="mt-3 line-clamp-2 max-w-2xl text-sm text-white/90 md:text-base">
               {current.description}
             </p>
@@ -171,7 +191,7 @@ export function NewsSlider({
         <>
           <button
             type="button"
-            aria-label={locale === "ar" ? "الخبر السابق" : "Previous story"}
+            aria-label={article.prevStory}
             onClick={() => goTo(index - 1)}
             className="absolute start-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100"
           >
@@ -179,7 +199,7 @@ export function NewsSlider({
           </button>
           <button
             type="button"
-            aria-label={locale === "ar" ? "الخبر التالي" : "Next story"}
+            aria-label={article.nextStory}
             onClick={() => goTo(index + 1)}
             className="absolute end-4 top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/70 group-hover:opacity-100"
           >

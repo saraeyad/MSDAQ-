@@ -17,6 +17,8 @@ import {
   fetchPublicCategory,
   PublicApiNotFoundError,
 } from "@/lib/api";
+import { readLocaleForSsr } from "@/lib/i18n/locale-request";
+import type { Locale } from "@/lib/i18n/types";
 import type { PublicArticle, PublicCategoryDetail } from "@/types";
 import {
   dehydrate,
@@ -41,6 +43,7 @@ const ARTICLE_ROUTE = /^\/articles\/([^/]+)\/?$/;
 const CATEGORY_ROUTE = /^\/categories\/([^/]+)\/?$/;
 
 function createSsrQueryClient(options: {
+  locale: Locale;
   article?: PublicArticle;
   articleUrlId?: string;
   categoryData?: PublicCategoryDetail;
@@ -55,12 +58,12 @@ function createSsrQueryClient(options: {
 
   if (options.article) {
     client.setQueryData(
-      ["public-article", String(options.article.id)],
+      ["public-article", options.locale, String(options.article.id)],
       options.article,
     );
     if (options.articleUrlId) {
       client.setQueryData(
-        ["public-article", options.articleUrlId],
+        ["public-article", options.locale, options.articleUrlId],
         options.article,
       );
     }
@@ -68,7 +71,7 @@ function createSsrQueryClient(options: {
 
   if (options.categoryData && options.slug) {
     client.setQueryData(
-      ["public-category", options.slug, options.page ?? 1],
+      ["public-category", options.locale, options.slug, options.page ?? 1],
       options.categoryData,
     );
   }
@@ -80,6 +83,7 @@ function renderPageTree(
   url: string,
   queryClient: QueryClient,
   origin: string,
+  locale: Locale,
 ): { appHtml: string; head: string; dehydratedState: DehydratedState } {
   const helmetContext: { helmet?: HelmetServerState } = {};
 
@@ -87,7 +91,7 @@ function renderPageTree(
     <HelmetProvider context={helmetContext}>
       <QueryClientProvider client={queryClient}>
         <SiteOriginProvider origin={origin}>
-          <LocaleProvider>
+          <LocaleProvider initialLocale={locale}>
             <AuthProvider>
               <StaticRouter location={url}>
                 <AppRoutes />
@@ -118,20 +122,26 @@ function renderPageTree(
 export async function handleSsrRequest(
   url: string,
   origin: string,
+  cookieHeader?: string | null,
 ): Promise<SsrPageResult | null> {
   const pathname = url.split("?")[0] ?? url;
   const pageParam = new URL(url, "http://ssr.local").searchParams.get("page");
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
+  const locale = readLocaleForSsr(cookieHeader);
 
   const articleMatch = pathname.match(ARTICLE_ROUTE);
   if (articleMatch) {
     const id = decodeArticleIdParam(articleMatch[1]!);
-    const article = await fetchPublicArticle(id);
+    const article = await fetchPublicArticle(id, locale);
     const jsonLd = buildArticleJsonLd(article, origin);
     const jsonLdScript = renderJsonLdScript(jsonLd);
 
-    const queryClient = createSsrQueryClient({ article, articleUrlId: id });
-    const rendered = renderPageTree(pathname, queryClient, origin);
+    const queryClient = createSsrQueryClient({
+      locale,
+      article,
+      articleUrlId: id,
+    });
+    const rendered = renderPageTree(pathname, queryClient, origin, locale);
 
     return {
       ...rendered,
@@ -143,17 +153,18 @@ export async function handleSsrRequest(
   const categoryMatch = pathname.match(CATEGORY_ROUTE);
   if (categoryMatch) {
     const slug = decodeURIComponent(categoryMatch[1]!);
-    const categoryData = await fetchPublicCategory(slug, page);
+    const categoryData = await fetchPublicCategory(slug, page, locale);
     const jsonLdScript = renderJsonLdScript(
       buildCategoryJsonLd(categoryData.category, origin),
     );
     const categoryUrl = page > 1 ? `${pathname}?page=${page}` : pathname;
     const queryClient = createSsrQueryClient({
+      locale,
       categoryData,
       slug,
       page,
     });
-    const rendered = renderPageTree(categoryUrl, queryClient, origin);
+    const rendered = renderPageTree(categoryUrl, queryClient, origin, locale);
 
     return {
       ...rendered,

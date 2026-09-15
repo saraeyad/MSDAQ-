@@ -3,7 +3,7 @@ export type Locale = "ar" | "en";
 export const LOCALE_STORAGE_KEY = "sabbara-locale:v1";
 
 /** Public language switch — turn on when English copy is ready. */
-export const LOCALE_SWITCH_READY = false;
+export const LOCALE_SWITCH_READY = true;
 
 export const LOCALE_META: Record<
   Locale,

@@ -99,6 +99,13 @@ export interface PublicArticleCategory {
   name_en?: string;
 }
 
+export interface StaffArticleTranslation {
+  title: string | null;
+  description: string | null;
+  content: string | null;
+  translated_at: string | null;
+}
+
 export interface StaffArticle {
   /** Sqid string in production (e.g. "AeWxagPl"); numeric in some envs. */
   id: number | string;
@@ -133,6 +140,8 @@ export interface StaffArticle {
   maxReviewsCount?: number | null;
   hasReachedLimit?: boolean;
   verification?: ArticleVerification;
+  /** English DeepL output — staff always receive both languages. */
+  translation?: StaffArticleTranslation;
   created_at: string;
   updated_at: string;
 }
@@ -260,14 +269,17 @@ export interface PublicArticle {
   author?: { id: number; name: string };
   entities?: PublicArticleEntity[];
   category?: PublicArticleCategory;
-  /** Cover thumb on list/show. Full-size cover + caption live on GET .../media. */
+  /** Cover thumb on list, full-size on show — inline in list/show responses. */
   cover_image: string | null;
   published_at: string;
+  /** Language of the returned text fields (may differ from the requested lang). */
+  lang?: "ar" | "en";
+  /** False for English when translation is not ready yet (text may be Arabic fallback). */
+  is_translated?: boolean;
   seo?: ArticleSeo;
   has_reached_review_limit?: boolean;
   /** @deprecated Prefer `has_reached_review_limit`. */
   hasReachedLimit?: boolean;
-  /** Not on public list/show — use GET .../media. */
   cover_description?: string | null;
   images?: ArticleImage[];
   video_poster?: string | null;

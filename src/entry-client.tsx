@@ -39,10 +39,10 @@ const app = (
   <StrictMode>
     <HelmetProvider>
       <NuqsAdapter>
-        <LocaleProvider>
-          <AuthProvider>
-            <SiteOriginProvider>
-              <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <LocaleProvider>
+            <AuthProvider>
+              <SiteOriginProvider>
                 {dehydratedState ? (
                   <HydrationBoundary state={dehydratedState}>
                     <AppRouter />
@@ -51,10 +51,10 @@ const app = (
                   <AppRouter />
                 )}
                 <Toaster position="top-center" expand visibleToasts={4} />
-              </QueryClientProvider>
-            </SiteOriginProvider>
-          </AuthProvider>
-        </LocaleProvider>
+              </SiteOriginProvider>
+            </AuthProvider>
+          </LocaleProvider>
+        </QueryClientProvider>
       </NuqsAdapter>
     </HelmetProvider>
   </StrictMode>

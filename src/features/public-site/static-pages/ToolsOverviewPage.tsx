@@ -1,8 +1,6 @@
 import { useAuth } from "@/context/auth";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import {
-  CATEGORY_DESCRIPTIONS,
-  CATEGORY_LABELS,
   TOOL_REGISTRY,
   type ToolCategory,
   type ToolConfigEntry,
@@ -19,44 +17,26 @@ const CATEGORY_ORDER: ToolCategory[] = [
   "editor",
 ];
 
-const CATEGORY_LABELS_EN: Record<ToolCategory, string> = {
-  editor: "Editing",
-  voice: "Voice",
-  editorial: "Editorial",
-  image: "Images & sources",
-};
-
-const CATEGORY_DESCRIPTIONS_EN: Record<ToolCategory, string> = {
-  editor: "Sharpen wording before a story goes out",
-  voice: "Transcribe, generate, and keep audio in the library",
-  editorial: "Standards, credibility, and local voice",
-  image: "Check pictures and the sites they come from",
-};
-
 function toolHref(slug: string, canOpenTools: boolean) {
   return canOpenTools ? `/newsroom/tools/${slug}` : ROUTES.LOGIN;
 }
 
 export default function ToolsOverviewPage() {
-  const { toolsPage } = usePublicCopy();
-  const { locale, dir } = useLocale();
+  const { toolsPage, toolsCategories, publicToolLabels } = usePublicCopy();
+  const { dir } = useLocale();
   const { token, hasPermission } = useAuth();
   const canOpenTools = Boolean(token) && hasPermission(PERMISSIONS.ACCESS_TOOLS);
   const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
-
-  const labels = locale === "en" ? CATEGORY_LABELS_EN : CATEGORY_LABELS;
-  const descriptions =
-    locale === "en" ? CATEGORY_DESCRIPTIONS_EN : CATEGORY_DESCRIPTIONS;
 
   const groups = useMemo(
     () =>
       CATEGORY_ORDER.map((category) => ({
         category,
-        label: labels[category],
-        description: descriptions[category],
+        label: toolsCategories[category].label,
+        description: toolsCategories[category].description,
         tools: TOOL_REGISTRY.filter((tool) => tool.category === category),
       })).filter((group) => group.tools.length > 0),
-    [descriptions, labels],
+    [toolsCategories],
   );
 
   let runningIndex = 0;
@@ -110,6 +90,13 @@ export default function ToolsOverviewPage() {
                     canOpenTools={canOpenTools}
                     openLabel={toolsPage.openTool}
                     Arrow={Arrow}
+                    label={
+                      publicToolLabels[tool.slug]?.label ?? tool.label
+                    }
+                    description={
+                      publicToolLabels[tool.slug]?.description ??
+                      tool.description
+                    }
                   />
                 );
               })}
@@ -127,12 +114,16 @@ function ToolCard({
   canOpenTools,
   openLabel,
   Arrow,
+  label,
+  description,
 }: {
   tool: ToolConfigEntry;
   index: number;
   canOpenTools: boolean;
   openLabel: string;
   Arrow: typeof ArrowLeft;
+  label: string;
+  description: string;
 }) {
   const Icon = tool.icon;
   return (
@@ -144,8 +135,8 @@ function ToolCard({
       <span className="tools-folio-card__icon" aria-hidden>
         <Icon className="size-5" strokeWidth={1.75} />
       </span>
-      <h3 className="tools-folio-card__title">{tool.label}</h3>
-      <p className="tools-folio-card__desc">{tool.description}</p>
+      <h3 className="tools-folio-card__title">{label}</h3>
+      <p className="tools-folio-card__desc">{description}</p>
       <span className="tools-folio-card__open">
         {openLabel}
         <Arrow className="size-4" />

@@ -4,14 +4,18 @@ import { derivePublishGate } from "@/lib/publishing";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { useQuery } from "@tanstack/react-query";
 
-export function usePublishGate(articleId: number | string | undefined) {
+export function usePublishGate(
+  articleId: number | string | undefined,
+  options?: { loadMedia?: boolean },
+) {
+  const loadMedia = options?.loadMedia ?? false;
   const query = useQuery({
     queryKey: ["staff-article", articleId],
     queryFn: () => ArticlesStaff_APIs.getArticle(articleId!),
     enabled: !!articleId,
     refetchInterval: 30_000,
   });
-  const mediaQuery = useStaffArticleMedia(articleId, !!articleId);
+  const mediaQuery = useStaffArticleMedia(articleId, !!articleId && loadMedia);
   const article = query.data
     ? mergeArticleMedia(query.data, mediaQuery.data)
     : query.data;

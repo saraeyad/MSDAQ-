@@ -1,4 +1,8 @@
 import type { Locale } from "@/lib/i18n/types";
+import {
+  PUBLIC_STATIC_COPY,
+  type PublicStaticCopy,
+} from "@/lib/i18n/public-static-copy";
 
 export type PublicCopy = {
   brand: {
@@ -127,7 +131,7 @@ export type PublicCopy = {
     valuesLead: string;
     values: { title: string; body: string }[];
   };
-};
+} & PublicStaticCopy;
 
 const ar: PublicCopy = {
   brand: {
@@ -194,13 +198,13 @@ const ar: PublicCopy = {
   },
   footer: {
     tagline:
-      "صبارة بوست — منصة إعلامية موثوقة تمكّن المجتمع من مواجهة المعلومات المضللة.",
+      "صبّارة بوست — منصة إعلامية موثوقة تمكّن المجتمع من مواجهة المعلومات المضللة.",
     sections: "الأقسام",
     info: "معلومات",
     location: "غزة، فلسطين",
     mapHeading: "موقعنا",
-    mapTitle: "موقع صبارة بوست على الخريطة",
-    copyright: (year) => `© ${year} صبارة بوست — جميع الحقوق محفوظة`,
+    mapTitle: "موقع صبّارة بوست على الخريطة",
+    copyright: (year) => `© ${year} صبّارة بوست — جميع الحقوق محفوظة`,
     aboutUs: "من نحن",
     partners: "شركاؤنا",
     sitePolicy: "سياسة الموقع",
@@ -284,6 +288,7 @@ const ar: PublicCopy = {
       },
     ],
   },
+  ...PUBLIC_STATIC_COPY.ar,
 };
 
 const en: PublicCopy = {
@@ -443,6 +448,7 @@ const en: PublicCopy = {
       },
     ],
   },
+  ...PUBLIC_STATIC_COPY.en,
 };
 
 export const PUBLIC_COPY: Record<Locale, PublicCopy> = { ar, en };

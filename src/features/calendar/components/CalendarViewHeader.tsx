@@ -147,7 +147,7 @@ export function CalendarViewHeader({
                   إضافة
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent dir="rtl" align="end">
                 {hasManageTasks && (
                   <DropdownMenuItem onClick={onAddTask} className="gap-2">
                     <ClipboardList className="size-4" />

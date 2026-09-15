@@ -1,3 +1,4 @@
+import { usePublicCopy } from "@/context/locale";
 import { PodcastAudioPlayer } from "@/components/podcast-audio-player";
 import {
   useLazyArticleMedia,
@@ -31,6 +32,7 @@ export function PublicArticleAudioPlayer({
   onPlaybackProgress,
   startOnMount = false,
 }: PublicArticleAudioPlayerProps) {
+  const { articleMedia } = usePublicCopy();
   const { media, isLoading, request, requested } = useLazyArticleMedia(
     articleId,
     scope,
@@ -45,7 +47,7 @@ export function PublicArticleAudioPlayer({
 
   if (requested && media && !fileUrl && !soundcloudUrl && !externalUrl) {
     return (
-      <p className="text-sm text-muted-foreground">لا يتوفر مصدر صوتي</p>
+      <p className="text-sm text-muted-foreground">{articleMedia.noAudio}</p>
     );
   }
 
@@ -58,7 +60,7 @@ export function PublicArticleAudioPlayer({
         className="text-sm font-medium text-primary hover:underline"
         onClick={(event) => event.stopPropagation()}
       >
-        استمع على المنصة الخارجية
+        {articleMedia.listenExternal}
       </a>
     );
   }

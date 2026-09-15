@@ -9,25 +9,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  runWithToolProcessing,
-  ToolProcessingDialog,
-} from "@/features/tools/components/ToolProcessingDialog";
+import { TtsProcessingInline } from "@/features/tools/components/TtsProcessingInline";
+import { getToolBySlug } from "@/features/tools/tool-config";
+import { useTtsStatusPoll } from "@/hooks/publishing";
 import { getApiErrorMessage } from "@/lib/api";
 import { resolveMediaUrl } from "@/lib/media";
-import { getToolBySlug } from "@/features/tools/tool-config";
-import { TTS_PROCESSING_STEPS } from "@/lib/publishing";
+import { ttsInflightArticleKey } from "@/lib/publishing";
+import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
+import { Tts_APIs } from "@/services/api/tools";
+import type { GeneratedAudio } from "@/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 
 const LOCALIZATION_LABEL =
   getToolBySlug("localization")?.label ?? "التبسيط واللهجة";
 const TTS_LABEL =
   getToolBySlug("text-to-speech")?.label ?? "تحويل النص إلى صوت";
-import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
-import { Tts_APIs } from "@/services/api/tools";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+
+const ARTICLE_TTS_STYLE = "اقرأ بنبرة إخبارية رسمية وهادئة";
 
 interface Step6LocalizeProps {
   articleId: number | string;
@@ -42,7 +43,6 @@ interface Step6LocalizeProps {
 
 export function Step6Localize({
   articleId,
-  bodyFormal = "",
   bodySimplified: initialSimplified = "",
   bodyDialect: initialDialect = "",
   generatedAudio: initialGeneratedAudio = "",
@@ -59,12 +59,48 @@ export function Step6Localize({
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [voice, setVoice] = useState("");
-  const [generatingTts, setGeneratingTts] = useState(false);
+  const [startingTts, setStartingTts] = useState(false);
 
   const { data: voices } = useQuery({
     queryKey: ["tts-voices"],
     queryFn: Tts_APIs.getVoices,
   });
+
+  const refreshArticleMedia = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ["staff-article", String(articleId)],
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ["staff", "article-media", String(articleId)],
+    });
+  }, [articleId, queryClient]);
+
+  const handleTtsCompleted = useCallback(
+    async (audio: GeneratedAudio) => {
+      const url =
+        audio.audio_url != null
+          ? (resolveMediaUrl(audio.audio_url) ?? audio.audio_url)
+          : "";
+      if (url) {
+        setGeneratedAudio(url);
+      }
+      await refreshArticleMedia();
+      toast.success("تم توليد النسخة الصوتية");
+    },
+    [refreshArticleMedia],
+  );
+
+  const handleTtsFailed = useCallback((errorMessage: string | null) => {
+    toast.error(errorMessage?.trim() || "فشل تحويل النص إلى صوت");
+  }, []);
+
+  const ttsPoll = useTtsStatusPoll({
+    storageKey: ttsInflightArticleKey(articleId),
+    onCompleted: (audio) => void handleTtsCompleted(audio),
+    onFailed: handleTtsFailed,
+  });
+
+  const isTtsBusy = startingTts || ttsPoll.isProcessing;
 
   const generate = async () => {
     setGenerating(true);
@@ -100,36 +136,26 @@ export function Step6Localize({
 
   const handleTts = async () => {
     if (!voice) return;
+    ttsPoll.resetPoll();
+    setStartingTts(true);
     try {
-      await runWithToolProcessing(setGeneratingTts, async () => {
-        const data = await ArticlesStaff_APIs.textToSpeech(articleId, {
-          voice,
-          style: "اقرأ بنبرة إخبارية رسمية وهادئة",
-        });
-        const url = resolveMediaUrl(data.audio_url) ?? data.audio_url;
-        setGeneratedAudio(url);
-        await queryClient.invalidateQueries({
-          queryKey: ["staff-article", String(articleId)],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["staff", "article-media", String(articleId)],
-        });
-        toast.success("تم توليد النسخة الصوتية");
+      const data = await ArticlesStaff_APIs.textToSpeech(articleId, {
+        voice,
+        style: ARTICLE_TTS_STYLE,
       });
+      ttsPoll.trackAudio(data);
+      if (data.status === "processing") {
+        toast.success("بدأ التوليد — سيتم عرض الصوت عند الانتهاء");
+      }
     } catch (err) {
       toast.error(getApiErrorMessage(err));
+    } finally {
+      setStartingTts(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <ToolProcessingDialog
-        open={generatingTts}
-        title="جاري تحويل النص إلى صوت"
-        steps={TTS_PROCESSING_STEPS}
-        className="publish-flow-processing"
-      />
-
       <p className="text-muted-foreground">
         {LOCALIZATION_LABEL} اختياري. يجب مراجعة كل نسخة يدوياً قبل الحفظ.
       </p>
@@ -159,8 +185,12 @@ export function Step6Localize({
 
       <div className="publish-flow-card">
         <h3 className="publish-flow-card__title">{TTS_LABEL} (اختياري)</h3>
-        <div className="flex flex-wrap gap-3">
-          <Select value={voice || undefined} onValueChange={setVoice}>
+        <div className="flex flex-wrap items-center gap-3">
+          <Select
+            value={voice || undefined}
+            onValueChange={setVoice}
+            disabled={isTtsBusy}
+          >
             <SelectTrigger className="w-48">
               <SelectValue placeholder="اختر الصوت" />
             </SelectTrigger>
@@ -174,12 +204,34 @@ export function Step6Localize({
           </Select>
           <Button
             variant="outline"
-            onClick={handleTts}
-            disabled={!voice || generatingTts}
+            onClick={() => void handleTts()}
+            disabled={!voice || isTtsBusy}
           >
+            {(startingTts || ttsPoll.isProcessing) && (
+              <Loader2 className="size-4 animate-spin" />
+            )}
             {TTS_LABEL}
           </Button>
+          {ttsPoll.uiState.kind === "failed" && (
+            <Button
+              variant="outline"
+              onClick={() => void handleTts()}
+              disabled={!voice || isTtsBusy}
+            >
+              إعادة المحاولة
+            </Button>
+          )}
         </div>
+
+        {ttsPoll.uiState.kind !== "idle" &&
+          ttsPoll.uiState.kind !== "completed" && (
+            <TtsProcessingInline
+              state={ttsPoll.uiState}
+              onRecheck={() => void ttsPoll.manualRecheck()}
+              rechecking={ttsPoll.rechecking}
+            />
+          )}
+
         {generatedAudio && (
           <audio controls className="w-full" src={generatedAudio} />
         )}

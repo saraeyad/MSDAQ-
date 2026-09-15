@@ -2,8 +2,10 @@ import { SmartEditorToolbar } from "@/features/tools/smart-editor/SmartEditorToo
 import { TranscriptProcessingInline } from "@/features/tools/components/TranscriptProcessingInline";
 import { Button } from "@/components/ui/button";
 import { FileUploadProgressCard } from "@/components/ui/file-upload-progress";
+import { articleEntityCorpus } from "@/lib/articles/entity-links";
 import {
   EntityTaggingPanel,
+  readTextSelection,
   tagsFromStaffEntities,
   tagsToWritePayload,
   type LocalEntityTag,
@@ -18,9 +20,10 @@ import { resolveMediaUrl } from "@/lib/media";
 import { sttInflightArticleKey } from "@/lib/publishing";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import type { ArticleImage, StaffArticleEntity } from "@/types";
+import { useStaffArticleMedia } from "@/hooks/useLazyArticleMedia";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Mic, PenLine, Upload } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { getToolBySlug } from "@/features/tools/tool-config";
@@ -32,6 +35,10 @@ const STT_LABEL =
 interface Step3BodyProps {
   articleId: number | string;
   initialBody?: string | null;
+  initialTitle?: string | null;
+  initialDescription?: string | null;
+  initialSimplified?: string | null;
+  initialDialect?: string | null;
   images?: ArticleImage[];
   initialEntities?: StaffArticleEntity[];
   onComplete: () => void;
@@ -41,6 +48,10 @@ interface Step3BodyProps {
 export function Step3Body({
   articleId,
   initialBody = "",
+  initialTitle = "",
+  initialDescription = "",
+  initialSimplified = "",
+  initialDialect = "",
   images = [],
   initialEntities = [],
   onComplete,
@@ -53,6 +64,7 @@ export function Step3Body({
     tagsFromStaffEntities(initialEntities),
   );
   const [bodyImages, setBodyImages] = useState(images);
+  const { data: articleMedia } = useStaffArticleMedia(articleId, true);
   const [saving, setSaving] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
@@ -62,6 +74,24 @@ export function Step3Body({
   );
   const imageRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (articleMedia?.images?.length) {
+      setBodyImages(articleMedia.images);
+    }
+  }, [articleMedia?.images]);
+
+  const corpus = useMemo(
+    () =>
+      articleEntityCorpus(
+        initialTitle,
+        initialDescription,
+        body,
+        initialSimplified,
+        initialDialect,
+      ),
+    [body, initialDescription, initialDialect, initialSimplified, initialTitle],
+  );
 
   const handlePollCompleted = useCallback((transcript: { transcript?: string | null }) => {
     const text = transcript.transcript?.trim();
@@ -91,7 +121,7 @@ export function Step3Body({
     try {
       await ArticlesStaff_APIs.updateArticle(articleId, {
         content_formal: body,
-        entities: tagsToWritePayload(entityTags, body),
+        entities: tagsToWritePayload(entityTags, corpus),
       });
       await queryClient.invalidateQueries({
         queryKey: ["staff-article", String(articleId)],
@@ -273,22 +303,19 @@ export function Step3Body({
       )}
 
       <EntityTaggingPanel
-        body={body}
+        corpus={corpus}
         selection={selection}
         tags={entityTags}
         onChange={setEntityTags}
         onClearSelection={() => setSelection("")}
+        hint="حدّد اسماً في النص ثم اربطه. الروابط تظهر أيضاً في العنوان والوصف إن وُجد نفس الاسم."
+        previewBlocks={[{ label: "المحتوى", text: body }]}
       >
         <Textarea
           rows={16}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          onSelect={(e) => {
-            const target = e.currentTarget;
-            setSelection(
-              target.value.slice(target.selectionStart, target.selectionEnd),
-            );
-          }}
+          onSelect={(e) => setSelection(readTextSelection(e.currentTarget))}
           className="entity-studio__textarea font-body text-base leading-relaxed"
         />
       </EntityTaggingPanel>

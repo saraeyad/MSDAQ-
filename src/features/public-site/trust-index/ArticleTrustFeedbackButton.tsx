@@ -1,3 +1,4 @@
+import { usePublicCopy } from "@/context/locale";
 import { OliveBranch } from "@/components/brand/olive-branch";
 import { MessageSquareQuote } from "lucide-react";
 
@@ -10,10 +11,11 @@ export function ArticleTrustFeedbackButton({
   onClick,
   disabled = false,
 }: ArticleTrustFeedbackButtonProps) {
+  const { trustIndex } = usePublicCopy();
   return (
     <div className="article-trust-feedback-cta">
       <p className="article-trust-feedback-cta__lead">
-        ما مدى ثقتك بهذا المحتوى؟ شاركنا تقييمك — مجهول ويستغرق دقيقة.
+        {trustIndex.articleRatePrompt}
       </p>
       <button
         type="button"
@@ -23,7 +25,7 @@ export function ArticleTrustFeedbackButton({
       >
         <OliveBranch className="article-trust-feedback-cta__branch" />
         <MessageSquareQuote className="article-trust-feedback-cta__icon" aria-hidden />
-        <span>قيّم هذا المقال</span>
+        <span>{trustIndex.articleRateButton}</span>
         <OliveBranch flip className="article-trust-feedback-cta__branch" />
       </button>
     </div>

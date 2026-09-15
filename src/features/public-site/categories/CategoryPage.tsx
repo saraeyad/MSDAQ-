@@ -1,4 +1,5 @@
 import { CategoryFeedView } from "@/features/public-site/categories/CategoryFeedView";
+import { useLocale, usePublicCopy } from "@/context/locale";
 import { usePublicCategories } from "@/hooks/public";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PublicPageHead } from "@/components/seo/PublicPageHead";
@@ -7,6 +8,7 @@ import {
   findCategoryByFilterKey,
   findParentCategory,
 } from "@/lib/publishing";
+import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import {
   buildCategoryJsonLd,
   buildCategorySeoHead,
@@ -30,6 +32,8 @@ export default function CategoryPage({
   const origin = useSiteOrigin();
   const { slug } = useParams<{ slug: string }>();
   const [page, setPage] = useState(initialPage);
+  const { locale } = useLocale();
+  const { categories: categoriesCopy } = usePublicCopy();
   const { data: categories = [] } = usePublicCategories();
 
   useEffect(() => {
@@ -50,9 +54,9 @@ export default function CategoryPage({
     if (!parentCategory?.children?.length) return [];
     return parentCategory.children.map((child) => ({
       slug: child.slug,
-      label: child.name_ar,
+      label: localizedCategoryName(child, locale),
     }));
-  }, [parentCategory]);
+  }, [parentCategory, locale]);
 
   const activeSubcategorySlug = parentCategory?.children?.some(
     (child) => child.slug === slug,
@@ -61,8 +65,8 @@ export default function CategoryPage({
     : undefined;
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["public-category", slug, page],
-    queryFn: () => PublicCategories_APIs.getBySlug(slug!, page),
+    queryKey: ["public-category", locale, slug, page],
+    queryFn: () => PublicCategories_APIs.getBySlug(slug!, page, locale),
     enabled: Boolean(slug),
     initialData: page === initialPage ? initialData : undefined,
     retry: false,
@@ -75,16 +79,20 @@ export default function CategoryPage({
   if (isError && !data) {
     return (
       <div className="container-page py-16 text-center">
-        <h1 className="font-headline text-2xl font-bold">القسم غير موجود</h1>
+        <h1 className="font-headline text-2xl font-bold">
+          {categoriesCopy.notFoundTitle}
+        </h1>
         <p className="mt-3 text-muted-foreground">
-          لم نعثر على هذا القسم. تحقق من الرابط أو عد إلى الصفحة الرئيسية.
+          {categoriesCopy.notFoundLead}
         </p>
       </div>
     );
   }
 
   const category = data?.category ?? cachedCategory;
-  const categoryName = category?.name_ar;
+  const categoryName = category
+    ? localizedCategoryName(category, locale)
+    : undefined;
   const pagination = data?.pagination;
   const seoHead = category
     ? buildCategorySeoHead(category, { page, origin, pagination })
@@ -110,10 +118,10 @@ export default function CategoryPage({
         onPageChange={setPage}
         emptyTitle={
           categoryName
-            ? `لا يوجد محتوى في «${categoryName}»`
-            : "لا يوجد محتوى في هذا القسم"
+            ? categoriesCopy.emptyInSection(categoryName)
+            : categoriesCopy.emptySectionTitle
         }
-        emptyDescription="تابعنا للاطلاع على المحتوى القادم في هذا القسم."
+        emptyDescription={categoriesCopy.emptySectionDescription}
       />
     </>
   );

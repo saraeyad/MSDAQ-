@@ -1,59 +1,12 @@
 import { ROUTES } from "@/router/routes";
-import type { LucideIcon } from "lucide-react";
-import { BookOpen, Database, Eye, FileText } from "lucide-react";
 
-/** Static editorial pages — not backed by GET /api/public/categories. */
-export interface StaticSectionConfig {
-  path: string;
-  title: string;
-  description: string;
-  badge: string;
-  icon: LucideIcon;
-}
+/** Static editorial page paths — copy lives in the public dictionary. */
+export const STATIC_SECTION_PATHS = [
+  ROUTES.RUYA,
+  ROUTES.PUBLICATIONS,
+  ROUTES.PUBLICATIONS_REPORTS,
+  ROUTES.PUBLICATIONS_BOOKS,
+  ROUTES.DATA_INFO,
+] as const;
 
-export const STATIC_SECTIONS: StaticSectionConfig[] = [
-  {
-    path: ROUTES.RUYA,
-    title: "رؤيا",
-    description:
-      "تحليلات وتقديرات موقف — رؤى تحريرية حول الأحداث والاتجاهات الإعلامية.",
-    badge: "رؤيا",
-    icon: Eye,
-  },
-  {
-    path: ROUTES.PUBLICATIONS,
-    title: "إصدارات ودراسات",
-    description:
-      "تقارير ودراسات منشورة — أبحاث صبارة بوست حول المعلومات المضللة والإعلام.",
-    badge: "دراسات",
-    icon: FileText,
-  },
-  {
-    path: ROUTES.PUBLICATIONS_REPORTS,
-    title: "تقارير",
-    description:
-      "تقارير تحريرية وبحثية — رصد وتحليل للأحداث والظواهر الإعلامية.",
-    badge: "تقارير",
-    icon: FileText,
-  },
-  {
-    path: ROUTES.PUBLICATIONS_BOOKS,
-    title: "كتب",
-    description:
-      "إصدارات وكتب منشورة — مطبوعات صبارة بوست وشركائنا في مجال التحقق والإعلام.",
-    badge: "كتب",
-    icon: BookOpen,
-  },
-  {
-    path: ROUTES.DATA_INFO,
-    title: "معلومات وبيانات",
-    description:
-      "بيانات ومعلومات موثقة — أرقام، إحصاءات، وملفات معلوماتية للصحفيين والباحثين.",
-    badge: "بيانات",
-    icon: Database,
-  },
-];
-
-export const STATIC_SECTION_BY_PATH = Object.fromEntries(
-  STATIC_SECTIONS.map((section) => [section.path, section]),
-) as Record<string, StaticSectionConfig>;
+export const STATIC_SECTIONS = STATIC_SECTION_PATHS.map((path) => ({ path }));

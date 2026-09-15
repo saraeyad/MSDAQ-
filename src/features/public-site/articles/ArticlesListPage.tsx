@@ -2,8 +2,14 @@ import { PageLoading } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { PublicArticleCover } from "@/components/article/cover-image";
 import { ArticleVerifiedBadge } from "@/components/article/article-verified-badge";
+import {
+  isEnglishArticlePending,
+  PublicArticleEnglishPendingBadge,
+} from "@/features/public-site/components/PublicArticleEnglishPending";
+import { ArticleTranslateButton } from "@/features/public-site/article-page/ArticleTranslateButton";
 import { useLocale, usePublicCopy } from "@/context/locale";
-import { publicMediaTypeLabel } from "@/lib/media";
+import { localizedCategoryName } from "@/lib/i18n/localized-category";
+import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
 import { articlePath } from "@/router/routes";
 import { Articles_APIs } from "@/services/api/articles";
 import { useQuery } from "@tanstack/react-query";
@@ -15,18 +21,21 @@ export default function ArticlesListPage() {
   const search = params.get("search") ?? "";
   const mediaType = params.get("media_type") ?? "";
   const page = Math.max(1, Number(params.get("page") ?? "1"));
-  const { pageHero } = usePublicCopy();
-  const { dir } = useLocale();
+  const copy = usePublicCopy();
+  const { pageHero } = copy;
+  const { dir, locale } = useLocale();
+  const { common } = copy;
   const PrevIcon = dir === "rtl" ? ChevronRight : ChevronLeft;
   const NextIcon = dir === "rtl" ? ChevronLeft : ChevronRight;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["articles", search, mediaType, page],
+    queryKey: ["articles", locale, search, mediaType, page],
     queryFn: () =>
       Articles_APIs.list({
         search: search || undefined,
         media_type: mediaType || undefined,
         page,
+        lang: locale,
       }),
   });
 
@@ -76,11 +85,13 @@ export default function ArticlesListPage() {
       ) : (
         <>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article, index) => (
+            {articles.map((article, index) => {
+              const englishPending = isEnglishArticlePending(article, locale);
+              return (
+              <article key={article.id} className="content-card overflow-hidden">
               <Link
-                key={article.id}
                 to={articlePath(article.id)}
-                className="content-card overflow-hidden"
+                className="block"
               >
                 {article.cover_image ? (
                   <PublicArticleCover
@@ -92,22 +103,39 @@ export default function ArticlesListPage() {
                 <div className="p-4">
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-primary">
-                      {article.category?.name_ar ??
-                        publicMediaTypeLabel(article.media_type)}
+                      {(article.category
+                        ? localizedCategoryName(article.category, locale)
+                        : null) ??
+                        publicMediaTypeLabelFromCopy(copy, article.media_type)}
                     </span>
                   </div>
                   <h2 className="mt-1 inline-flex flex-wrap items-center gap-2 font-headline text-lg font-semibold">
-                    {article.title}
-                    <ArticleVerifiedBadge article={article} compact />
+                    {englishPending ? (
+                      <PublicArticleEnglishPendingBadge />
+                    ) : (
+                      <>
+                        {article.title}
+                        <ArticleVerifiedBadge article={article} compact />
+                      </>
+                    )}
                   </h2>
-                  {article.description && (
+                  {!englishPending && article.description && (
                     <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                       {article.description}
                     </p>
                   )}
                 </div>
               </Link>
-            ))}
+                <div className="flex justify-end px-4 pb-4">
+                  <ArticleTranslateButton
+                    articleId={article.id}
+                    contentLang={locale}
+                    compact
+                  />
+                </div>
+              </article>
+            );
+            })}
           </div>
 
           {pagination && pagination.last_page > 1 && (
@@ -119,12 +147,10 @@ export default function ArticlesListPage() {
                 onClick={() => setPage(page - 1)}
               >
                 <PrevIcon className="size-4" />
-                {dir === "rtl" ? "السابق" : "Previous"}
+                {common.previous}
               </Button>
               <span className="text-sm text-muted-foreground">
-                {dir === "rtl"
-                  ? `صفحة ${pagination.current_page} من ${pagination.last_page}`
-                  : `Page ${pagination.current_page} of ${pagination.last_page}`}
+                {common.pageOf(pagination.current_page, pagination.last_page)}
               </span>
               <Button
                 variant="outline"
@@ -132,7 +158,7 @@ export default function ArticlesListPage() {
                 disabled={page >= pagination.last_page}
                 onClick={() => setPage(page + 1)}
               >
-                {dir === "rtl" ? "التالي" : "Next"}
+                {common.next}
                 <NextIcon className="size-4" />
               </Button>
             </div>

@@ -9,7 +9,8 @@ import {
 } from "@/lib/media";
 import type { TrustMediaProgress } from "@/lib/site";
 import { cn } from "@/lib/utils";
-import { ArrowUpLeft, Loader2, Pause, Play } from "lucide-react";
+import { useLocale, usePublicCopy } from "@/context/locale";
+import { ArrowUpLeft, ArrowUpRight, Loader2, Pause, Play } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { WaveformBars } from "./WaveformBars";
 
@@ -100,8 +101,11 @@ function WaveformPlayerShell({
   hiddenBridge,
   sourceUrl,
 }: WaveformPlayerShellProps) {
+  const { dir } = useLocale();
+  const { articleMedia } = usePublicCopy();
   const waveRef = useRef<HTMLDivElement | null>(null);
   const isDark = variant === "embed";
+  const ExternalArrow = dir === "rtl" ? ArrowUpLeft : ArrowUpRight;
 
   const progress =
     durationSeconds > 0 ? Math.min(1, currentTime / durationSeconds) : 0;
@@ -235,23 +239,24 @@ function WaveformPlayerShell({
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
+          dir={dir}
           className={cn(
             "podcast-soundcloud-link",
             isDark && "podcast-soundcloud-link--embed",
           )}
-          aria-label="استمع على ساوند كلاود"
+          aria-label={articleMedia.listenOnSoundCloud}
           onClick={(event) => event.stopPropagation()}
           onPointerDown={(event) => event.stopPropagation()}
         >
-        <span className="podcast-soundcloud-link__icon">
-          <SoundCloudMark />
-        </span>
-        <span className="podcast-soundcloud-link__label">
-          استمع على ساوند كلاود
-        </span>
-        <ArrowUpLeft className="podcast-soundcloud-link__arrow" />
-      </a>
-    ) : null}
+          <span className="podcast-soundcloud-link__icon">
+            <SoundCloudMark />
+          </span>
+          <span className="podcast-soundcloud-link__label">
+            {articleMedia.listenOnSoundCloud}
+          </span>
+          <ExternalArrow className="podcast-soundcloud-link__arrow" />
+        </a>
+      ) : null}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import {
   isApiSuccessful,
   parsePublicCategoryDetailResponse,
 } from "@/lib/api";
+import type { Locale } from "@/lib/i18n/types";
 import type { ApiResponse, PublicCategory, PublicCategoryDetail } from "@/types";
 import API from "./api.repository";
 
@@ -43,10 +44,14 @@ export const PublicCategories_APIs = {
     return normalizePublicCategoryTree(body.data);
   },
 
-  getBySlug: async (slug: string, page = 1): Promise<PublicCategoryDetail> => {
+  getBySlug: async (
+    slug: string,
+    page = 1,
+    lang: Locale = "ar",
+  ): Promise<PublicCategoryDetail> => {
     const response = await API.get<
       ApiResponse<PublicCategoryDetailPayload>
-    >(`/api/public/categories/${slug}`, { params: { page } });
+    >(`/api/public/categories/${slug}`, { params: { page, lang } });
     return parsePublicCategoryDetailResponse(response.data);
   },
 };

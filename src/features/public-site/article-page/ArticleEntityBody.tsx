@@ -3,16 +3,27 @@ import {
   isInternalEntityLink,
   splitArticleEntities,
 } from "@/lib/articles/entity-links";
+import { cn } from "@/lib/utils";
 import type { PublicArticleEntity } from "@/types";
 import { Link } from "react-router-dom";
 
 interface ArticleEntityBodyProps {
   text: string;
   entities?: PublicArticleEntity[] | null;
+  tone?: "body" | "heading";
 }
 
-export function ArticleEntityBody({ text, entities }: ArticleEntityBodyProps) {
+export function ArticleEntityBody({
+  text,
+  entities,
+  tone = "body",
+}: ArticleEntityBodyProps) {
   const pieces = splitArticleEntities(text, entities);
+  const heading = tone === "heading";
+  const linkClass = cn(
+    "article-entity-link",
+    heading && "article-entity-link--heading",
+  );
 
   return (
     <>
@@ -26,7 +37,7 @@ export function ArticleEntityBody({ text, entities }: ArticleEntityBodyProps) {
             <Link
               key={`e-${index}`}
               to={entityInternalPath(piece.entity.url)}
-              className="article-entity-link"
+              className={linkClass}
               title={piece.entity.url}
             >
               {piece.value}
@@ -40,13 +51,15 @@ export function ArticleEntityBody({ text, entities }: ArticleEntityBodyProps) {
             href={piece.entity.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="article-entity-link article-entity-link--external"
+            className={cn(linkClass, "article-entity-link--external")}
             title={piece.entity.url}
           >
             {piece.value}
-            <span className="article-entity-link__ext" aria-hidden>
-              ↗
-            </span>
+            {heading ? null : (
+              <span className="article-entity-link__ext" aria-hidden>
+                ↗
+              </span>
+            )}
           </a>
         );
       })}

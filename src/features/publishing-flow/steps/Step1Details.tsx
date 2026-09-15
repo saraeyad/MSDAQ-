@@ -14,9 +14,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { FieldGroup } from "@/features/publishing-flow/steps/Step1Details/FieldGroup";
 import { FormSection } from "@/features/publishing-flow/steps/Step1Details/FormSection";
 import { getApiErrorMessage } from "@/lib/api";
+import { articleEntityCorpus } from "@/lib/articles/entity-links";
 import { resolveCategoryIntegerId } from "@/lib/publishing";
 import { mediaTypeLabel } from "@/lib/media";
 import { articleReviewThresholds } from "@/lib/site";
+import {
+  EntityTaggingPanel,
+  readTextSelection,
+  tagsFromStaffEntities,
+  tagsToWritePayload,
+  type LocalEntityTag,
+} from "@/features/publishing-flow/components/EntityTaggingPanel";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { Categories_APIs } from "@/services/api/categories";
 import type {
@@ -231,6 +239,10 @@ export function Step1Details({
     initialSources(article),
   );
   const [sourcesDirty, setSourcesDirty] = useState(false);
+  const [selection, setSelection] = useState("");
+  const [entityTags, setEntityTags] = useState<LocalEntityTag[]>(() =>
+    tagsFromStaffEntities(article?.entities),
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -243,6 +255,28 @@ export function Step1Details({
     }
     return map;
   }, [article?.sources]);
+
+  const corpus = useMemo(
+    () =>
+      articleEntityCorpus(
+        title,
+        description,
+        article?.content?.formal,
+        article?.content?.simplified,
+        article?.content?.dialect,
+      ),
+    [
+      article?.content?.dialect,
+      article?.content?.formal,
+      article?.content?.simplified,
+      description,
+      title,
+    ],
+  );
+
+  const entityPayload = tagsToWritePayload(entityTags, corpus);
+  const entitiesLoaded = Array.isArray(article?.entities);
+  const shouldWriteEntities = entitiesLoaded || entityTags.length > 0;
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["staff-categories"],
@@ -319,6 +353,7 @@ export function Step1Details({
           category_id: resolvedCategoryId,
           media_url:
             mediaType !== "text" && mediaUrl.trim() ? mediaUrl.trim() : null,
+          ...(shouldWriteEntities ? { entities: entityPayload } : {}),
           ...thresholdPayloadForUpdate(),
         };
 
@@ -361,6 +396,7 @@ export function Step1Details({
         media_url:
           mediaType !== "text" && mediaUrl.trim() ? mediaUrl.trim() : undefined,
         sources: validSources,
+        ...(entityPayload.length ? { entities: entityPayload } : {}),
         ...thresholdPayloadForCreate(),
       });
       toast.success("تم إنشاء المسودة");
@@ -385,27 +421,49 @@ export function Step1Details({
       <FormSection
         icon={FileText}
         title="المعلومات الأساسية"
-        description="العنوان يظهر في البطاقات وبوابة النشر — الوصف اختياري"
+        description="العنوان يظهر في البطاقات وبوابة النشر — يمكن ربط الأسماء في العنوان أو الوصف"
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FieldGroup label="العنوان" required className="sm:col-span-2">
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="عنوان المقال"
-              className="publish-input"
-            />
-          </FieldGroup>
-          <FieldGroup label="الوصف (اختياري)" className="sm:col-span-2">
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="ملخص قصير يظهر في البطاقات — اختياري"
-              rows={3}
-              className="publish-input min-h-[5.5rem] resize-y"
-            />
-          </FieldGroup>
-        </div>
+        <EntityTaggingPanel
+          variant="embedded"
+          corpus={corpus}
+          selection={selection}
+          tags={entityTags}
+          onChange={setEntityTags}
+          onClearSelection={() => setSelection("")}
+          heading="ربط الأسماء"
+          hint={
+            mediaType === "text"
+              ? "حدّد اسماً في العنوان أو الوصف ثم اربطه. نص المقال يُربَط أيضاً في خطوة المحتوى."
+              : "المقال ليس نصاً — حدّد اسماً في العنوان أو الوصف ثم اربطه ليظهر للقارئ."
+          }
+          dockHint="حدّد اسماً في العنوان أو الوصف — ستظهر بطاقة الربط فوراً"
+          previewBlocks={[
+            { label: "العنوان", text: title },
+            { label: "الوصف", text: description },
+          ]}
+        >
+          <div className="entity-studio__fields">
+            <FieldGroup label="العنوان" required>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onSelect={(e) => setSelection(readTextSelection(e.currentTarget))}
+                placeholder="عنوان المقال"
+                className="publish-input entity-studio__input"
+              />
+            </FieldGroup>
+            <FieldGroup label="الوصف (اختياري)">
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                onSelect={(e) => setSelection(readTextSelection(e.currentTarget))}
+                placeholder="ملخص قصير يظهر في البطاقات — اختياري"
+                rows={3}
+                className="publish-input min-h-[5.5rem] resize-y entity-studio__textarea entity-studio__textarea--compact"
+              />
+            </FieldGroup>
+          </div>
+        </EntityTaggingPanel>
       </FormSection>
 
       <FormSection

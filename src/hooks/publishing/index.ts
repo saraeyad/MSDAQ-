@@ -5,3 +5,4 @@ export {
   useTranscriptStatusPoll,
   type TranscriptPollUiState,
 } from "./useTranscriptStatusPoll";
+export { useTtsStatusPoll, type TtsPollUiState } from "./useTtsStatusPoll";

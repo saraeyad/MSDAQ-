@@ -1,9 +1,9 @@
 import { getApiData, parsePaginatedListResponse } from "@/lib/api";
 import { appendSttAudioField } from "@/lib/media";
-import { TTS_REQUEST_TIMEOUT_MS } from "@/lib/publishing";
 import type {
   ApiResponse,
   GeneratedAudio,
+  GeneratedAudioStatus,
   PaginatedListResult,
   PaginatedResponse,
   Transcript,
@@ -24,7 +24,6 @@ export const ToolsVoice_APIs = {
     const response = await API.post<ApiResponse<GeneratedAudio>>(
       "/api/tools/text-to-speech",
       data,
-      { timeout: TTS_REQUEST_TIMEOUT_MS },
     );
     return getApiData(response);
   },
@@ -55,6 +54,15 @@ export const ToolsVoice_APIs = {
   getGeneratedAudio: async (id: number | string): Promise<GeneratedAudio> => {
     const response = await API.get<ApiResponse<GeneratedAudio>>(
       `/api/tools/generated-audios/${id}`,
+    );
+    return getApiData(response);
+  },
+
+  getGeneratedAudioStatus: async (
+    id: number | string,
+  ): Promise<GeneratedAudioStatus> => {
+    const response = await API.get<ApiResponse<GeneratedAudioStatus>>(
+      `/api/tools/generated-audios/${id}/status`,
     );
     return getApiData(response);
   },

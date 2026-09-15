@@ -1,7 +1,8 @@
 import { PartnerLogo } from "@/features/public-site/partners/PartnerLogo";
 import { PublicPageHero } from "@/features/public-site/components/PublicPageHero";
 import type { Partner } from "@/features/public-site/partners/data/partners";
-import { ALL_PARTNERS } from "@/features/public-site/partners/data/partners";
+import { partnersFromCopy } from "@/features/public-site/partners/data/partners";
+import { usePublicCopy } from "@/context/locale";
 
 function PartnerCard({ partner }: { partner: Partner }) {
   return (
@@ -15,16 +16,19 @@ function PartnerCard({ partner }: { partner: Partner }) {
 }
 
 export default function PartnersPage() {
+  const { partnersPage, partnersList } = usePublicCopy();
+  const partners = partnersFromCopy(partnersList);
+
   return (
     <div className="partners-page">
       <PublicPageHero
-        title="شركاؤنا"
-        description="شراكات استراتيجية مع مؤسسات دولية ومحلية تدعم عملنا في التحقق الإعلامي وتمكين المجتمع."
+        title={partnersPage.title}
+        description={partnersPage.description}
       />
 
       <section className="container-page py-10 md:py-14">
         <div className="partners-page-grid">
-          {ALL_PARTNERS.map((partner) => (
+          {partners.map((partner) => (
             <PartnerCard key={partner.id} partner={partner} />
           ))}
         </div>
@@ -33,8 +37,7 @@ export default function PartnersPage() {
       <section className="partners-page-footer-note">
         <div className="container-page">
           <p className="text-center text-sm leading-relaxed text-muted-foreground md:text-base">
-            للاستفسار عن الشراكات أو التعاون المؤسسي، تواصل معنا عبر صفحة
-            المركز.
+            {partnersPage.footerNote}
           </p>
         </div>
       </section>

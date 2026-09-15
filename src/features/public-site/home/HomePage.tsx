@@ -1,6 +1,7 @@
 import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
 import { HomeHero } from "@/features/public-site/home/HomeHero";
-import { usePublicCopy } from "@/context/locale";
+import { useLocale, usePublicCopy } from "@/context/locale";
+import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import { usePublicCategories } from "@/hooks/public";
 import { buildParentSlugMap } from "@/lib/publishing";
 import { cn } from "@/lib/utils";
@@ -58,16 +59,17 @@ export default function HomePage() {
   );
   const { data: categories = [] } = usePublicCategories();
   const { home } = usePublicCopy();
+  const { locale } = useLocale();
 
   const filters = useMemo(
     () => [
       { id: "all", label: home.allFilter },
       ...categories.map((category) => ({
         id: category.slug,
-        label: category.name_ar,
+        label: localizedCategoryName(category, locale),
       })),
     ],
-    [categories, home.allFilter],
+    [categories, home.allFilter, locale],
   );
 
   const parentSlugMap = useMemo(
@@ -76,8 +78,8 @@ export default function HomePage() {
   );
 
   const { data, isLoading } = useQuery({
-    queryKey: ["home-articles"],
-    queryFn: () => Articles_APIs.list({ latest: true }),
+    queryKey: ["home-articles", locale],
+    queryFn: () => Articles_APIs.list({ latest: true, lang: locale }),
   });
 
   const articles = data?.items ?? [];

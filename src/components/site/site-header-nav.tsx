@@ -14,7 +14,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { LocaleSwitcher } from "@/components/site/locale-switcher";
-import { usePublicCopy } from "@/context/locale";
+import { useLocale, usePublicCopy } from "@/context/locale";
 import {
   buildPublicNavItems,
   isPublicNavLinkActive,
@@ -27,7 +27,7 @@ import { usePublicCategories } from "@/hooks/public";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, ChevronLeft, Menu } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 
 function isDropdownActive(paths: string[], pathname: string) {
   return paths.some(
@@ -46,7 +46,9 @@ function NavParentFlyoutRow({
   entry: PublicNavMenuLink;
   pathname: string;
 }) {
+  const { dir } = useLocale();
   const { nav } = usePublicCopy();
+  const FlyoutChevron = dir === "rtl" ? ChevronLeft : ChevronRight;
   const hasChildren = Boolean(entry.children?.length);
   const parentActive = pathMatches(entry.to, pathname);
   const branchActive = entry.children?.some((child) =>
@@ -76,7 +78,7 @@ function NavParentFlyoutRow({
         )}
       >
         <span className="site-nav-parent-link__label">{entry.label}</span>
-        <ChevronLeft
+        <FlyoutChevron
           className="site-nav-parent-link__chevron"
           aria-hidden
         />
@@ -181,11 +183,12 @@ function NavLinkItem({ item }: { item: PublicNavLinkItem }) {
 
 function useSiteNavItems(): PublicNavItem[] {
   const { data: categories = [] } = usePublicCategories();
+  const { locale } = useLocale();
   const { nav } = usePublicCopy();
 
   return useMemo(
-    () => buildPublicNavItems(categories, nav),
-    [categories, nav],
+    () => buildPublicNavItems(categories, nav, locale),
+    [categories, nav, locale],
   );
 }
 

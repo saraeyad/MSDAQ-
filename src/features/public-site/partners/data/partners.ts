@@ -1,3 +1,6 @@
+import type { PublicStaticCopy } from "@/lib/i18n/public-static-copy";
+import { PUBLIC_STATIC_COPY } from "@/lib/i18n/public-static-copy";
+
 export interface Partner {
   id: string;
   title: string;
@@ -33,58 +36,34 @@ function partner({ logoKey, ...rest }: PartnerInput): Partner {
   };
 }
 
-/** شريط الشعارات — للصفحة الرئيسية ومن نحن */
-export const FEATURED_PARTNERS: Partner[] = [
-  partner({
-    id: "cfi",
-    title: "سي إف آي للتنمية الإعلامية",
-    logoAlt: "CFI Media Development",
-    initials: "CFI",
-    logoKey: "cfi",
-  }),
-  partner({
-    id: "un-trust",
-    title: "صندوق الأمم المتحدة لإنهاء العنف ضد المرأة",
-    logoAlt: "United Nations Trust Fund to End Violence Against Women",
-    initials: "UN",
-    logoKey: "unTrustFund",
-  }),
-  partner({
-    id: "crs",
-    title: "منظمة الإغاثة الكاثوليكية",
-    logoAlt: "Catholic Relief Services",
-    initials: "CRS",
-    logoKey: "crs",
-  }),
-  partner({
-    id: "aisha",
-    title: "جمعية عايشة لحماية المرأة والطفل",
-    logoAlt: "Aisha Association for Woman and Child Protection",
-    initials: "عايشة",
-    logoKey: "aisha",
-  }),
-  partner({
-    id: "birzeit",
-    title: "جامعة بيرزيت",
-    logoAlt: "Birzeit University",
-    initials: "BZU",
-    logoKey: "birzeit",
-  }),
-  partner({
-    id: "wacc",
-    title: "الجمعية العالمية للاتصالات المسيحية",
-    logoAlt: "WACC — communication for all",
-    initials: "WACC",
-    logoKey: "wacc",
-  }),
-  partner({
-    id: "ndc",
-    title: "مركز تطوير المؤسسات الأهلية الفلسطينية",
-    logoAlt: "NGO Development Center",
-    initials: "NDC",
-    logoKey: "ndc",
-  }),
-];
+const PARTNER_LOGO_KEYS: Record<string, LogoKey> = {
+  cfi: "cfi",
+  "un-trust": "unTrustFund",
+  crs: "crs",
+  aisha: "aisha",
+  birzeit: "birzeit",
+  wacc: "wacc",
+  ndc: "ndc",
+};
 
-/** قائمة الشركاء الكاملة — صفحة شركاؤنا (شعارات فقط) */
+export function partnersFromCopy(
+  list: PublicStaticCopy["partnersList"],
+): Partner[] {
+  return list.map((entry) =>
+    partner({
+      id: entry.id,
+      title: entry.title,
+      logoAlt: entry.logoAlt,
+      initials: entry.initials,
+      logoKey: PARTNER_LOGO_KEYS[entry.id],
+    }),
+  );
+}
+
+/** @deprecated Use partnersFromCopy(copy.partnersList) in UI */
+export const FEATURED_PARTNERS: Partner[] = partnersFromCopy(
+  PUBLIC_STATIC_COPY.ar.partnersList,
+);
+
+/** @deprecated Use partnersFromCopy(copy.partnersList) in UI */
 export const ALL_PARTNERS: Partner[] = FEATURED_PARTNERS;

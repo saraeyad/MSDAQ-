@@ -1,3 +1,4 @@
+import { usePublicCopy } from "@/context/locale";
 import { CoverImage } from "@/components/article/cover-image";
 import {
   useLazyArticleMedia,
@@ -44,6 +45,7 @@ export function PublicArticleVideoPlayer({
   onVideoProgress,
   startOnMount = false,
 }: PublicArticleVideoPlayerProps) {
+  const { articleMedia } = usePublicCopy();
   const { media, isLoading, isError, request, requested } = useLazyArticleMedia(
     articleId,
     scope,
@@ -132,7 +134,7 @@ export function PublicArticleVideoPlayer({
           rel="noopener noreferrer"
           className="text-sm font-medium text-primary hover:underline"
         >
-          مشاهدة على المنصة الخارجية
+          {articleMedia.watchExternal}
         </a>
       </div>
     );
@@ -269,6 +271,7 @@ function VideoPosterButton({
   fill?: boolean;
   onPlay: () => void;
 }) {
+  const { article: articleCopy, articleMedia } = usePublicCopy();
   return (
     <button
       type="button"
@@ -279,7 +282,9 @@ function VideoPosterButton({
         if (!pending) onPlay();
       }}
       disabled={pending}
-      aria-label={pending ? "جاري التحميل" : `تشغيل فيديو: ${title}`}
+      aria-label={
+        pending ? articleCopy.loadingMedia : articleCopy.playVideo(title)
+      }
     >
       <CoverImage
         src={poster}
@@ -295,7 +300,9 @@ function VideoPosterButton({
         )}
       </span>
       {failed ? (
-        <span className="article-media-poster__error">تعذّر تحميل المصدر</span>
+        <span className="article-media-poster__error">
+          {articleMedia.loadFailed}
+        </span>
       ) : null}
     </button>
   );

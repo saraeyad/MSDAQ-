@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { StarRatingInput } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
+import { usePublicCopy } from "@/context/locale";
 import { getApiErrorMessage } from "@/lib/api";
 import { isPublicFeedbackRateLimited } from "@/lib/site";
-import { PLATFORM_TRUST_DIMENSIONS } from "@/lib/site";
 import { PlatformFeedback_APIs } from "@/services/api/platform-feedback";
 import type { PlatformFeedbackSubmitPayload } from "@/types";
 import { useMutation } from "@tanstack/react-query";
@@ -41,6 +41,8 @@ export function PlatformFeedbackDialog({
   open,
   onOpenChange,
 }: PlatformFeedbackDialogProps) {
+  const { common, feedback, trustIndex } = usePublicCopy();
+  const dimensions = trustIndex.platformDimensions;
   const [scores, setScores] = useState(INITIAL_SCORES);
 
   const submitMutation = useMutation({
@@ -57,7 +59,7 @@ export function PlatformFeedbackDialog({
       return PlatformFeedback_APIs.submitPublic(payload);
     },
     onSuccess: () => {
-      toast.success("شكراً — تم تسجيل تقييمك");
+      toast.success(feedback.thanks);
       setScores(INITIAL_SCORES);
       onOpenChange(false);
     },
@@ -70,12 +72,12 @@ export function PlatformFeedbackDialog({
     },
   });
 
-  const filledCount = PLATFORM_TRUST_DIMENSIONS.filter(
+  const filledCount = dimensions.filter(
     (dimension) =>
       (scores[`${dimension.key}_score` as keyof PlatformFeedbackFormState] as number) >=
       1,
   ).length;
-  const allScoresSet = filledCount === PLATFORM_TRUST_DIMENSIONS.length;
+  const allScoresSet = filledCount === dimensions.length;
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -88,16 +90,18 @@ export function PlatformFeedbackDialog({
       <DialogContent className="trust-index-dialog gap-0 p-0 sm:max-w-md">
         <DialogHeader className="trust-index-dialog__banner !grid !grid-cols-[1fr_auto] !items-center !gap-2.5 !text-start">
           <div className="trust-index-dialog__intro">
-            <p className="trust-index-dialog__kicker">مؤشر ثقة الجمهور بالمنصة</p>
+            <p className="trust-index-dialog__kicker">
+              {feedback.platformKicker}
+            </p>
             <DialogTitle className="trust-index-dialog__title">
-              ما مدى ثقتك في صبارة بوست؟
+              {feedback.platformTitle}
             </DialogTitle>
             <DialogDescription className="trust-index-dialog__lead">
-              استطلاع مجهول · خمسة أسئلة فقط
+              {feedback.platformLead}
             </DialogDescription>
           </div>
           <div className="trust-index-dialog__progress" aria-hidden>
-            {PLATFORM_TRUST_DIMENSIONS.map((dimension) => {
+            {dimensions.map((dimension) => {
               const scored =
                 (scores[
                   `${dimension.key}_score` as keyof PlatformFeedbackFormState
@@ -118,7 +122,7 @@ export function PlatformFeedbackDialog({
         </DialogHeader>
 
         <div className="trust-index-dialog__body">
-          {PLATFORM_TRUST_DIMENSIONS.map((dimension, index) => (
+          {dimensions.map((dimension, index) => (
             <section key={dimension.key} className="trust-index-dialog__card">
               <span className="trust-index-dialog__index">
                 {String(index + 1).padStart(2, "0")}
@@ -144,8 +148,8 @@ export function PlatformFeedbackDialog({
 
           <div className="trust-index-dialog__note">
             <label htmlFor="platform-feedback-comment">
-              ما أكثر شيء أثر على تقييمك لتجربة المنصة؟
-              <span> اختياري</span>
+              {feedback.platformCommentLabel}
+              <span>{feedback.platformCommentOptional}</span>
             </label>
             <Textarea
               id="platform-feedback-comment"
@@ -153,7 +157,7 @@ export function PlatformFeedbackDialog({
               maxLength={2000}
               rows={2}
               disabled={submitMutation.isPending}
-              placeholder="مثلاً: سهولة التصفح، أو تنوع المحتوى..."
+              placeholder={feedback.platformCommentPlaceholder}
               onChange={(event) =>
                 setScores((current) => ({
                   ...current,
@@ -165,14 +169,14 @@ export function PlatformFeedbackDialog({
         </div>
 
         <DialogFooter className="trust-index-dialog__footer">
-          <p className="trust-index-dialog__anon">هويتك غير مسجّلة · صوتك يُحتسب</p>
+          <p className="trust-index-dialog__anon">{feedback.anonNote}</p>
           <div className="trust-index-dialog__actions">
             <Button
               variant="outline"
               disabled={submitMutation.isPending}
               onClick={() => onOpenChange(false)}
             >
-              لاحقاً
+              {common.later}
             </Button>
             <Button
               disabled={!allScoresSet || submitMutation.isPending}
@@ -181,7 +185,7 @@ export function PlatformFeedbackDialog({
               {submitMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : null}
-              إرسال التقييم
+              {common.submitRating}
             </Button>
           </div>
         </DialogFooter>

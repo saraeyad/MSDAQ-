@@ -4,7 +4,6 @@ import { normalizeStandardsResult } from "@/lib/publishing";
 import { appendSttAudioField, normalizeArticleMedia } from "@/lib/media";
 import {
   STANDARDS_REQUEST_TIMEOUT_MS,
-  TTS_REQUEST_TIMEOUT_MS,
 } from "@/lib/publishing";
 import type {
   ApiResponse,
@@ -18,7 +17,7 @@ import type {
   StaffMediaType,
   StandardsCheckResult,
   Transcript,
-  TtsResult,
+  GeneratedAudio,
   VideoUploadResult,
 } from "@/types";
 import type {
@@ -257,11 +256,10 @@ export const ArticlesStaff_APIs = {
   textToSpeech: async (
     id: number | string,
     data: { voice: string; style?: string },
-  ): Promise<TtsResult> => {
-    const response = await API.post<ApiResponse<TtsResult>>(
+  ): Promise<GeneratedAudio> => {
+    const response = await API.post<ApiResponse<GeneratedAudio>>(
       articleUrl(id, "/text-to-speech"),
       data,
-      { timeout: TTS_REQUEST_TIMEOUT_MS },
     );
     return getApiData(response);
   },
@@ -269,6 +267,15 @@ export const ArticlesStaff_APIs = {
   publish: async (id: number | string) => {
     const response = await API.post<ApiResponse<StaffArticle>>(
       articleUrl(id, "/publish"),
+      {},
+    );
+    return getApiData(response);
+  },
+
+  /** Retry DeepL translation after a failure — not part of the normal publish flow. */
+  translate: async (id: number | string) => {
+    const response = await API.post<ApiResponse<StaffArticle>>(
+      articleUrl(id, "/translate"),
       {},
     );
     return getApiData(response);

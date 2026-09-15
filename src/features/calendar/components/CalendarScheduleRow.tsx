@@ -88,6 +88,7 @@ function TimeChipDropdown({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
+        dir="rtl"
         align="start"
         className="calendar-schedule-row__time-menu max-h-56 w-24 p-1"
       >
@@ -154,7 +155,7 @@ function PeriodChip({
           {period}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-20 p-1">
+      <DropdownMenuContent dir="rtl" align="start" className="w-20 p-1">
         {(["ص", "م"] as const).map((option) => {
           const nextValue = applyPeriodToDatetimeLocal(value, option);
           const isPast = requireFuture && !isFutureDatetimeLocal(nextValue);

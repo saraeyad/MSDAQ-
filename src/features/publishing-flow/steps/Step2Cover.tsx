@@ -28,6 +28,7 @@ import type {
   ReverseSearchMatch,
   StaffArticle,
 } from "@/types";
+import { useStaffArticleMedia } from "@/hooks/useLazyArticleMedia";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -83,11 +84,25 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
 
   const articleId = article.id;
   const mediaType = article.media_type;
+  const needsPlayableMedia = mediaType === "audio" || mediaType === "video";
+  const { data: staffMedia } = useStaffArticleMedia(
+    articleId,
+    needsPlayableMedia,
+  );
 
   const videoRejectOptions = {
     coverImage: article.cover_image,
     videoPoster: article.video_poster,
   };
+
+  useEffect(() => {
+    if (!staffMedia) return;
+    const audioUrl = resolveMediaUrl(staffMedia.source_audio);
+    if (audioUrl) setAudioPreview(audioUrl);
+    const playable = resolvePlayableVideoUrl(staffMedia.video, videoRejectOptions);
+    if (playable) setVideoPreview(playable);
+    if (staffMedia.media_url) setMediaUrl(staffMedia.media_url);
+  }, [staffMedia, article.cover_image, article.video_poster]);
 
   const applyVideoFromArticle = (updated: StaffArticle) => {
     const playable = resolvePlayableVideoUrl(updated.video, videoRejectOptions);

@@ -1,3 +1,5 @@
+import type { Locale } from "@/lib/i18n/types";
+import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import type { PublicCopy } from "@/lib/i18n/public-dictionary";
 import { categoryPath, ROUTES } from "@/router/routes";
 import type { PublicCategory } from "@/types";
@@ -81,6 +83,7 @@ export function buildStaticFooterLinksFromCopy(
 function buildCategoriesDropdown(
   categories: PublicCategory[],
   sectionsLabel: string,
+  locale: Locale,
 ): PublicNavDropdownItem | null {
   if (categories.length === 0) return null;
 
@@ -94,12 +97,15 @@ function buildCategoriesDropdown(
     const children = (category.children ?? []).map((child) => {
       const childPath = categoryPath(child.slug);
       paths.push(childPath);
-      return { to: childPath, label: child.name_ar };
+      return {
+        to: childPath,
+        label: localizedCategoryName(child, locale),
+      };
     });
 
     items.push({
       to: parentPath,
-      label: category.name_ar,
+      label: localizedCategoryName(category, locale),
       children: children.length ? children : undefined,
     });
   }
@@ -114,34 +120,19 @@ function buildCategoriesDropdown(
 
 export function buildPublicNavItems(
   categories: PublicCategory[],
-  nav?: PublicCopy["nav"],
+  nav: PublicCopy["nav"],
+  locale: Locale,
 ): PublicNavItem[] {
-  const labels = nav ?? {
-    home: "الرئيسية",
-    sections: "الأقسام",
-    vision: "رؤيا",
-    publications: "إصدارات",
-    allPublications: "جميع الإصدارات",
-    reports: "تقارير",
-    books: "كتب",
-    aboutCenter: "عن المركز",
-    aboutUs: "من نحن",
-    partners: "شركاؤنا",
-    dataInfo: "معلومات وبيانات",
-    login: "",
-    workspace: "",
-    menu: "",
-    openMenu: "",
-    subcategories: "",
-    searchPlaceholder: "",
-  };
-
-  const categoriesMenu = buildCategoriesDropdown(categories, labels.sections);
+  const categoriesMenu = buildCategoriesDropdown(
+    categories,
+    nav.sections,
+    locale,
+  );
 
   return [
-    { type: "link", to: ROUTES.HOME, label: labels.home, end: true },
+    { type: "link", to: ROUTES.HOME, label: nav.home, end: true },
     ...(categoriesMenu ? [categoriesMenu] : []),
-    ...buildStaticNavTail(labels),
+    ...buildStaticNavTail(nav),
   ];
 }
 
@@ -184,13 +175,14 @@ function rootPublicCategories(categories: PublicCategory[]): PublicCategory[] {
 /** Top-level sections only — children stay grouped under the parent. */
 export function buildPublicFooterSections(
   categories: PublicCategory[],
+  locale: Locale,
 ): PublicFooterSection[] {
   return rootPublicCategories(categories).map((category) => ({
     to: categoryPath(category.slug),
-    label: category.name_ar,
+    label: localizedCategoryName(category, locale),
     children: (category.children ?? []).map((child) => ({
       to: categoryPath(child.slug),
-      label: child.name_ar,
+      label: localizedCategoryName(child, locale),
     })),
   }));
 }

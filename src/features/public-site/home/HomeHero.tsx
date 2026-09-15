@@ -71,7 +71,7 @@ export function HomeHero() {
         <span className="home-cinematic-hero__center-logo-grain" aria-hidden />
         <img
           src="/brand/cdmc.webp?v=3"
-          alt="مركز التنمية والإعلام المجتمعي"
+          alt={hero.brandLine}
           loading="lazy"
           decoding="async"
         />

@@ -25,7 +25,10 @@ function AudioLibraryRow({
   onRenamed: () => void;
   isDeleting: boolean;
 }) {
-  const audioUrl = resolveMediaUrl(item.audio_url) ?? item.audio_url;
+  const audioUrl =
+    item.audio_url != null
+      ? (resolveMediaUrl(item.audio_url) ?? item.audio_url)
+      : null;
 
   return (
     <VoiceAssetRow
@@ -48,7 +51,11 @@ function AudioLibraryRow({
       }}
       isDeleting={isDeleting}
     >
-      <audio controls src={audioUrl} className="w-full" />
+      {audioUrl ? (
+        <audio controls src={audioUrl} className="w-full" />
+      ) : (
+        <p className="text-sm text-muted-foreground">لا يوجد رابط صوتي</p>
+      )}
     </VoiceAssetRow>
   );
 }

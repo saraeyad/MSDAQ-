@@ -23,7 +23,9 @@ interface Step7PublishProps {
 
 export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   const navigate = useNavigate();
-  const { data: gate, article, isLoading } = usePublishGate(articleId);
+  const { data: gate, article, isLoading } = usePublishGate(articleId, {
+    loadMedia: true,
+  });
   const [scheduledFor, setScheduledFor] = useState("");
   const [publishing, setPublishing] = useState(false);
 

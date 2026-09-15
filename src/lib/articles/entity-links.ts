@@ -23,6 +23,16 @@ export type ArticleEntityPiece =
   | { type: "text"; value: string }
   | { type: "entity"; value: string; entity: PublicArticleEntity };
 
+/** Title, description, and body variants — tags can live in any of them. */
+export function articleEntityCorpus(
+  ...parts: Array<string | null | undefined>
+): string {
+  return parts
+    .map((part) => part?.trim() ?? "")
+    .filter(Boolean)
+    .join("\n");
+}
+
 /** Longest `match_text` first so a short tag cannot swallow a longer one. */
 export function splitArticleEntities(
   text: string,

@@ -168,6 +168,7 @@ export function CategoryFlyoutFilter({
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent
+        dir="rtl"
         align={menuAlign}
         sideOffset={6}
         className={cn(

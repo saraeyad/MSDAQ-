@@ -32,7 +32,7 @@ export function StaffUserMenu({ className }: { className?: string }) {
         </span>
         <ChevronDown className="staff-user-menu__chevron" aria-hidden />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="staff-user-menu__dropdown">
+      <DropdownMenuContent dir="rtl" align="end" sideOffset={8} className="staff-user-menu__dropdown">
         <div className="staff-user-menu__card">
           <UserAvatar name={name} />
           <div className="min-w-0">
