@@ -218,38 +218,36 @@ function MobileNavSection({
   onNavigate: () => void;
 }) {
   const { pathname } = useLocation();
-  const [expandedTo, setExpandedTo] = useState<string | null>(() => {
-    const current = items.find((item) =>
-      item.children?.some((child) => pathMatches(child.to, pathname)),
-    );
-    return current?.to ?? null;
-  });
+  const [expandedTo, setExpandedTo] = useState<string | null>(null);
 
   return (
-    <div className="space-y-1">
-      <p className="px-3 text-xs font-semibold text-muted-foreground">{title}</p>
+    <div className="site-mobile-nav__section">
+      <p className="site-mobile-nav__label">{title}</p>
       {items.map((item) => {
         const hasChildren = Boolean(item.children?.length);
         const isExpanded = expandedTo === item.to;
 
         return (
-          <div key={item.to}>
+          <div key={item.to} className="site-mobile-nav__group">
             {hasChildren ? (
               <button
                 type="button"
                 onClick={() => setExpandedTo(isExpanded ? null : item.to)}
+                aria-expanded={isExpanded}
                 className={cn(
-                  "site-nav-parent flex w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted",
-                  pathMatches(item.to, pathname)
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground",
+                  "site-mobile-nav__link site-mobile-nav__link--parent",
+                  (pathMatches(item.to, pathname) ||
+                    item.children?.some((child) =>
+                      pathMatches(child.to, pathname),
+                    )) &&
+                    "site-mobile-nav__link--active",
                 )}
               >
                 <span>{item.label}</span>
                 <ChevronDown
                   className={cn(
-                    "site-nav-parent__chevron",
-                    isExpanded && "site-nav-parent__chevron--open",
+                    "site-mobile-nav__chevron",
+                    isExpanded && "site-mobile-nav__chevron--open",
                   )}
                   aria-hidden
                 />
@@ -259,32 +257,41 @@ function MobileNavSection({
                 to={item.to}
                 onClick={onNavigate}
                 className={cn(
-                  "block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted",
-                  pathMatches(item.to, pathname)
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground",
+                  "site-mobile-nav__link",
+                  pathMatches(item.to, pathname) &&
+                    "site-mobile-nav__link--active",
                 )}
               >
                 {item.label}
               </Link>
             )}
-            {hasChildren && isExpanded
-              ? item.children!.map((child) => (
-                  <Link
-                    key={child.to}
-                    to={child.to}
-                    onClick={onNavigate}
-                    className={cn(
-                      "site-nav-submenu block rounded-lg py-2.5 text-sm transition-colors hover:bg-muted",
-                      pathMatches(child.to, pathname)
-                        ? "site-nav-submenu--active bg-accent"
-                        : undefined,
-                    )}
-                  >
-                    {child.label}
-                  </Link>
-                ))
-              : null}
+            {hasChildren ? (
+              <div
+                className={cn(
+                  "site-mobile-nav__children",
+                  isExpanded && "site-mobile-nav__children--open",
+                )}
+                aria-hidden={!isExpanded}
+              >
+                <div className="site-mobile-nav__children-inner">
+                  {item.children!.map((child) => (
+                    <Link
+                      key={child.to}
+                      to={child.to}
+                      onClick={onNavigate}
+                      tabIndex={isExpanded ? 0 : -1}
+                      className={cn(
+                        "site-mobile-nav__sublink",
+                        pathMatches(child.to, pathname) &&
+                          "site-mobile-nav__sublink--active",
+                      )}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         );
       })}
@@ -301,9 +308,11 @@ export function MobileSiteNav({
 }) {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const { dir } = useLocale();
   const { nav } = usePublicCopy();
   const navItems = useSiteNavItems();
   const close = () => setOpen(false);
+  const sheetSide = dir === "rtl" ? "left" : "right";
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -311,21 +320,31 @@ export function MobileSiteNav({
         <Button
           variant="outline"
           size="icon"
-          className="shrink-0 lg:hidden"
+          className="site-mobile-nav-trigger shrink-0 lg:hidden"
           aria-label={nav.openMenu}
         >
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[min(100%,20rem)] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="font-headline text-start">{nav.menu}</SheetTitle>
+      <SheetContent
+        side={sheetSide}
+        className={cn(
+          "site-mobile-nav gap-0 p-0 w-[min(100%,20.5rem)]",
+          sheetSide === "right"
+            ? "site-mobile-nav--right"
+            : "site-mobile-nav--left",
+        )}
+      >
+        <SheetHeader className="site-mobile-nav__header ghazawiya-pattern">
+          <SheetTitle className="site-mobile-nav__title">
+            {nav.menu}
+          </SheetTitle>
         </SheetHeader>
-        <div className="mt-4 flex items-center gap-2">
-          <SiteHeaderSearch className="flex-1 lg:hidden" />
-          <LocaleSwitcher />
+        <div className="site-mobile-nav__tools">
+          <SiteHeaderSearch className="site-mobile-nav__search flex-1" />
+          <LocaleSwitcher className="site-mobile-nav__locale" />
         </div>
-        <nav className="mt-6 flex flex-col gap-6">
+        <nav className="site-mobile-nav__list">
           {navItems.map((item) =>
             item.type === "link" ? (
               <Link
@@ -333,10 +352,9 @@ export function MobileSiteNav({
                 to={item.to}
                 onClick={close}
                 className={cn(
-                  "block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted",
-                  isPublicNavLinkActive(item, pathname)
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground",
+                  "site-mobile-nav__link",
+                  isPublicNavLinkActive(item, pathname) &&
+                    "site-mobile-nav__link--active",
                 )}
               >
                 {item.label}
@@ -352,8 +370,8 @@ export function MobileSiteNav({
           )}
         </nav>
         {authHref && authLabel ? (
-          <div className="mt-6 border-t border-border pt-4">
-            <Button asChild className="w-full" onClick={close}>
+          <div className="site-mobile-nav__footer">
+            <Button asChild className="site-mobile-nav__auth" onClick={close}>
               <Link to={authHref}>{authLabel}</Link>
             </Button>
           </div>

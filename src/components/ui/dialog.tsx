@@ -47,7 +47,9 @@ function DialogContent({
   children,
   dir = "rtl",
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  dir?: "ltr" | "rtl";
+}) {
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
