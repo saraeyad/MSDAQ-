@@ -59,7 +59,7 @@ export function Step4Standards({
       />
 
       <p className="text-muted-foreground">
-        يجب اجتياز فحص المعايير التحريرية والفصحى قبل المتابعة.
+        فحص المعايير إرشادي — يمكنك المتابعة والنشر حتى إن لم يُجتز الفحص.
       </p>
       <Button onClick={() => void runCheck()} disabled={processing}>
         تشغيل فحص المعايير

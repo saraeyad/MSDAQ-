@@ -4,7 +4,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { categoryFilterKey, categoryFilterLabel } from "@/lib/publishing";
+import {
+  categoryFilterKey,
+  categoryFilterLabel,
+  categoryNodeLabel,
+} from "@/lib/publishing";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronLeft } from "lucide-react";
 import { useMemo, useState, type PointerEvent } from "react";
@@ -12,7 +16,9 @@ import { useMemo, useState, type PointerEvent } from "react";
 type FlyoutCategory = {
   id?: number | string | null;
   slug: string;
-  name_ar: string;
+  name?: string | null;
+  name_ar?: string | null;
+  name_en?: string | null;
   children?: FlyoutCategory[];
 };
 
@@ -36,6 +42,7 @@ function CategoryFilterFlyoutRow({
   const children = category.children ?? [];
   const hasChildren = children.length > 0;
   const parentKey = categoryFilterKey(category);
+  const parentLabel = categoryNodeLabel(category);
   const parentSelected = parentKey === value;
   const branchSelected = children.some(
     (child) => categoryFilterKey(child) === value,
@@ -47,7 +54,7 @@ function CategoryFilterFlyoutRow({
         className={cn(parentSelected && "text-primary font-medium")}
         onSelect={() => onSelect(parentKey)}
       >
-        {category.name_ar}
+        {parentLabel}
       </DropdownMenuItem>
     );
   }
@@ -65,7 +72,7 @@ function CategoryFilterFlyoutRow({
           selectOnPointerDown(event, () => onSelect(parentKey))
         }
       >
-        <span className="site-nav-parent-link__label">{category.name_ar}</span>
+        <span className="site-nav-parent-link__label">{parentLabel}</span>
         <ChevronLeft className="site-nav-parent-link__chevron" aria-hidden />
       </button>
       <div
@@ -74,9 +81,9 @@ function CategoryFilterFlyoutRow({
           flyoutPlacement === "inward" && "site-nav-flyout--inward",
         )}
         role="menu"
-        aria-label={`${category.name_ar} — تصنيفات فرعية`}
+        aria-label={`${parentLabel} — تصنيفات فرعية`}
       >
-        <p className="site-nav-flyout__heading">{category.name_ar}</p>
+        <p className="site-nav-flyout__heading">{parentLabel}</p>
         <ul className="site-nav-flyout__list">
           {children.map((child) => {
             const childKey = categoryFilterKey(child);
@@ -96,7 +103,7 @@ function CategoryFilterFlyoutRow({
                 >
                   <span className="site-nav-flyout__bullet" aria-hidden />
                   <span className="site-nav-flyout__label">
-                    {child.name_ar}
+                    {categoryNodeLabel(child)}
                   </span>
                 </button>
               </li>

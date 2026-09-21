@@ -189,9 +189,7 @@ export function isRequiredStepComplete(
     case 3:
       return article.media_type !== "text" || hasContentFormal(article);
     case 4:
-      return (
-        article.media_type !== "text" || article.gate?.fusha_passed === true
-      );
+      return true;
     case 5:
       return (
         article.media_type !== "text" ||
@@ -347,9 +345,9 @@ export function derivePublishGate(
         blocking: true,
       },
       {
-        label: "اجتياز فحص المعايير (فصحى)",
+        label: "اجتياز فحص المعايير (فصحى) — إرشادي",
         passed: gate?.fusha_passed === true,
-        blocking: true,
+        blocking: false,
       },
     );
   }

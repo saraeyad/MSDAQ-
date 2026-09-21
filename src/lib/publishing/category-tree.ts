@@ -3,9 +3,20 @@ import type { Category, PublicCategory } from "@/types";
 type CategoryFilterNode = {
   id?: number | string | null;
   slug: string;
-  name_ar?: string;
+  name?: string | null;
+  name_ar?: string | null;
+  name_en?: string | null;
   children?: CategoryFilterNode[];
 };
+
+export function categoryNodeLabel(category: CategoryFilterNode): string {
+  return (
+    category.name_ar?.trim() ||
+    category.name?.trim() ||
+    category.name_en?.trim() ||
+    category.slug
+  );
+}
 
 function visitCategoryTree(
   category: CategoryFilterNode,
@@ -85,7 +96,8 @@ export function categoryFilterLabel(
   fallback = "كل التصنيفات",
 ): string {
   if (!key) return fallback;
-  return findCategoryByFilterKey(tree, key)?.name_ar ?? fallback;
+  const node = findCategoryByFilterKey(tree, key);
+  return (node ? categoryNodeLabel(node) : "") || fallback;
 }
 
 export function collectCategoryFilterKeys(category: CategoryFilterNode): string[] {

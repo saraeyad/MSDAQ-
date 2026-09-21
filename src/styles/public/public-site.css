@@ -612,7 +612,7 @@
     height: auto;
     width: auto;
     object-fit: contain;
-    background: transparent;
+    background: #ffffff;
   }
 
   .partners-logo-fallback {
@@ -684,7 +684,7 @@
     min-height: 9.5rem;
     align-items: center;
     justify-content: center;
-    background: #f8f9fa;
+    background: #ffffff;
     padding: 1.75rem 1.25rem;
   }
 

@@ -10,13 +10,13 @@ export interface Partner {
 }
 
 export const PARTNER_LOGOS = {
-  unTrustFund: "/partners/un-trust-fund.webp",
-  crs: "/partners/crs.webp",
-  aisha: "/partners/aisha.webp",
-  birzeit: "/partners/birzeit.webp",
-  wacc: "/partners/wacc.webp",
-  ndc: "/partners/ndc.webp",
-  cfi: "/partners/cfi.webp",
+  cfi: "/partners/cfi.jpg",
+  ccfd: "/partners/ccfd.jpg",
+  rsf: "/partners/rsf.jpg",
+  euroMed: "/partners/euro-med.png",
+  wacc: "/partners/wacc.png",
+  boell: "/partners/boell.png",
+  care: "/partners/care.png",
 } as const;
 
 type LogoKey = keyof typeof PARTNER_LOGOS;
@@ -38,12 +38,12 @@ function partner({ logoKey, ...rest }: PartnerInput): Partner {
 
 const PARTNER_LOGO_KEYS: Record<string, LogoKey> = {
   cfi: "cfi",
-  "un-trust": "unTrustFund",
-  crs: "crs",
-  aisha: "aisha",
-  birzeit: "birzeit",
+  ccfd: "ccfd",
+  rsf: "rsf",
+  "euro-med": "euroMed",
   wacc: "wacc",
-  ndc: "ndc",
+  boell: "boell",
+  care: "care",
 };
 
 export function partnersFromCopy(

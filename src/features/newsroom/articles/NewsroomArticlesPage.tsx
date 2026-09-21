@@ -15,7 +15,6 @@ import { StatusBadge } from "@/features/admin/components/StatusBadge";
 import { ArticleStatusActions } from "@/features/newsroom/articles/ArticleStatusActions";
 import { CategoryFlyoutFilter } from "@/features/newsroom/articles/CategoryFlyoutFilter";
 import { usePermission } from "@/hooks/auth";
-import { usePublicCategories } from "@/hooks/public";
 import { useAuth } from "@/context/auth";
 import { getApiErrorMessage } from "@/lib/api";
 import { mediaTypeLabel, resolveMediaUrl } from "@/lib/media";
@@ -35,6 +34,7 @@ import {
   staffArticleTrustFeedbackPath,
 } from "@/router/routes";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
+import { Categories_APIs } from "@/services/api/categories";
 import type { ArticleStatus, StaffArticle } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -213,7 +213,10 @@ export default function NewsroomArticlesPage() {
   const mine = params.get("mine") === "1";
   const page = Math.max(1, Number(params.get("page") ?? "1"));
 
-  const { data: categories = [] } = usePublicCategories();
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ["staff-categories"],
+    queryFn: () => Categories_APIs.list(),
+  });
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["staff-articles", status, category, mine],
@@ -389,6 +392,7 @@ export default function NewsroomArticlesPage() {
           <CategoryFlyoutFilter
             categories={categories}
             value={category}
+            loading={categoriesLoading}
             className="newsroom-articles-filter newsroom-articles-filter--wide"
             onChange={(nextCategory) =>
               updateParams({
