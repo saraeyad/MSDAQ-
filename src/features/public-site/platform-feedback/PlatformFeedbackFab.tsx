@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const FAB_ART = {
   ar: "/brand/sabbara-feedback-fab.webp?v=2",
-  en: "/brand/sabbara-feedback-fab-en.png?v=1",
+  en: "/brand/sabbara-feedback-fab-en.webp?v=2",
 } as const;
 
 export function PlatformFeedbackFab() {

@@ -5,7 +5,6 @@ import { DesktopSiteNav, MobileSiteNav } from "@/components/site/site-header-nav
 import { SiteFooter } from "@/components/site/site-footer";
 import { PlatformFeedbackProvider } from "@/context/platform-feedback";
 import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/PlatformFeedbackFab";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
 import { usePublicCopy } from "@/context/locale";
 import {
@@ -15,9 +14,8 @@ import {
 } from "@/lib/site";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { cn } from "@/lib/utils";
-import { LogIn } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 const HomeToolsSection = lazy(() =>
   import("@/features/public-site/home/HomeToolsSection").then((module) => ({
@@ -125,7 +123,7 @@ export default function PublicLayout() {
             <div className="ms-auto flex shrink-0 items-center gap-2">
               <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
               <LocaleSwitcher className="hidden sm:inline-flex" />
-              {authHref && authLabel ? (
+              {/* {authHref && authLabel ? (
                 <Button
                   asChild
                   size="sm"
@@ -136,7 +134,7 @@ export default function PublicLayout() {
                     {authLabel}
                   </Link>
                 </Button>
-              ) : null}
+              ) : null} */}
               <MobileSiteNav authHref={authHref} authLabel={authLabel} />
             </div>
           </div>

@@ -10,13 +10,13 @@ export interface Partner {
 }
 
 export const PARTNER_LOGOS = {
-  cfi: "/partners/cfi.jpg",
-  ccfd: "/partners/ccfd.jpg",
-  rsf: "/partners/rsf.jpg",
-  euroMed: "/partners/euro-med.png",
-  wacc: "/partners/wacc.png",
-  boell: "/partners/boell.png",
-  care: "/partners/care.png",
+  cfi: "/partners/cfi.webp",
+  ccfd: "/partners/ccfd.webp",
+  rsf: "/partners/rsf.webp",
+  euroMed: "/partners/euro-med.webp",
+  wacc: "/partners/wacc.webp",
+  boell: "/partners/boell.webp",
+  care: "/partners/care.webp",
 } as const;
 
 type LogoKey = keyof typeof PARTNER_LOGOS;

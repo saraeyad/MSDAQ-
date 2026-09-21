@@ -369,13 +369,13 @@ export function MobileSiteNav({
             ),
           )}
         </nav>
-        {authHref && authLabel ? (
+        {/* {authHref && authLabel ? (
           <div className="site-mobile-nav__footer">
             <Button asChild className="site-mobile-nav__auth" onClick={close}>
               <Link to={authHref}>{authLabel}</Link>
             </Button>
           </div>
-        ) : null}
+        ) : null} */}
       </SheetContent>
     </Sheet>
   );
