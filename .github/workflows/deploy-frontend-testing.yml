@@ -21,7 +21,8 @@ jobs:
       - name: Install Dependencies & Compile Build
         run: |
           npm ci
-          npm run build
+          # FIXED: Forces the bundler to compile using your staging environment variables
+          npm run build -- --mode staging
 
       - name: Deploy Compiled dist Folder to Server via Sync
         uses: appleboy/scp-action@v0.1.7
@@ -30,9 +31,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          # CHANGED: Target the specific nested build files inside your app output
           source: "dist/client/*,dist/client/**"
           target: "public_html/frontend-staging"
-          # CHANGED: Strips both the 'dist/' and 'client/' folders so files land directly
           strip_components: 2
           overwrite: true
