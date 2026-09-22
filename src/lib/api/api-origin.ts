@@ -1,4 +1,4 @@
-export const DEFAULT_API_URL = "https://api.sabbarapost.org";
+export const DEFAULT_API_URL = "https://api.staging.sabbarapost.org";
 
 /** Absolute API origin (no trailing slash). */
 export function apiOrigin(): string {
