@@ -1,4 +1,4 @@
-name: Deploy Staging Frontend
+name: Deploy Testing Frontend
 
 on:
   push:
@@ -30,7 +30,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
-          source: "dist/*"
-          target: "/home/sabbarapost/public_html/frontend-staging"
-          strip_components: 1
+          # CHANGED: Target the specific nested build files inside your app output
+          source: "dist/client/*,dist/client/**"
+          target: "public_html/frontend-staging"
+          # CHANGED: Strips both the 'dist/' and 'client/' folders so files land directly
+          strip_components: 2
           overwrite: true
