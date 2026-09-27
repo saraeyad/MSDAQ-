@@ -119,12 +119,16 @@ export function HomeArticleCard({
               {englishPending ? (
                 <PublicArticleEnglishPendingBadge />
               ) : (
-                <span className="inline-flex flex-wrap items-center gap-1.5">
+                <span className="home-feed-stack-item__headline">
                   {article.title}
-                  <ArticleVerifiedBadge article={article} />
                 </span>
               )}
             </Link>
+            <span className="home-feed-stack-item__verified">
+              {englishPending ? null : (
+                <ArticleVerifiedBadge article={article} />
+              )}
+            </span>
             <time className="home-feed-stack-item__date">
               {new Date(article.published_at).toLocaleDateString(dateLocale)}
             </time>

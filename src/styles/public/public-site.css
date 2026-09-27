@@ -1819,6 +1819,7 @@
   }
 
   .home-feed-frontpage__stack .home-feed-stack-item {
+    min-height: 7.35rem;
     background: var(--card);
     border: 1px solid rgba(17, 17, 17, 0.09);
     border-radius: 0.85rem;
@@ -1826,9 +1827,16 @@
     overflow: hidden;
   }
 
+  .home-feed-pair__col .home-feed-stack-item,
+  .home-feed-frontpage__stack .home-feed-stack-item {
+    margin-inline: 0 !important;
+  }
+
   .home-feed-stack-item__link {
     display: flex;
+    align-items: center;
     gap: 0.85rem;
+    min-height: 7.35rem;
     padding: 0.85rem;
     text-decoration: none;
     color: inherit;
@@ -1917,6 +1925,11 @@
   }
 
   .home-feed-stack-item__title {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.35rem;
+    min-height: 2.52rem;
     font-family: var(--font-headline);
     font-size: 0.9rem;
     font-weight: 700;
@@ -1924,10 +1937,15 @@
     color: #111111;
     text-decoration: none;
     transition: color 0.15s ease;
+  }
+
+  .home-feed-stack-item__headline {
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
+    min-height: 2.52rem;
   }
 
   .home-feed-stack-item__title:hover {
@@ -4617,4 +4635,49 @@
   html.dark .public-page-hero__kicker {
     color: var(--secondary);
   }
+}
+
+.home-feed-frontpage__stack .home-feed-stack-item,
+.home-feed-pair__col .home-feed-stack-item {
+  min-height: 8.35rem;
+  margin-inline: 0 !important;
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
+  border-radius: 0.85rem;
+  box-shadow: 0 2px 12px rgba(17, 17, 17, 0.05);
+  overflow: hidden;
+}
+
+.home-feed-stack-item__link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 8.35rem;
+  padding: 0.85rem;
+}
+
+.home-feed-stack-item__title {
+  display: block;
+  min-height: 2.52em;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.home-feed-stack-item__headline {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.52em;
+}
+
+.home-feed-stack-item__verified {
+  display: flex;
+  align-items: center;
+  min-height: 1.3rem;
+}
+
+.home-feed-stack-item__date {
+  margin-top: auto;
 }
