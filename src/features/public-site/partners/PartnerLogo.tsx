@@ -49,7 +49,11 @@ export function PartnerLogo({
       loading="lazy"
       decoding="async"
       onError={() => setFailed(true)}
-      className={cn("w-auto object-contain", SIZE[size], className)}
+      className={cn(
+        size === "strip" ? "object-contain" : "w-auto object-contain",
+        SIZE[size],
+        className,
+      )}
     />
   );
 }

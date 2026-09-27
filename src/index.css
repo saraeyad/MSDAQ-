@@ -666,7 +666,7 @@ html.light {
 /* Dark mode: warm ink page; cards + navbar share --public-surface-paper */
 html.dark
   :is(
-    .bg-card,
+    .bg-card:not(.trust-index-dialog):not(.trust-index-dialog *),
     .content-card,
     .news-card-enter,
     .home-feed-stack-item,
@@ -675,7 +675,6 @@ html.dark
     .home-feed-band--listen,
     .home-podcast,
     .partners-strip,
-    .partners-strip__logo-cell,
     .partners-page-card,
     .partners-page-card__logo,
     .partners-page-footer-note,
@@ -1049,4 +1048,22 @@ html.dark .podcast-soundcloud-link:not(.podcast-soundcloud-link--embed):hover {
 
 html.dark .home-news-rail::after {
   opacity: 0.92;
+}
+
+html.dark [data-slot="dialog-content"].trust-index-dialog.bg-card,
+html.dark [data-slot="dialog-content"].trust-index-dialog,
+html.dark .trust-index-dock {
+  background: #2a2622 !important;
+  background-color: #2a2622 !important;
+  background-image: none !important;
+  border-color: #5a5348 !important;
+  color: #f3ead8 !important;
+}
+
+html.dark .trust-index-dialog .bg-card,
+html.dark .trust-index-dialog [data-slot="textarea"] {
+  background: #1f1c19 !important;
+  background-color: #1f1c19 !important;
+  color: #f3ead8 !important;
+  border-color: #5a5348 !important;
 }
