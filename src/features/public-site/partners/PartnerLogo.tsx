@@ -13,7 +13,7 @@ const SIZE: Record<NonNullable<PartnerLogoProps["size"]>, string> = {
   md: "h-16 max-w-[11rem]",
   lg: "h-24 max-w-[16rem]",
   card: "h-20 max-w-[14rem]",
-  strip: "h-auto w-auto max-h-[5.5rem] max-w-full",
+  strip: "partners-strip__logo h-full w-full",
 };
 
 export function PartnerLogo({

@@ -50,18 +50,18 @@ export function CategoryFeedView({
   const NextIcon = dir === "rtl" ? ChevronLeft : ChevronRight;
 
   return (
-    <div className="pb-16">
-      <section className="public-page-hero border-b border-border py-12 md:py-16">
+    <div className="category-feed">
+      <section className="category-feed__hero">
         <div className="container-page">
           {headerLoading ? (
             <div className="h-10 w-56 max-w-full animate-pulse rounded-lg bg-muted md:h-12" />
           ) : (
-            <h1 className="font-headline text-3xl font-bold md:text-4xl">
+            <h1 className="category-feed__title font-headline text-3xl font-bold md:text-4xl">
               {title}
             </h1>
           )}
           {!headerLoading && description ? (
-            <p className="mt-3 max-w-2xl text-muted-foreground md:text-lg">
+            <p className="category-feed__lead mt-3 max-w-2xl text-muted-foreground md:text-lg">
               {description}
             </p>
           ) : null}
@@ -74,9 +74,9 @@ export function CategoryFeedView({
                     key={link.slug}
                     to={categoryPath(link.slug)}
                     className={cn(
-                      "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+                      "category-feed__chip rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
                       active
-                        ? "border-primary bg-primary text-primary-foreground"
+                        ? "category-feed__chip--active border-primary bg-primary text-primary-foreground"
                         : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-accent",
                     )}
                   >

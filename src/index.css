@@ -94,11 +94,11 @@ html.dark {
   color-scheme: dark;
   --background: #221f1c;
   --foreground: #ebe4d6;
-  --public-surface-paper: #f8f5f0;
+  --public-surface-paper: #dcd6cc;
   --card: var(--public-surface-paper);
   --card-foreground: #111111;
   --card-muted: #6b7280;
-  --card-border: #e8e4dc;
+  --card-border: #cabfa7;
   --popover: var(--public-surface-paper);
   --popover-foreground: #111111;
   --primary: #c41e3a;
@@ -664,7 +664,8 @@ html.light {
 }
 
 /* Dark mode: warm ink page; cards + navbar share --public-surface-paper */
-html.dark :is(
+html.dark
+  :is(
     .bg-card,
     .content-card,
     .news-card-enter,
@@ -674,11 +675,10 @@ html.dark :is(
     .home-feed-band--listen,
     .home-podcast,
     .partners-strip,
+    .partners-strip__logo-cell,
     .partners-page-card,
     .partners-page-card__logo,
     .partners-page-footer-note,
-    .partners-strip__logos img,
-    .partners-logo-fallback,
     .home-tools-plate,
     .tools-folio-card,
     .tools-folio__count,
@@ -702,7 +702,7 @@ html.dark :is(
   --border: var(--card-border);
 }
 
-html.dark .public-page-hero {
+html.dark .public-page-hero:not(.category-feed__hero) {
   background:
     linear-gradient(
       135deg,
@@ -716,6 +716,13 @@ html.dark .public-page-hero {
     );
 }
 
+html.dark .category-feed,
+html.dark .category-feed__hero {
+  background: transparent;
+  background-image: none;
+  color: var(--foreground);
+}
+
 html.dark .platform-feedback-fab,
 html.dark .article-trust-feedback-cta,
 html.dark .pilot-welcome__card {
@@ -725,17 +732,29 @@ html.dark .pilot-welcome__card {
 }
 
 html.dark .home-tools-plate:hover {
-  background-color: color-mix(in srgb, var(--public-surface-paper) 94%, #111111);
+  background-color: color-mix(
+    in srgb,
+    var(--public-surface-paper) 94%,
+    #111111
+  );
   border-color: var(--card-border);
 }
 
 html.dark .site-mobile-nav__tools {
-  background: color-mix(in srgb, var(--public-surface-paper) 88%, var(--background));
+  background: color-mix(
+    in srgb,
+    var(--public-surface-paper) 88%,
+    var(--background)
+  );
   border-bottom-color: var(--card-border);
 }
 
 html.dark .site-mobile-nav__link:hover {
-  background: color-mix(in srgb, var(--public-surface-paper) 78%, var(--background));
+  background: color-mix(
+    in srgb,
+    var(--public-surface-paper) 78%,
+    var(--background)
+  );
 }
 
 html.dark .site-mobile-nav__link--active {
@@ -755,18 +774,12 @@ html.dark .news-card-enter .font-headline {
   color: var(--card-foreground);
 }
 
-html.dark
-  .home-feed-stack-item__title,
-html.dark
-  .home-feed-stack-item__date,
-html.dark
-  .home-podcast__title,
-html.dark
-  .home-podcast__foot,
-html.dark
-  .home-feed-audio-row__title,
-html.dark
-  .home-feed-audio-row__date {
+html.dark .home-feed-stack-item__title,
+html.dark .home-feed-stack-item__date,
+html.dark .home-podcast__title,
+html.dark .home-podcast__foot,
+html.dark .home-feed-audio-row__title,
+html.dark .home-feed-audio-row__date {
   color: var(--card-foreground);
 }
 
@@ -786,12 +799,12 @@ html.dark .site-header--hero {
 
 html.dark .site-header-search-input {
   background: var(--public-header-search-bg);
-  border-color: rgba(45, 74, 45, 0.16);
+  border-color: var(--public-header-ink);
   color: var(--card-foreground);
 }
 
 html.dark .locale-switcher {
-  border-color: rgba(45, 74, 45, 0.18);
+  border-color: var(--public-header-ink);
   background: var(--public-header-search-bg);
   color: var(--public-header-ink);
 }
@@ -817,9 +830,13 @@ html.dark .partners-strip {
   border-top-color: var(--border);
 }
 
+html.dark .partners-strip__logo-cell {
+  background: #ffffff;
+}
+
 html.dark .partners-strip__logos img,
 html.dark .partners-strip__logos .partners-logo-fallback {
-  background: var(--card);
+  background: transparent;
 }
 
 html.dark .partners-page-card__title {
@@ -887,7 +904,11 @@ html.dark .home-tools-plate__cta {
 }
 
 html.dark .home-tools-plate--cta {
-  background-color: color-mix(in srgb, var(--public-surface-paper) 88%, var(--primary));
+  background-color: color-mix(
+    in srgb,
+    var(--public-surface-paper) 88%,
+    var(--primary)
+  );
   border-color: rgba(196, 30, 58, 0.35);
 }
 
