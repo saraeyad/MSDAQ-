@@ -17,6 +17,7 @@ import { CategoryFlyoutFilter } from "@/features/newsroom/articles/CategoryFlyou
 import { usePermission } from "@/hooks/auth";
 import { useAuth } from "@/context/auth";
 import { getApiErrorMessage } from "@/lib/api";
+import { formatApiDateTime } from "@/lib/calendar";
 import { mediaTypeLabel, resolveMediaUrl } from "@/lib/media";
 import {
   collectCategoryFilterKeys,
@@ -124,7 +125,7 @@ function StaffArticleCard({
             ) : null}
             {article.status === "scheduled" && article.scheduled_for ? (
               <span>
-                مجدول: {new Date(article.scheduled_for).toLocaleString("ar")}
+                مجدول: {formatApiDateTime(article.scheduled_for)}
               </span>
             ) : null}
             <span>{new Date(article.updated_at).toLocaleDateString("ar")}</span>

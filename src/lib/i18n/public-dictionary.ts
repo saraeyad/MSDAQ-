@@ -54,6 +54,9 @@ export type PublicCopy = {
     noFilterMatch: string;
     filterEmpty: (label: string) => string;
     showMore: string;
+    moreInSection: (label: string) => string;
+    morePodcasts: string;
+    podcastsTitle: string;
     toolsKicker: [string, string, string];
     toolsTitleLine: string;
     toolsTitleAccent: string;
@@ -95,6 +98,10 @@ export type PublicCopy = {
     switchTo: string;
     current: string;
     comingSoon: string;
+  };
+  theme: {
+    switchToDark: string;
+    switchToLight: string;
   };
   pageHero: {
     articles: string;
@@ -183,6 +190,9 @@ const ar: PublicCopy = {
     noFilterMatch: "لا توجد مقالات مطابقة لهذا الفلتر.",
     filterEmpty: (label) => `لا توجد مقالات في «${label}».`,
     showMore: "عرض المزيد",
+    moreInSection: (label) => `المزيد في ${label}`,
+    morePodcasts: "المزيد من البودكاست",
+    podcastsTitle: "بودكاست",
     toolsKicker: ["تحقق", "صور", "صوت"],
     toolsTitleLine: "أدواتنا.",
     toolsTitleAccent: "للتحقق من الأخبار.",
@@ -226,6 +236,10 @@ const ar: PublicCopy = {
     switchTo: "English",
     current: "العربية",
     comingSoon: "الترجمة قيد الإعداد",
+  },
+  theme: {
+    switchToDark: "الوضع الداكن",
+    switchToLight: "الوضع الفاتح",
   },
   pageHero: {
     articles: "المقالات",
@@ -341,6 +355,9 @@ const en: PublicCopy = {
     noFilterMatch: "No articles match this filter.",
     filterEmpty: (label) => `No articles in “${label}”.`,
     showMore: "Show more",
+    moreInSection: (label) => `More in ${label}`,
+    morePodcasts: "More from the podcasts",
+    podcastsTitle: "Podcasts",
     toolsKicker: ["Verify", "Images", "Audio"],
     toolsTitleLine: "Our tools.",
     toolsTitleAccent: "For checking the news.",
@@ -385,6 +402,10 @@ const en: PublicCopy = {
     switchTo: "العربية",
     current: "English",
     comingSoon: "Translation coming soon",
+  },
+  theme: {
+    switchToDark: "Dark mode",
+    switchToLight: "Light mode",
   },
   pageHero: {
     articles: "Articles",

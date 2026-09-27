@@ -1,3 +1,4 @@
+import { formatApiDateTime } from "@/lib/calendar";
 import { ROUTES } from "@/router/routes";
 import type { ArticleStatus } from "@/types";
 import { Link } from "react-router-dom";
@@ -61,7 +62,7 @@ export function WorkflowListPanel({
               <p className="mt-1 text-xs text-muted-foreground">
                 {item.author}
                 {item.scheduled_for
-                  ? ` · ${new Date(item.scheduled_for).toLocaleString("ar")}`
+                  ? ` · ${formatApiDateTime(item.scheduled_for)}`
                   : null}
                 {item.revert_reason ? ` · ${item.revert_reason}` : null}
               </p>

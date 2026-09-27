@@ -49,11 +49,12 @@ export function NewsSlider({
   );
 
   useEffect(() => {
+    if (isRail) return;
     if (slides.length <= 1 || paused || autoPlayMs <= 0) return;
     if (window.matchMedia("(max-width: 767px)").matches) return;
     const timer = window.setInterval(() => goTo(index + 1), autoPlayMs);
     return () => window.clearInterval(timer);
-  }, [autoPlayMs, goTo, index, paused, slides.length]);
+  }, [autoPlayMs, goTo, index, isRail, paused, slides.length]);
 
   const slideHeight = isBanner
     ? "h-[12rem] sm:h-[16rem] md:h-[20rem] lg:h-[24rem]"
@@ -74,22 +75,19 @@ export function NewsSlider({
     );
   }
 
-  const current = slides[index];
-  const category =
-    (current.category
-      ? localizedCategoryName(current.category, locale)
-      : null) ??
-    publicMediaTypeLabelFromCopy(copy, current.media_type);
-  const published = new Date(current.published_at).toLocaleDateString(
-    locale === "ar" ? "ar" : "en-GB",
-    { day: "numeric", month: "short" },
-  );
-  const englishPending = isEnglishArticlePending(current, locale);
-
   if (isRail) {
+    const repeats = slides.length >= 4 ? 2 : 4;
+    const tickerItems = Array.from({ length: repeats }, () => slides).flat();
+    const durationSec = Math.max(22, slides.length * 8);
+
     return (
       <div
-        className={cn("news-rail", className)}
+        className={cn(
+          "news-rail",
+          slides.length > 1 && "news-rail--moving",
+          paused && "news-rail--paused",
+          className,
+        )}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -98,53 +96,49 @@ export function NewsSlider({
           {home.nowLabel}
         </span>
 
-        <Link to={articlePath(current.id)} className="news-rail__story">
-          <PublicArticleCover
-            article={current}
-            className="news-rail__thumb"
-          />
-          <div className="news-rail__copy">
-            <p className="news-rail__meta">
-              <span>{category}</span>
-              <span aria-hidden>·</span>
-              <time dateTime={current.published_at}>{published}</time>
-            </p>
-            <h2 className="news-rail__title">
-              {englishPending ? (
-                <PublicArticleEnglishPendingBadge />
-              ) : (
-                current.title
-              )}
-            </h2>
-          </div>
-        </Link>
+        <div className="news-rail__viewport">
+          <div
+            className="news-rail__track"
+            style={{ animationDuration: `${durationSec}s` }}
+          >
+            {tickerItems.map((item, itemIndex) => {
+              const itemCategory =
+                (item.category
+                  ? localizedCategoryName(item.category, locale)
+                  : null) ??
+                publicMediaTypeLabelFromCopy(copy, item.media_type);
+              const itemPending = isEnglishArticlePending(item, locale);
 
-        {slides.length > 1 && (
-          <div className="news-rail__controls">
-            <span className="news-rail__count" aria-hidden>
-              {index + 1}/{slides.length}
-            </span>
-            <button
-              type="button"
-              aria-label={article.prevStory}
-              onClick={() => goTo(index - 1)}
-              className="news-rail__nav"
-            >
-              <PrevIcon className="size-4" />
-            </button>
-            <button
-              type="button"
-              aria-label={article.nextStory}
-              onClick={() => goTo(index + 1)}
-              className="news-rail__nav"
-            >
-              <NextIcon className="size-4" />
-            </button>
+              return (
+                <Link
+                  key={`${item.id}-${itemIndex}`}
+                  to={articlePath(item.id)}
+                  className="news-rail__story"
+                >
+                  <span className="news-rail__meta">{itemCategory}</span>
+                  <span className="news-rail__title">
+                    {itemPending ? (
+                      <PublicArticleEnglishPendingBadge />
+                    ) : (
+                      item.title
+                    )}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
-        )}
+        </div>
       </div>
     );
   }
+
+  const current = slides[index];
+  const category =
+    (current.category
+      ? localizedCategoryName(current.category, locale)
+      : null) ??
+    publicMediaTypeLabelFromCopy(copy, current.media_type);
+  const englishPending = isEnglishArticlePending(current, locale);
 
   return (
     <div

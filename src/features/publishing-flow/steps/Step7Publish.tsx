@@ -1,16 +1,20 @@
 import { PublishGatePanel } from "@/features/publishing-flow/components/PublishGatePanel";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
-import { CalendarScheduleRow } from "@/features/calendar/components/CalendarScheduleRow";
+import {
+  CalendarScheduleRow,
+  normalizeScheduleDatetime,
+} from "@/features/calendar/components/CalendarScheduleRow";
 import { Button } from "@/components/ui/button";
 import { usePublishGate } from "@/hooks/publishing";
 import { getApiErrorMessage } from "@/lib/api";
 import {
-  dateToOffsetIso,
+  dateToUtcIso,
   isoToDatetimeLocal,
   parseDatetimeLocal,
 } from "@/lib/calendar";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { CalendarClock, CheckCircle2, Loader2, Send, Undo2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -23,6 +27,7 @@ interface Step7PublishProps {
 
 export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: gate, article, isLoading } = usePublishGate(articleId, {
     loadMedia: true,
   });
@@ -36,7 +41,9 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
 
   useEffect(() => {
     if (!article?.scheduled_for) return;
-    setScheduledFor(isoToDatetimeLocal(article.scheduled_for));
+    setScheduledFor(
+      normalizeScheduleDatetime(isoToDatetimeLocal(article.scheduled_for)),
+    );
   }, [article?.scheduled_for]);
 
   const handlePublish = async () => {
@@ -64,14 +71,18 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
     }
     setPublishing(true);
     try {
-      const when = dateToOffsetIso(parsed);
-      if (isScheduled) {
-        await ArticlesStaff_APIs.reschedule(articleId, when);
-        toast.success("تم إعادة جدولة المقال");
+      const when = dateToUtcIso(parsed);
+      const updated = isScheduled
+        ? await ArticlesStaff_APIs.reschedule(articleId, when)
+        : await ArticlesStaff_APIs.schedule(articleId, when);
+      if (updated) {
+        queryClient.setQueryData(["staff-article", articleId], updated);
       } else {
-        await ArticlesStaff_APIs.schedule(articleId, when);
-        toast.success("تم جدولة النشر");
+        await queryClient.invalidateQueries({
+          queryKey: ["staff-article", articleId],
+        });
       }
+      toast.success(isScheduled ? "تم إعادة جدولة المقال" : "تم جدولة النشر");
       navigate(ROUTES.NEWSROOM_ARTICLES);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
@@ -142,7 +153,7 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
               <h3 className="publish-flow-card__title">جدولة النشر</h3>
             </div>
             <p className="publish-step-publish__lead">
-              اختر اليوم ثم الساعة (بتوقيت جهازك) — يُرسل الوقت مع المنطقة الزمنية.
+              اختر اليوم ثم الساعة بتوقيت جهازك. 12 ص = منتصف الليل، 12 م = الظهر.
             </p>
             <CalendarScheduleRow
               value={scheduledFor}

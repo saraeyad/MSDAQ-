@@ -1,5 +1,6 @@
 import { AuthProvider } from "@/context/auth";
 import { LocaleProvider } from "@/context/locale";
+import { ThemeProvider } from "@/context/theme";
 import { SiteOriginProvider } from "@/context/site-origin";
 import { AppRoutes } from "@/router/AppRoutes";
 import {
@@ -19,6 +20,8 @@ import {
 } from "@/lib/api";
 import { readLocaleForSsr } from "@/lib/i18n/locale-request";
 import type { Locale } from "@/lib/i18n/types";
+import { readThemeForSsr } from "@/lib/theme/theme-request";
+import type { Theme } from "@/lib/theme/types";
 import type { PublicArticle, PublicCategoryDetail } from "@/types";
 import {
   dehydrate,
@@ -84,21 +87,24 @@ function renderPageTree(
   queryClient: QueryClient,
   origin: string,
   locale: Locale,
+  theme: Theme,
 ): { appHtml: string; head: string; dehydratedState: DehydratedState } {
   const helmetContext: { helmet?: HelmetServerState } = {};
 
   const appHtml = renderToString(
     <HelmetProvider context={helmetContext}>
       <QueryClientProvider client={queryClient}>
-        <SiteOriginProvider origin={origin}>
-          <LocaleProvider initialLocale={locale}>
-            <AuthProvider>
-              <StaticRouter location={url}>
-                <AppRoutes />
-              </StaticRouter>
-            </AuthProvider>
-          </LocaleProvider>
-        </SiteOriginProvider>
+        <ThemeProvider initialTheme={theme}>
+          <SiteOriginProvider origin={origin}>
+            <LocaleProvider initialLocale={locale}>
+              <AuthProvider>
+                <StaticRouter location={url}>
+                  <AppRoutes />
+                </StaticRouter>
+              </AuthProvider>
+            </LocaleProvider>
+          </SiteOriginProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </HelmetProvider>,
   );
@@ -128,6 +134,7 @@ export async function handleSsrRequest(
   const pageParam = new URL(url, "http://ssr.local").searchParams.get("page");
   const page = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
   const locale = readLocaleForSsr(cookieHeader);
+  const theme = readThemeForSsr(cookieHeader);
 
   const articleMatch = pathname.match(ARTICLE_ROUTE);
   if (articleMatch) {
@@ -141,7 +148,7 @@ export async function handleSsrRequest(
       article,
       articleUrlId: id,
     });
-    const rendered = renderPageTree(pathname, queryClient, origin, locale);
+    const rendered = renderPageTree(pathname, queryClient, origin, locale, theme);
 
     return {
       ...rendered,
@@ -164,7 +171,13 @@ export async function handleSsrRequest(
       slug,
       page,
     });
-    const rendered = renderPageTree(categoryUrl, queryClient, origin, locale);
+    const rendered = renderPageTree(
+      categoryUrl,
+      queryClient,
+      origin,
+      locale,
+      theme,
+    );
 
     return {
       ...rendered,

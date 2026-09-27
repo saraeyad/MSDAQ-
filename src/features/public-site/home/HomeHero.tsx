@@ -67,16 +67,6 @@ export function HomeHero() {
         </div>
       </div>
 
-      <div className="home-cinematic-hero__center-logo">
-        <span className="home-cinematic-hero__center-logo-grain" aria-hidden />
-        <img
-          src="/brand/cdmc.webp?v=3"
-          alt={hero.brandLine}
-          loading="lazy"
-          decoding="async"
-        />
-      </div>
-
       <div className="home-cinematic-hero__spine" aria-hidden>
         {hero.spine.map((label) => (
           <span key={label}>{label}</span>

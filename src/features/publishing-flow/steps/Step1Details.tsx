@@ -126,7 +126,7 @@ function sourceDraftFromArticle(source: ArticleSource): SourceDraft {
 }
 
 function initialSources(article?: StaffArticle): SourceDraft[] {
-  if (article?.sources.length) {
+  if (article?.sources?.length) {
     return article.sources.map(sourceDraftFromArticle);
   }
   return [{ ...EMPTY_SOURCE }];

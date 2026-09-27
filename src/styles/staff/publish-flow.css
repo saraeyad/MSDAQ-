@@ -605,10 +605,25 @@
     color: var(--muted-foreground);
   }
 
-  .publish-category-flyout {
+  .publish-field .publish-category-flyout.newsroom-category-filter {
     width: 100%;
     min-width: 0;
     max-width: none;
+    flex: none;
+    height: 2.65rem;
+    min-height: 2.65rem;
+    max-height: 2.65rem;
+    border-radius: 0.375rem;
+    padding: 0 0.75rem;
+    background: #fafafa;
+    box-shadow: none;
+  }
+
+  .publish-field .publish-category-flyout.newsroom-category-filter:hover,
+  .publish-field .publish-category-flyout.newsroom-category-filter[data-state="open"] {
+    border-color: rgba(249, 140, 52, 0.55);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(249, 140, 52, 0.12);
   }
 
   .publish-threshold-grid {

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import express from "express";
+import { parseThemeFromCookie } from "../src/lib/theme/theme-request";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProduction = process.env.NODE_ENV === "production";
@@ -18,26 +19,39 @@ function getRequestOrigin(req: express.Request): string {
   return "https://misdaq.ps";
 }
 
+function stampHtmlTheme(template: string, cookieHeader?: string): string {
+  const theme = parseThemeFromCookie(cookieHeader ?? null) ?? "light";
+  return template.replace(
+    "<html lang=\"ar\" dir=\"rtl\">",
+    `<html lang="ar" dir="rtl" class="${theme}" style="color-scheme: ${theme}">`,
+  );
+}
+
 function injectTemplate(
   template: string,
   {
     appHtml,
     head,
     dehydratedState,
+    cookieHeader,
   }: {
     appHtml: string;
     head: string;
     dehydratedState: unknown;
+    cookieHeader?: string;
   },
 ): string {
   const stateScript = dehydratedState
     ? `<script>window.__REACT_QUERY_STATE__=${JSON.stringify(dehydratedState).replace(/</g, "\\u003c")}</script>`
     : "";
 
-  return template
-    .replace("<!--ssr-head-->", head || "<title>صبارة بوست</title>")
-    .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`)
-    .replace("<!--ssr-state-->", stateScript);
+  return stampHtmlTheme(
+    template
+      .replace("<!--ssr-head-->", head || "<title>صبارة بوست</title>")
+      .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`)
+      .replace("<!--ssr-state-->", stateScript),
+    cookieHeader,
+  );
 }
 
 async function createServer() {
@@ -96,6 +110,7 @@ async function createServer() {
                 appHtml: result.appHtml,
                 head: result.head,
                 dehydratedState: result.dehydratedState,
+                cookieHeader: req.headers.cookie,
               }),
             );
           return;
@@ -113,6 +128,7 @@ async function createServer() {
                 appHtml: missing.appHtml,
                 head: missing.head,
                 dehydratedState: missing.dehydratedState,
+                cookieHeader: req.headers.cookie,
               }),
             );
           return;
@@ -128,6 +144,7 @@ async function createServer() {
             appHtml: "",
             head: "",
             dehydratedState: null,
+            cookieHeader: req.headers.cookie,
           }),
         );
     } catch (error) {

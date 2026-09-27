@@ -1,0 +1,5 @@
+/**
+ * Optional unlayered dark overrides (not imported by default).
+ * Canonical hybrid dark rules live at the bottom of src/index.css:
+ * warm page shell + white/warm cards and navbar.
+ */

@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { ThemeSwitcher } from "@/components/site/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,10 +117,11 @@ export default function LoginPage() {
         </section>
 
         <div className="login-card">
-          <div className="login-card__top">
+          <div className="login-card__top flex items-start justify-between gap-3">
             <Link to={ROUTES.HOME} className="login-card__home" aria-label={brand.homeAria}>
               <BrandLogo size="xl" linkToHome={false} />
             </Link>
+            <ThemeSwitcher className="shrink-0" />
           </div>
 
           <div className="login-card__brand">

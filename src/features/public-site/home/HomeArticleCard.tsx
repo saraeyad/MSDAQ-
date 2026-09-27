@@ -12,15 +12,17 @@ import { publicArticleCoverUrl } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import type { PublicArticle, PublicMediaType } from "@/types";
-import { ArrowLeft, ArrowRight, FileText, Mic, Play, Video } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  FileText,
+  Mic,
+  Play,
+  Video,
+} from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 
-const PublicArticleAudioPlayer = lazy(() =>
-  import("@/features/public-site/components/PublicArticleAudioPlayer").then(
-    (module) => ({ default: module.PublicArticleAudioPlayer }),
-  ),
-);
 const PublicArticleVideoPlayer = lazy(() =>
   import("@/features/public-site/components/PublicArticleVideoPlayer").then(
     (module) => ({ default: module.PublicArticleVideoPlayer }),
@@ -33,20 +35,41 @@ const MEDIA_ICONS: Record<PublicMediaType, typeof FileText> = {
   video: Video,
 };
 
+type HomeArticleCardVariant = "default" | "compact" | "audioRow" | "podcast";
+
+function cardEdgeShift(id: PublicArticle["id"], index: number) {
+  const seed = [...String(id)].reduce(
+    (sum, char) => sum + char.charCodeAt(0),
+    index * 13,
+  );
+  const start = 0.15 + (seed % 7) * 0.22;
+  const end = 0.15 + ((seed * 5) % 6) * 0.22;
+  return {
+    marginInlineStart: `${start.toFixed(2)}rem`,
+    marginInlineEnd: `${end.toFixed(2)}rem`,
+  };
+}
+
 interface HomeArticleCardProps {
   article: PublicArticle;
   featured?: boolean;
   wide?: boolean;
+  variant?: HomeArticleCardVariant;
   index?: number;
   className?: string;
+  moreHref?: string | null;
+  moreLabel?: string;
 }
 
 export function HomeArticleCard({
   article,
   featured = false,
   wide = false,
+  variant = "default",
   index = 0,
   className,
+  moreHref,
+  moreLabel,
 }: HomeArticleCardProps) {
   const [mediaStarted, setMediaStarted] = useState(false);
   const { locale, dir } = useLocale();
@@ -64,10 +87,142 @@ export function HomeArticleCard({
   const isVideo = article.media_type === "video";
   const articleHref = articlePath(article.id);
   const posterUrl = publicArticleCoverUrl(article);
+  const edgeShift = cardEdgeShift(article.id, index);
+
+  if (variant === "compact") {
+    return (
+      <article
+        style={{ animationDelay: `${index * 40}ms`, ...edgeShift }}
+        className={cn("home-feed-stack-item news-card-enter group", className)}
+      >
+        <div className="home-feed-stack-item__link">
+          <Link to={articleHref} className="home-feed-stack-item__visual">
+            <span className="home-feed-stack-item__type">{badge}</span>
+            <span className="home-feed-stack-item__thumb">
+              <PublicArticleCover
+                article={article}
+                className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <span className="home-feed-stack-item__media" aria-hidden>
+                <Icon className="size-3.5" />
+              </span>
+            </span>
+          </Link>
+          <span className="home-feed-stack-item__body">
+            {moreHref && moreLabel ? (
+              <Link to={moreHref} className="home-feed-stack-item__more">
+                {moreLabel}
+                <CtaArrow className="size-3.5" />
+              </Link>
+            ) : null}
+            <Link to={articleHref} className="home-feed-stack-item__title">
+              {englishPending ? (
+                <PublicArticleEnglishPendingBadge />
+              ) : (
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  {article.title}
+                  <ArticleVerifiedBadge article={article} />
+                </span>
+              )}
+            </Link>
+            <time className="home-feed-stack-item__date">
+              {new Date(article.published_at).toLocaleDateString(dateLocale)}
+            </time>
+          </span>
+        </div>
+      </article>
+    );
+  }
+
+  if (variant === "podcast") {
+    return (
+      <article
+        style={{ animationDelay: `${index * 40}ms` }}
+        className={cn("home-podcast news-card-enter group", className)}
+      >
+        <Link to={articleHref} className="home-podcast__cover">
+          <PublicArticleCover
+            article={article}
+            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </Link>
+        <div className="home-podcast__body">
+          <div className="home-podcast__top">
+            <span className="home-podcast__badge">{badge}</span>
+            {moreHref && moreLabel ? (
+              <Link to={moreHref} className="home-podcast__more">
+                {moreLabel}
+                <CtaArrow className="size-3.5" />
+              </Link>
+            ) : null}
+          </div>
+          <Link to={articleHref} className="home-podcast__title">
+            {englishPending ? (
+              <PublicArticleEnglishPendingBadge />
+            ) : (
+              <span className="inline-flex flex-wrap items-center gap-2">
+                {article.title}
+                <ArticleVerifiedBadge article={article} />
+              </span>
+            )}
+          </Link>
+          <div className="home-podcast__foot">
+            <time dateTime={article.published_at}>
+              {new Date(article.published_at).toLocaleDateString(dateLocale)}
+            </time>
+            <Link
+              to={articleHref}
+              className="home-card-listen home-card-listen--inline"
+            >
+              <Play className="size-4 fill-current" />
+              {common.listenNow}
+            </Link>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  if (variant === "audioRow") {
+    return (
+      <article
+        style={{ animationDelay: `${index * 40}ms`, ...edgeShift }}
+        className={cn("home-feed-audio-row news-card-enter group", className)}
+      >
+        <div className="home-feed-audio-row__main">
+          <Link to={articleHref} className="home-feed-audio-row__copy">
+            <span className="home-feed-audio-row__badge">{badge}</span>
+            <h3 className="home-feed-audio-row__title">
+              {englishPending ? (
+                <PublicArticleEnglishPendingBadge />
+              ) : (
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  {article.title}
+                  <ArticleVerifiedBadge article={article} />
+                </span>
+              )}
+            </h3>
+            <time className="home-feed-audio-row__date">
+              {new Date(article.published_at).toLocaleDateString(dateLocale)}
+            </time>
+          </Link>
+          <div className="home-feed-audio-row__actions">
+            <Link
+              to={articleHref}
+              className="home-card-listen home-card-listen--inline"
+            >
+              <Play className="size-4 fill-current" />
+              {common.listenNow}
+            </Link>
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article
-      style={{ animationDelay: `${index * 60}ms` }}
+      style={{ animationDelay: `${index * 60}ms`, ...edgeShift }}
       className={cn(
         "news-card-enter group relative flex overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/50 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:ring-primary/25",
         wide ? "flex-col lg:flex-row" : "flex-col",
@@ -176,32 +331,10 @@ export function HomeArticleCard({
 
         {isAudio ? (
           <div className="relative z-10 mt-auto pt-3">
-            {mediaStarted ? (
-              <Suspense
-                fallback={
-                  <div className="home-card-listen" aria-hidden>
-                    <Play className="size-4 fill-current" />
-                    <span>{common.loading}…</span>
-                  </div>
-                }
-              >
-                <PublicArticleAudioPlayer
-                  articleId={article.id}
-                  variant="inline"
-                  startOnMount
-                  className="w-full"
-                />
-              </Suspense>
-            ) : (
-              <button
-                type="button"
-                className="home-card-listen"
-                onClick={() => setMediaStarted(true)}
-              >
-                <Play className="size-4 fill-current" />
-                {common.listenNow}
-              </button>
-            )}
+            <Link to={articleHref} className="home-card-listen">
+              <Play className="size-4 fill-current" />
+              {common.listenNow}
+            </Link>
           </div>
         ) : null}
 

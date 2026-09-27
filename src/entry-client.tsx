@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth";
 import { LocaleProvider } from "@/context/locale";
+import { ThemeProvider } from "@/context/theme";
 import { SiteOriginProvider } from "@/context/site-origin";
 import AppRouter from "@/router/AppRouter";
 import "./index.css";
@@ -40,9 +41,10 @@ const app = (
     <HelmetProvider>
       <NuqsAdapter>
         <QueryClientProvider client={queryClient}>
-          <LocaleProvider>
-            <AuthProvider>
-              <SiteOriginProvider>
+          <ThemeProvider>
+            <LocaleProvider>
+              <AuthProvider>
+                <SiteOriginProvider>
                 {dehydratedState ? (
                   <HydrationBoundary state={dehydratedState}>
                     <AppRouter />
@@ -51,9 +53,10 @@ const app = (
                   <AppRouter />
                 )}
                 <Toaster position="top-center" expand visibleToasts={4} />
-              </SiteOriginProvider>
-            </AuthProvider>
-          </LocaleProvider>
+                </SiteOriginProvider>
+              </AuthProvider>
+            </LocaleProvider>
+          </ThemeProvider>
         </QueryClientProvider>
       </NuqsAdapter>
     </HelmetProvider>

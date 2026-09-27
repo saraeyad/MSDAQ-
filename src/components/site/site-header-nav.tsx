@@ -14,6 +14,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { LocaleSwitcher } from "@/components/site/locale-switcher";
+import { ThemeSwitcher } from "@/components/site/theme-switcher";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import {
   buildPublicNavItems,
@@ -343,6 +344,7 @@ export function MobileSiteNav({
         <div className="site-mobile-nav__tools">
           <SiteHeaderSearch className="site-mobile-nav__search flex-1" />
           <LocaleSwitcher className="site-mobile-nav__locale" />
+          <ThemeSwitcher className="site-mobile-nav__theme shrink-0" />
         </div>
         <nav className="site-mobile-nav__list">
           {navItems.map((item) =>

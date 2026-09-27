@@ -1,11 +1,7 @@
 import { usePlatformFeedback } from "@/context/platform-feedback";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import { cn } from "@/lib/utils";
-
-const FAB_ART = {
-  ar: "/brand/sabbara-feedback-fab.webp?v=2",
-  en: "/brand/sabbara-feedback-fab-en.webp?v=2",
-} as const;
+import { MessageSquareText } from "lucide-react";
 
 export function PlatformFeedbackFab() {
   const { feedbackOpen, openFeedback, trustIndexOpen } = usePlatformFeedback();
@@ -27,14 +23,10 @@ export function PlatformFeedbackFab() {
       onClick={openFeedback}
       aria-label={feedback.fabAria}
     >
-      <img
-        src={FAB_ART[locale]}
-        alt=""
-        className="platform-feedback-fab__art"
-        loading="lazy"
-        decoding="async"
-        draggable={false}
-      />
+      <span className="platform-feedback-fab__label">{feedback.fabChip}</span>
+      <span className="platform-feedback-fab__mark" aria-hidden>
+        <MessageSquareText strokeWidth={2.25} />
+      </span>
     </button>
   );
 }

@@ -10,6 +10,7 @@ import { ArticleTrustIndexSection } from "@/features/trust-index/components/Arti
 import { ArticleStatusActions } from "@/features/newsroom/articles/ArticleStatusActions";
 import { usePermission } from "@/hooks/auth";
 import { getApiErrorMessage } from "@/lib/api";
+import { formatApiDateTime } from "@/lib/calendar";
 import { mediaTypeLabel, resolveMediaUrl } from "@/lib/media";
 import { derivePublishGate } from "@/lib/publishing";
 import {
@@ -314,7 +315,7 @@ export default function StaffArticleDetailPage() {
             <div className="staff-article-hero__dates">
               {article.scheduled_for ? (
                 <span className="staff-article-date staff-article-date--scheduled">
-                  مجدول: {new Date(article.scheduled_for).toLocaleString("ar")}
+                  مجدول: {formatApiDateTime(article.scheduled_for)}
                 </span>
               ) : null}
               {article.published_at ? (
@@ -495,7 +496,7 @@ export default function StaffArticleDetailPage() {
             </SectionPanel>
           ) : null}
 
-          {article.sources.length > 0 ? (
+          {article.sources?.length ? (
             <SectionPanel
               icon={ExternalLink}
               title={`المصادر (${article.sources.length})`}

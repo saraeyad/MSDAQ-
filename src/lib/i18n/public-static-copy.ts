@@ -92,6 +92,7 @@ export type PublicStaticCopy = {
   feedback: {
     fabAria: string;
     fabLabel: string;
+    fabChip: string;
     thanks: string;
     platformKicker: string;
     platformTitle: string;
@@ -318,6 +319,7 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
     feedback: {
       fabAria: "شاركنا رأيك في منصة صبارة بوست",
       fabLabel: "شاركنا رأيك",
+      fabChip: "رأيك",
       thanks: "شكراً — تم تسجيل تقييمك",
       platformKicker: "مؤشر ثقة الجمهور بالمنصة",
       platformTitle: "ما مدى ثقتك في صبارة بوست؟",
@@ -575,6 +577,7 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
     feedback: {
       fabAria: "Share your feedback on SABBARA POST",
       fabLabel: "Share feedback",
+      fabChip: "Feedback",
       thanks: "Thank you — your rating was recorded",
       platformKicker: "Public trust in the platform",
       platformTitle: "How much do you trust SABBARA POST?",

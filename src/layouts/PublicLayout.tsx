@@ -1,4 +1,5 @@
 import { LocaleSwitcher } from "@/components/site/locale-switcher";
+import { ThemeSwitcher } from "@/components/site/theme-switcher";
 import { SiteBrandLink } from "@/features/public-site/components/site-brand-link";
 import { SiteHeaderSearch } from "@/components/site/site-header-search";
 import { DesktopSiteNav, MobileSiteNav } from "@/components/site/site-header-nav";
@@ -115,7 +116,7 @@ export default function PublicLayout() {
             isHome && heroScrolled && "site-header--scrolled",
           )}
         >
-          <div className="site-header__inner container-page flex min-h-16 items-center gap-3 py-1.5 md:gap-5">
+          <div className="site-header__inner container-page flex min-h-12 items-center gap-2 py-1 sm:min-h-16 sm:gap-3 md:gap-5">
             <div className="site-header__brand">
               <SiteBrandLink linkToHome />
             </div>
@@ -123,6 +124,7 @@ export default function PublicLayout() {
             <div className="ms-auto flex shrink-0 items-center gap-2">
               <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
               <LocaleSwitcher className="hidden sm:inline-flex" />
+              <ThemeSwitcher className="hidden sm:inline-flex" />
               {/* {authHref && authLabel ? (
                 <Button
                   asChild
@@ -136,6 +138,20 @@ export default function PublicLayout() {
                 </Button>
               ) : null} */}
               <MobileSiteNav authHref={authHref} authLabel={authLabel} />
+              <a
+                href="https://cdmcgaza.ps/ar/"
+                className="site-header__cdmc"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img
+                  src="/brand/cdmc.webp?v=3"
+                  alt="CDMC"
+                  width={120}
+                  height={120}
+                  decoding="async"
+                />
+              </a>
             </div>
           </div>
         </header>
