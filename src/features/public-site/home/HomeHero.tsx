@@ -4,7 +4,7 @@ import { Circle } from "lucide-react";
 import { useEffect } from "react";
 
 const HERO_IMAGE = "/images/hero-people.webp";
-const HERO_FALLBACK = "/images/hero-verification.webp";
+const HERO_FALLBACK = "/images/hero-people.jpg";
 
 export function HomeHero() {
   const copy = usePublicCopy();
@@ -21,8 +21,8 @@ export function HomeHero() {
           src={HERO_IMAGE}
           alt=""
           className="home-cinematic-hero__photo"
-          width={1600}
-          height={1067}
+          width={1024}
+          height={265}
           sizes="100vw"
           loading="eager"
           fetchPriority="high"

@@ -1,8 +1,15 @@
 import { findCategoryByFilterKey } from "@/lib/publishing";
 import type { PublicArticle, PublicCategory } from "@/types";
 
-export const HOME_DESK_ARTICLE_LIMIT = 3;
-export const HOME_AUDIO_DESK_LIMIT = 3;
+export const HOME_DESK_ARTICLE_LIMIT = 4;
+export const HOME_AUDIO_DESK_LIMIT = 5;
+/** Side (2) + text rail (up to 4), BBC-style front grid. */
+export const HOME_FRONT_STACK_SIZE = 6;
+export const HOME_MOSAIC_PODCAST_LIMIT = 4;
+export const HOME_MOSAIC_HUMAN_LIMIT = 4;
+export const HOME_MOSAIC_VISUAL_LIMIT = 4;
+export const HOME_MOSAIC_ASIDE_LIMIT = 8;
+export const HOME_MAX_EXTRA_DESKS = 8;
 
 export type HomeFeedDeskLayout = "grid" | "wide" | "audio" | "video";
 
@@ -240,7 +247,7 @@ export type HomeMosaic = {
 
 /**
  * After the latest lead + stack:
- * a podcasts band, three human stories,
+ * a podcasts band, four human stories,
  * then photo reports beside a success/studies stack.
  */
 export function buildHomeMosaic(
@@ -270,8 +277,11 @@ export function buildHomeMosaic(
     desks.find((desk) => isStudiesCategoryBand(desk.slug, categories)) ??
     null;
 
-  const podcasts = (audio?.articles ?? []).slice(0, 3);
-  const humanArticles = (humanDesk?.articles ?? []).slice(0, 3);
+  const podcasts = (audio?.articles ?? []).slice(0, HOME_MOSAIC_PODCAST_LIMIT);
+  const humanArticles = (humanDesk?.articles ?? []).slice(
+    0,
+    HOME_MOSAIC_HUMAN_LIMIT,
+  );
   const visualSeen = new Set<string>();
   const visualArticles: PublicArticle[] = [];
   for (const article of [
@@ -282,7 +292,7 @@ export function buildHomeMosaic(
     if (visualSeen.has(id)) continue;
     visualSeen.add(id);
     visualArticles.push(article);
-    if (visualArticles.length >= 3) break;
+    if (visualArticles.length >= HOME_MOSAIC_VISUAL_LIMIT) break;
   }
   const seenAside = new Set<string>();
   const asideArticles: PublicArticle[] = [];
@@ -294,7 +304,7 @@ export function buildHomeMosaic(
     if (seenAside.has(id)) continue;
     seenAside.add(id);
     asideArticles.push(article);
-    if (asideArticles.length >= 6) break;
+    if (asideArticles.length >= HOME_MOSAIC_ASIDE_LIMIT) break;
   }
 
   return {
@@ -347,8 +357,77 @@ export function splitFrontPack(articles: PublicArticle[]): HomeFrontPack {
   }
   return {
     lead: articles[0] ?? null,
-    stack: articles.slice(1, 4),
+    stack: articles.slice(1, 1 + HOME_FRONT_STACK_SIZE),
   };
+}
+
+/** Split stack into side column (image cards) and headline rail. */
+export function partitionFrontStack(stack: PublicArticle[]): {
+  side: PublicArticle[];
+  rail: PublicArticle[];
+} {
+  if (stack.length === 0) {
+    return { side: [], rail: [] };
+  }
+  if (stack.length === 1) {
+    return { side: [stack[0]!], rail: [] };
+  }
+  if (stack.length === 2) {
+    return { side: [stack[0]!], rail: [stack[1]!] };
+  }
+  return {
+    side: stack.slice(0, 2),
+    rail: stack.slice(2),
+  };
+}
+
+export function mosaicConsumedSlugs(mosaic: HomeMosaic): Set<string> {
+  const slugs = new Set<string>();
+  if (mosaic.podcastSlug) slugs.add(mosaic.podcastSlug);
+  if (mosaic.human?.slug) slugs.add(mosaic.human.slug);
+  if (mosaic.visual?.slug) slugs.add(mosaic.visual.slug);
+  if (mosaic.asideSuccessSlug) slugs.add(mosaic.asideSuccessSlug);
+  if (mosaic.asideStudiesSlug) slugs.add(mosaic.asideStudiesSlug);
+  if (mosaic.aside?.slug) slugs.add(mosaic.aside.slug);
+  return slugs;
+}
+
+export function mosaicArticleIds(mosaic: HomeMosaic): Set<string> {
+  const ids = new Set<string>();
+  for (const article of mosaic.podcasts) {
+    ids.add(String(article.id));
+  }
+  for (const desk of [mosaic.human, mosaic.visual, mosaic.aside]) {
+    if (!desk) continue;
+    for (const article of desk.articles) {
+      ids.add(String(article.id));
+    }
+  }
+  return ids;
+}
+
+/** Category desks not already represented in the mosaic band. */
+export function desksBeyondMosaic(
+  desks: HomeCategoryDesk[],
+  mosaic: HomeMosaic,
+  excludeArticleIds: ReadonlySet<string>,
+): HomeCategoryDesk[] {
+  const usedSlugs = mosaicConsumedSlugs(mosaic);
+  const result: HomeCategoryDesk[] = [];
+
+  for (const desk of desks) {
+    if (usedSlugs.has(desk.slug)) continue;
+    const articles = dedupeDeskArticles(
+      desk.articles,
+      excludeArticleIds,
+      deskArticleLimit(desk.layout),
+    );
+    if (articles.length === 0) continue;
+    result.push({ ...desk, articles });
+    if (result.length >= HOME_MAX_EXTRA_DESKS) break;
+  }
+
+  return result;
 }
 
 export function frontPackArticleIds(pack: HomeFrontPack): Set<string> {

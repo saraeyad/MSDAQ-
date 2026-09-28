@@ -35,7 +35,39 @@ const MEDIA_ICONS: Record<PublicMediaType, typeof FileText> = {
   video: Video,
 };
 
-type HomeArticleCardVariant = "default" | "compact" | "audioRow" | "podcast";
+type HomeArticleCardVariant =
+  | "default"
+  | "compact"
+  | "audioRow"
+  | "podcast"
+  | "lead"
+  | "editorialHero"
+  | "editorialSide"
+  | "editorialText";
+
+/** Lead + body split for the home hero card excerpt. */
+function splitHeroExcerpt(description: string): {
+  lead: string;
+  body: string;
+} | null {
+  const text = description.replace(/\s+/g, " ").trim();
+  if (text.length < 40) return null;
+
+  const sentenceMatch = text.match(/^(.+?[.!?؟…])(?:\s+)([\s\S]+)$/);
+  if (sentenceMatch?.[1] && sentenceMatch[2]?.trim().length >= 18) {
+    return { lead: sentenceMatch[1].trim(), body: sentenceMatch[2].trim() };
+  }
+
+  const commaIdx = text.indexOf("،");
+  if (commaIdx >= 24 && commaIdx <= text.length - 22) {
+    return {
+      lead: text.slice(0, commaIdx + 1).trim(),
+      body: text.slice(commaIdx + 1).trim(),
+    };
+  }
+
+  return null;
+}
 
 function cardEdgeShift(id: PublicArticle["id"], index: number) {
   const seed = [...String(id)].reduce(
@@ -89,6 +121,123 @@ export function HomeArticleCard({
   const posterUrl = publicArticleCoverUrl(article);
   const edgeShift = cardEdgeShift(article.id, index);
 
+  if (variant === "lead") {
+    return (
+      <article
+        style={{ animationDelay: `${index * 60}ms` }}
+        className={cn(
+          "home-article-card home-article-card--lead news-card-enter group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-primary/25 lg:flex-row lg:items-stretch",
+          className,
+        )}
+      >
+        <div className="home-article-card__media w-full shrink-0 lg:w-[44%]">
+          <div className="home-article-card__media-frame">
+            {isVideo && mediaStarted ? (
+              <Suspense
+                fallback={
+                  <PublicArticleCover
+                    article={article}
+                    priority
+                    className="home-card-cover--fit"
+                  />
+                }
+              >
+                <PublicArticleVideoPlayer
+                  articleId={article.id}
+                  title={article.title}
+                  posterUrl={posterUrl}
+                  coverImage={article.cover_image}
+                  fill
+                  startOnMount
+                  className="size-full"
+                />
+              </Suspense>
+            ) : isVideo ? (
+              <button
+                type="button"
+                className="article-media-poster home-article-card__media-link"
+                onClick={() => setMediaStarted(true)}
+                aria-label={articleCopy.playVideo(
+                  englishPending
+                    ? articleCopy.englishPendingTitle
+                    : article.title,
+                )}
+              >
+                <PublicArticleCover
+                  article={article}
+                  priority
+                  className="home-card-cover--fit article-media-poster__image"
+                />
+                <span className="article-media-poster__scrim" aria-hidden />
+                <span className="article-media-poster__play" aria-hidden>
+                  <Play className="size-7 fill-current" />
+                </span>
+              </button>
+            ) : (
+              <Link to={articleHref} className="home-article-card__media-link">
+                <PublicArticleCover
+                  article={article}
+                  priority
+                  className="home-card-cover--fit"
+                />
+              </Link>
+            )}
+            <span
+              className="home-article-card__media-type pointer-events-none"
+              aria-hidden
+            >
+              <Icon className="size-4" />
+            </span>
+          </div>
+          <span className="home-article-card__category">{badge}</span>
+        </div>
+
+        <div className="relative flex min-w-0 flex-1 flex-col p-5 lg:p-6">
+          <div className="absolute start-0 top-0 hidden h-full w-1 rounded-full bg-primary lg:block" />
+
+          <Link to={articleHref} className="block">
+            <h3 className="font-headline text-xl font-bold leading-snug transition-colors group-hover:text-primary md:text-2xl">
+              {englishPending ? (
+                <PublicArticleEnglishPendingBadge />
+              ) : (
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  {article.title}
+                  <ArticleVerifiedBadge article={article} />
+                </span>
+              )}
+            </h3>
+
+            {!englishPending && article.description ? (
+              <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-muted-foreground md:text-base">
+                {article.description}
+              </p>
+            ) : null}
+          </Link>
+
+          <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/60 pt-4">
+            <time className="text-xs text-muted-foreground">
+              {new Date(article.published_at).toLocaleDateString(dateLocale)}
+            </time>
+            <div className="flex items-center gap-2">
+              <ArticleTranslateButton
+                articleId={article.id}
+                contentLang={locale}
+                compact
+              />
+              <Link
+                to={articleHref}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
+              >
+                {common.readMore}
+                <CtaArrow className="size-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
   if (variant === "compact") {
     return (
       <article
@@ -96,18 +245,6 @@ export function HomeArticleCard({
         className={cn("home-feed-stack-item news-card-enter group", className)}
       >
         <div className="home-feed-stack-item__link">
-          <Link to={articleHref} className="home-feed-stack-item__visual">
-            <span className="home-feed-stack-item__type">{badge}</span>
-            <span className="home-feed-stack-item__thumb">
-              <PublicArticleCover
-                article={article}
-                className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <span className="home-feed-stack-item__media" aria-hidden>
-                <Icon className="size-3.5" />
-              </span>
-            </span>
-          </Link>
           <span className="home-feed-stack-item__body">
             {moreHref && moreLabel ? (
               <Link to={moreHref} className="home-feed-stack-item__more">
@@ -119,20 +256,32 @@ export function HomeArticleCard({
               {englishPending ? (
                 <PublicArticleEnglishPendingBadge />
               ) : (
-                <span className="home-feed-stack-item__headline">
-                  {article.title}
-                </span>
+                <>
+                  <span className="home-feed-stack-item__headline">
+                    {article.title}
+                  </span>
+                  <ArticleVerifiedBadge article={article} compact />
+                </>
               )}
             </Link>
-            <span className="home-feed-stack-item__verified">
-              {englishPending ? null : (
-                <ArticleVerifiedBadge article={article} />
-              )}
-            </span>
             <time className="home-feed-stack-item__date">
               {new Date(article.published_at).toLocaleDateString(dateLocale)}
             </time>
           </span>
+          <div className="home-feed-stack-item__visual">
+            <Link to={articleHref} className="home-feed-stack-item__thumb-link">
+              <span className="home-feed-stack-item__thumb">
+                <PublicArticleCover
+                  article={article}
+                  className="home-card-cover--fit"
+                />
+                <span className="home-feed-stack-item__media" aria-hidden>
+                  <Icon className="size-3.5" />
+                </span>
+              </span>
+            </Link>
+            <span className="home-feed-stack-item__category">{badge}</span>
+          </div>
         </div>
       </article>
     );
@@ -147,12 +296,23 @@ export function HomeArticleCard({
         <Link to={articleHref} className="home-podcast__cover">
           <PublicArticleCover
             article={article}
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="home-card-cover--fit"
           />
+          <span className="home-podcast__wave-scrim" aria-hidden>
+            <svg
+              className="home-podcast__wave-svg"
+              viewBox="0 0 320 28"
+              preserveAspectRatio="none"
+            >
+              <path
+                fill="currentColor"
+                d="M0,14 C40,2 80,26 120,14 S200,2 240,14 280,26 320,14 V28 H0 Z"
+              />
+            </svg>
+          </span>
         </Link>
         <div className="home-podcast__body">
           <div className="home-podcast__top">
-            <span className="home-podcast__badge">{badge}</span>
             {moreHref && moreLabel ? (
               <Link to={moreHref} className="home-podcast__more">
                 {moreLabel}
@@ -170,18 +330,152 @@ export function HomeArticleCard({
               </span>
             )}
           </Link>
+          {!englishPending && article.description ? (
+            <p className="home-podcast__deck">{article.description}</p>
+          ) : null}
           <div className="home-podcast__foot">
-            <time dateTime={article.published_at}>
-              {new Date(article.published_at).toLocaleDateString(dateLocale)}
-            </time>
+            <p className="home-podcast__meta">
+              <time dateTime={article.published_at}>
+                {new Date(article.published_at).toLocaleDateString(dateLocale)}
+              </time>
+              <span className="home-podcast__meta-sep" aria-hidden>
+                |
+              </span>
+              <span className="home-podcast__meta-category">{badge}</span>
+            </p>
+            <span className="home-podcast__play-cluster">
+              <span className="home-podcast__waveform" aria-hidden>
+                <span className="home-podcast__waveform-bar" />
+                <span className="home-podcast__waveform-bar" />
+                <span className="home-podcast__waveform-bar" />
+                <span className="home-podcast__waveform-bar" />
+                <span className="home-podcast__waveform-bar" />
+              </span>
+              <Link
+                to={articleHref}
+                className="home-card-listen home-card-listen--inline"
+              >
+                <Play className="size-4 fill-current" />
+                {common.listenNow}
+              </Link>
+            </span>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  if (
+    variant === "editorialHero" ||
+    variant === "editorialSide" ||
+    variant === "editorialText"
+  ) {
+    const isHero = variant === "editorialHero";
+    const isText = variant === "editorialText";
+    const publishedLabel = new Date(article.published_at).toLocaleDateString(
+      dateLocale,
+    );
+    const heroExcerpt =
+      isHero && article.description
+        ? splitHeroExcerpt(article.description)
+        : null;
+
+    return (
+      <article
+        style={{ animationDelay: `${index * 50}ms` }}
+        className={cn(
+          "home-editorial news-card-enter group",
+          isHero && "home-editorial--hero",
+          variant === "editorialSide" && "home-editorial--side",
+          isText && "home-editorial--text",
+          className,
+        )}
+      >
+        {!isText ? (
+          <div className="home-editorial__media">
             <Link
               to={articleHref}
-              className="home-card-listen home-card-listen--inline"
+              className={cn(
+                "home-editorial__media-frame",
+                isHero
+                  ? "home-editorial__media-frame--hero"
+                  : "home-editorial__media-frame--side",
+              )}
             >
-              <Play className="size-4 fill-current" />
-              {common.listenNow}
+              <PublicArticleCover
+                article={article}
+                priority={isHero || index === 0}
+                className="home-card-cover--fit"
+              />
             </Link>
+            <span className="home-editorial__kicker">{badge}</span>
           </div>
+        ) : null}
+
+        <div className="home-editorial__body">
+          {moreHref && moreLabel ? (
+            <Link to={moreHref} className="home-editorial__section-more">
+              {moreLabel}
+            </Link>
+          ) : null}
+
+          <Link to={articleHref} className="home-editorial__title-link">
+            <h3
+              className={cn(
+                "home-editorial__title",
+                isHero && "home-editorial__title--hero",
+              )}
+            >
+              {englishPending ? (
+                <PublicArticleEnglishPendingBadge />
+              ) : (
+                <span className="home-editorial__title-text">
+                  {article.title}
+                </span>
+              )}
+            </h3>
+          </Link>
+
+          {!englishPending ? (
+            <ArticleVerifiedBadge
+              article={article}
+              compact
+              className="home-editorial__verified"
+            />
+          ) : null}
+
+          {!englishPending && article.description ? (
+            isHero && heroExcerpt ? (
+              <div className="home-editorial__excerpt home-editorial__excerpt--hero">
+                <p className="home-editorial__summary-lead">
+                  {heroExcerpt.lead}
+                </p>
+                <p className="home-editorial__hero-copy">{heroExcerpt.body}</p>
+              </div>
+            ) : (
+              <p
+                className={cn(
+                  "home-editorial__summary",
+                  isHero ? "home-editorial__summary--hero-single" : "line-clamp-2",
+                )}
+              >
+                {article.description}
+              </p>
+            )
+          ) : null}
+
+          <p className="home-editorial__meta">
+            <time
+              className="home-editorial__meta-date"
+              dateTime={article.published_at}
+            >
+              {publishedLabel}
+            </time>
+            <span className="home-editorial__meta-sep" aria-hidden>
+              |
+            </span>
+            <span className="home-editorial__meta-category">{badge}</span>
+          </p>
         </div>
       </article>
     );
@@ -206,9 +500,20 @@ export function HomeArticleCard({
                 </span>
               )}
             </h3>
-            <time className="home-feed-audio-row__date">
-              {new Date(article.published_at).toLocaleDateString(dateLocale)}
-            </time>
+            {!englishPending && article.description ? (
+              <p className="home-feed-audio-row__summary">
+                {article.description}
+              </p>
+            ) : null}
+            <p className="home-feed-audio-row__meta">
+              <time dateTime={article.published_at}>
+                {new Date(article.published_at).toLocaleDateString(dateLocale)}
+              </time>
+              <span className="home-feed-audio-row__meta-sep" aria-hidden>
+                |
+              </span>
+              <span className="home-feed-audio-row__meta-category">{badge}</span>
+            </p>
           </Link>
           <div className="home-feed-audio-row__actions">
             <Link
@@ -230,72 +535,76 @@ export function HomeArticleCard({
       className={cn(
         "news-card-enter group relative flex overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/50 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:ring-primary/25",
         wide ? "flex-col lg:flex-row" : "flex-col",
-        featured ? "min-h-[320px] lg:min-h-[360px]" : "min-h-[280px]",
+        featured ? "min-h-[300px] lg:min-h-[320px]" : "min-h-[260px]",
         className,
       )}
     >
       <div
         className={cn(
-          "relative shrink-0 overflow-hidden",
-          wide ? "h-44 lg:h-auto lg:w-2/5" : featured ? "h-48" : "h-36",
+          "home-card-media shrink-0",
+          wide && "home-card-media--wide lg:w-2/5",
+          featured && "home-card-media--featured",
         )}
       >
-        {isVideo && mediaStarted ? (
-          <Suspense
-            fallback={
+        <div
+          className={cn(
+            "home-card-media__frame",
+            wide ? "home-card-media__frame--wide" : featured ? "home-card-media__frame--featured" : "home-card-media__frame--default",
+          )}
+        >
+          {isVideo && mediaStarted ? (
+            <Suspense
+              fallback={
+                <PublicArticleCover
+                  article={article}
+                  priority={featured || index === 0}
+                  className="home-card-cover--fit"
+                />
+              }
+            >
+              <PublicArticleVideoPlayer
+                articleId={article.id}
+                title={article.title}
+                posterUrl={posterUrl}
+                coverImage={article.cover_image}
+                fill
+                startOnMount
+                className="size-full"
+              />
+            </Suspense>
+          ) : isVideo ? (
+            <button
+              type="button"
+              className="article-media-poster home-card-media__link"
+              onClick={() => setMediaStarted(true)}
+              aria-label={articleCopy.playVideo(
+                englishPending ? articleCopy.englishPendingTitle : article.title,
+              )}
+            >
               <PublicArticleCover
                 article={article}
                 priority={featured || index === 0}
-                className="size-full object-cover"
+                className="home-card-cover--fit article-media-poster__image"
               />
-            }
-          >
-            <PublicArticleVideoPlayer
-              articleId={article.id}
-              title={article.title}
-              posterUrl={posterUrl}
-              coverImage={article.cover_image}
-              fill
-              startOnMount
-              className="size-full"
-            />
-          </Suspense>
-        ) : isVideo ? (
-          <button
-            type="button"
-            className="article-media-poster absolute inset-0 h-full aspect-auto rounded-none"
-            onClick={() => setMediaStarted(true)}
-            aria-label={articleCopy.playVideo(
-              englishPending ? articleCopy.englishPendingTitle : article.title,
-            )}
-          >
-            <PublicArticleCover
-              article={article}
-              priority={featured || index === 0}
-              className="article-media-poster__image size-full object-cover"
-            />
-            <span className="article-media-poster__scrim" aria-hidden />
-            <span className="article-media-poster__play" aria-hidden>
-              <Play className="size-7 fill-current" />
-            </span>
-          </button>
-        ) : (
-          <Link to={articleHref} className="absolute inset-0 block">
-            <PublicArticleCover
-              article={article}
-              priority={featured || index === 0}
-              className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-          </Link>
-        )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
-
-        <span className="pointer-events-none absolute top-3 start-3 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-md">
-          {badge}
-        </span>
-        <span className="pointer-events-none absolute top-3 end-3 flex size-9 items-center justify-center rounded-xl bg-card/90 text-primary shadow-md backdrop-blur-sm">
-          <Icon className="size-4" />
-        </span>
+              <span className="article-media-poster__scrim" aria-hidden />
+              <span className="article-media-poster__play" aria-hidden>
+                <Play className="size-7 fill-current" />
+              </span>
+            </button>
+          ) : (
+            <Link to={articleHref} className="home-card-media__link">
+              <PublicArticleCover
+                article={article}
+                priority={featured || index === 0}
+                className="home-card-cover--fit"
+              />
+            </Link>
+          )}
+          <span className="home-card-media__type pointer-events-none" aria-hidden>
+            <Icon className="size-4" />
+          </span>
+        </div>
+        <span className="home-card-media__category">{badge}</span>
       </div>
 
       <div className="relative flex flex-1 flex-col p-5">

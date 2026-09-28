@@ -1,5 +1,7 @@
+import { HomeBbcFrontpage } from "@/features/public-site/home/HomeBbcFrontpage";
+import { HomePodcastWaveDecor } from "@/features/public-site/home/HomePodcastWaveDecor";
 import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
-import { HomeCategoryDesk as HomeCategoryDeskSection } from "@/features/public-site/home/HomeCategoryDesk";
+import { HomeCategoryDesk as HomeCategoryDeskSection, HomeBandMoreLink } from "@/features/public-site/home/HomeCategoryDesk";
 import { HomeHero } from "@/features/public-site/home/HomeHero";
 import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { useLocale, usePublicCopy } from "@/context/locale";
@@ -18,9 +20,11 @@ import {
   isAudioCategoryBand,
   isHumanStoriesCategoryBand,
   findPhotoReportsCategory,
-  isStudiesCategoryBand,
   orderCategoriesForDesks,
   splitFrontPack,
+  frontPackArticleIds,
+  desksBeyondMosaic,
+  mosaicArticleIds,
   type HomeCategoryDesk,
 } from "@/features/public-site/home/home-feed-layout";
 import { cn } from "@/lib/utils";
@@ -29,10 +33,9 @@ import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type { PublicArticle } from "@/types";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
-import { Link } from "react-router-dom";
 import { categoryPath } from "@/router/routes";
 
-const MOBILE_CARD_LIMIT = 6;
+const MOBILE_CARD_LIMIT = 10;
 const DESKTOP_CARD_MQ = "(min-width: 768px)";
 
 function subscribeDesktopCards(onChange: () => void) {
@@ -70,13 +73,10 @@ function matchesFilter(
 function HomeFeedSkeleton() {
   return (
     <div className="home-feed-skeleton" aria-hidden>
-      <div className="home-feed-frontpage">
+      <div className="home-bbc-frontpage home-bbc-frontpage--skeleton">
+        <div className="home-feed-skeleton__stack-row" />
         <div className="home-feed-skeleton__lead" />
-        <div className="home-feed-skeleton__stack">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="home-feed-skeleton__stack-row" />
-          ))}
-        </div>
+        <div className="home-feed-skeleton__stack-row" />
       </div>
       <div className="home-feed-skeleton__grid">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -92,7 +92,7 @@ function HomeDeskSkeleton() {
     <div className="home-feed-skeleton home-feed-skeleton--desks" aria-hidden>
       <div className="home-feed-skeleton__band-title" />
       <div className="home-feed-skeleton__grid">
-        {Array.from({ length: 3 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="home-feed-skeleton__card" />
         ))}
       </div>
@@ -199,7 +199,7 @@ export default function HomePage() {
       }
       const articlesForDesk = [...(current?.articles ?? []), ...extra].slice(
         0,
-        3,
+        deskArticleLimit(current?.layout ?? "grid"),
       );
       if (articlesForDesk.length === 0) return current;
       return { slug: titleSlug, articles: articlesForDesk, layout: "grid" };
@@ -281,6 +281,17 @@ export default function HomePage() {
 
   const hasFrontPack = Boolean(frontPack.lead) || frontPack.stack.length > 0;
 
+  const frontPackIds = useMemo(
+    () => frontPackArticleIds(frontPack),
+    [frontPack],
+  );
+
+  const extraDesks = useMemo(() => {
+    if (!mosaic) return [];
+    const exclude = new Set([...frontPackIds, ...mosaicArticleIds(mosaic)]);
+    return desksBeyondMosaic(desks, mosaic, exclude);
+  }, [desks, mosaic, frontPackIds]);
+
   return (
     <div>
       <PublicPageHead head={homeHead} />
@@ -300,69 +311,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section
-        className="home-latest relative overflow-hidden py-10 md:py-14"
-        aria-labelledby="home-latest-title"
-      >
+      <section className="home-latest relative overflow-hidden py-8 md:py-10">
         <div className="pointer-events-none absolute inset-0 news-section-bg" />
 
         <div className="container-page relative">
-          <div className="home-latest-masthead">
-            <span className="home-latest-masthead__corner home-latest-masthead__corner--tl" />
-            <span className="home-latest-masthead__corner home-latest-masthead__corner--tr" />
-            <span className="home-latest-masthead__corner home-latest-masthead__corner--bl" />
-            <span className="home-latest-masthead__corner home-latest-masthead__corner--br" />
-
-            <h2 id="home-latest-title" className="home-latest-masthead__title">
-              <span className="home-latest-masthead__title-line">
-                {home.latestTitleLine}
-              </span>
-              <span className="home-latest-masthead__title-accent">
-                {home.latestTitleAccent}
-              </span>
-            </h2>
-
-            <span className="home-latest-masthead__rule" aria-hidden />
-
-            <p className="home-latest-masthead__lead">{home.latestLead}</p>
-          </div>
-
-          <div className="mt-6">
+          <div>
             {isFrontLoading ? (
               <HomeFeedSkeleton />
             ) : articles.length === 0 ? null : (
               <>
-                <div className="home-feed">
+                <div className="home-feed home-news-board">
                   {hasFrontPack ? (
-                    <div
-                      className={cn(
-                        "home-feed-frontpage",
-                        frontPack.stack.length === 0 &&
-                          "home-feed-frontpage--lead-only",
-                      )}
-                    >
-                      {frontPack.lead ? (
-                        <div className="home-feed-frontpage__lead">
-                          <HomeArticleCard
-                            article={frontPack.lead}
-                            index={0}
-                            featured
-                          />
-                        </div>
-                      ) : null}
-                      {frontPack.stack.length > 0 ? (
-                        <div className="home-feed-frontpage__stack">
-                          {frontPack.stack.map((article, index) => (
-                            <HomeArticleCard
-                              key={article.id}
-                              article={article}
-                              index={index + 1}
-                              variant="compact"
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
+                    <HomeBbcFrontpage frontPack={frontPack} />
                   ) : null}
 
                   {desksLoading ? (
@@ -371,31 +331,33 @@ export default function HomePage() {
                       <>
                         {mosaic.podcasts.length > 0 ? (
                           <section
-                            className="home-feed-band home-feed-band--podcasts"
+                            className="home-feed-band home-feed-band--podcasts home-audio-wave-band"
                             aria-label={podcastTitle}
                           >
-                            <div className="home-feed-band__header">
-                              <h3 className="home-feed-band__title">
-                                {podcastTitle}
-                              </h3>
+                            <HomePodcastWaveDecor />
+                            <div className="home-audio-wave-band__inner">
+                              <div className="home-feed-band__header home-audio-wave-band__header">
+                                <h3 className="home-feed-band__title">
+                                  {podcastTitle}
+                                </h3>
+                              </div>
+                              <div className="home-feed-podcasts home-bbc-audio-scroll home-audio-wave-band__scroll">
+                                {mosaic.podcasts.map((article, index) => (
+                                  <HomeArticleCard
+                                    key={article.id}
+                                    article={article}
+                                    index={4 + index}
+                                    variant="podcast"
+                                    className="home-podcast--wave"
+                                  />
+                                ))}
+                              </div>
                               {podcastMoreHref ? (
-                                <Link
-                                  className="home-feed-band__more"
+                                <HomeBandMoreLink
                                   to={podcastMoreHref}
-                                >
-                                  {home.morePodcasts}
-                                </Link>
-                              ) : null}
-                            </div>
-                            <div className="home-feed-podcasts">
-                              {mosaic.podcasts.map((article, index) => (
-                                <HomeArticleCard
-                                  key={article.id}
-                                  article={article}
-                                  index={4 + index}
-                                  variant="podcast"
+                                  label={home.more}
                                 />
-                              ))}
+                              ) : null}
                             </div>
                           </section>
                         ) : null}
@@ -403,9 +365,6 @@ export default function HomePage() {
                           <HomeCategoryDeskSection
                             desk={mosaic.human}
                             title={categoryDeskTitle(mosaic.human.slug)}
-                            moreLabel={home.moreInSection(
-                              categoryDeskTitle(mosaic.human.slug),
-                            )}
                             cardIndexOffset={7}
                           />
                         ) : null}
@@ -418,38 +377,32 @@ export default function HomePage() {
                             )}
                           >
                             {mosaic.visual ? (
-                              <div className="home-feed-pair__col">
+                              <div className="home-feed-pair__col home-feed-band">
                                 <div className="home-feed-band__header">
                                   <h3 className="home-feed-band__title">
                                     {locale === "ar"
                                       ? "تقارير مصورة"
                                       : "Photo reports"}
                                   </h3>
-                                  <Link
-                                    className="home-feed-band__more"
-                                    to={categoryPath(mosaic.visual.slug)}
-                                  >
-                                    {home.moreInSection(
-                                      locale === "ar"
-                                        ? "تقارير مصورة"
-                                        : "Photo reports",
-                                    )}
-                                  </Link>
                                 </div>
-                                <div className="home-feed-frontpage__stack">
+                                <div className="home-bbc-card-grid">
                                   {mosaic.visual.articles.map((article, index) => (
                                     <HomeArticleCard
                                       key={article.id}
                                       article={article}
                                       index={9 + index}
-                                      variant="compact"
+                                      variant="editorialSide"
                                     />
                                   ))}
                                 </div>
+                                <HomeBandMoreLink
+                                  to={categoryPath(mosaic.visual.slug)}
+                                  label={home.more}
+                                />
                               </div>
                             ) : null}
                             {mosaic.aside ? (
-                              <div className="home-feed-pair__col">
+                              <div className="home-feed-pair__col home-feed-pair__col--rail home-feed-band">
                                 <div className="home-feed-band__header">
                                   <h3 className="home-feed-band__title">
                                     {[
@@ -468,46 +421,38 @@ export default function HomePage() {
                                       .join(" / ")}
                                   </h3>
                                 </div>
-                                <div className="home-feed-frontpage__stack">
-                                  {mosaic.aside.articles.map((article, index) => {
-                                    const articleSlug =
-                                      article.category?.slug?.trim() ?? "";
-                                    const moreSlug =
-                                      articleSlug &&
-                                      isStudiesCategoryBand(
-                                        articleSlug,
-                                        categories,
-                                      )
-                                        ? mosaic.asideStudiesSlug
-                                        : mosaic.asideSuccessSlug ??
-                                          mosaic.asideStudiesSlug;
-                                    const moreTitle = moreSlug
-                                      ? categoryDeskTitle(moreSlug)
-                                      : "";
-                                    return (
-                                      <HomeArticleCard
-                                        key={article.id}
-                                        article={article}
-                                        index={12 + index}
-                                        variant="compact"
-                                        moreHref={
-                                          moreSlug
-                                            ? categoryPath(moreSlug)
-                                            : null
-                                        }
-                                        moreLabel={
-                                          moreTitle
-                                            ? home.moreInSection(moreTitle)
-                                            : undefined
-                                        }
-                                      />
-                                    );
-                                  })}
+                                <div className="home-bbc-rail-list">
+                                  {mosaic.aside.articles.map((article, index) => (
+                                    <HomeArticleCard
+                                      key={article.id}
+                                      article={article}
+                                      index={12 + index}
+                                      variant="editorialText"
+                                    />
+                                  ))}
                                 </div>
+                                {mosaic.aside.slug ? (
+                                  <HomeBandMoreLink
+                                    to={categoryPath(
+                                      mosaic.asideSuccessSlug ??
+                                        mosaic.asideStudiesSlug ??
+                                        mosaic.aside.slug,
+                                    )}
+                                    label={home.more}
+                                  />
+                                ) : null}
                               </div>
                             ) : null}
                           </div>
                         ) : null}
+                        {extraDesks.map((desk, deskIndex) => (
+                          <HomeCategoryDeskSection
+                            key={desk.slug}
+                            desk={desk}
+                            title={categoryDeskTitle(desk.slug)}
+                            cardIndexOffset={20 + deskIndex * 6}
+                          />
+                        ))}
                       </>
                     ) : null}
                 </div>

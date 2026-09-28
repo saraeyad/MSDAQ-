@@ -1072,8 +1072,16 @@
   }
 
   .staff-article-hero[data-has-cover="true"] .article-verified-badge {
-    color: #dcfce7;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+    color: #ffffff;
+    background: rgba(45, 74, 45, 0.82);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+    filter: none;
+  }
+
+  .staff-article-hero[data-has-cover="true"] .article-verified-badge__icon,
+  .staff-article-hero[data-has-cover="true"] .article-verified-badge__label {
+    color: #ffffff;
   }
 
   .staff-article-hero__title {

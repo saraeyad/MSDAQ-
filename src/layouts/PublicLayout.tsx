@@ -15,7 +15,7 @@ import {
 } from "@/lib/site";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { cn } from "@/lib/utils";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 const HomeToolsSection = lazy(() =>
@@ -61,8 +61,6 @@ export default function PublicLayout() {
   const showHomeSections = shouldShowHomeSections(location.pathname);
   const { token, hasAnyPermission } = useAuth();
   const { nav } = usePublicCopy();
-  const [heroScrolled, setHeroScrolled] = useState(false);
-  const overlayHeader = isHome && !heroScrolled;
 
   const canOpenWorkspace = hasAnyPermission([
     PERMISSIONS.VIEW_ARTICLES,
@@ -86,20 +84,6 @@ export default function PublicLayout() {
     trackPageView(`${location.pathname}${location.search}`);
   }, [location.pathname, location.search]);
 
-  useEffect(() => {
-    if (!isHome) {
-      setHeroScrolled(false);
-      return;
-    }
-
-    const onScroll = () => {
-      setHeroScrolled(window.scrollY > 72);
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [isHome]);
 
   return (
     <PlatformFeedbackProvider>
@@ -109,13 +93,14 @@ export default function PublicLayout() {
           isHome && "public-home",
         )}
       >
-        <header
-          className={cn(
-            "site-header",
-            overlayHeader ? "site-header--hero" : "site-header--paper",
-            isHome && heroScrolled && "site-header--scrolled",
-          )}
-        >
+        <header className="site-header site-header--paper">
+          <div className="site-header__utility">
+            <div className="site-header__utility-inner container-page">
+              <LocaleSwitcher className="site-header__utility-locale" />
+              <span className="site-header__utility-sep" aria-hidden />
+              <ThemeSwitcher className="site-header__utility-theme" />
+            </div>
+          </div>
           <div className="site-header__inner container-page flex min-h-12 items-center gap-2 py-1 sm:min-h-16 sm:gap-3 md:gap-5">
             <div className="site-header__brand">
               <SiteBrandLink linkToHome />
@@ -123,8 +108,6 @@ export default function PublicLayout() {
             <DesktopSiteNav />
             <div className="ms-auto flex shrink-0 items-center gap-2">
               <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
-              <LocaleSwitcher className="hidden sm:inline-flex" />
-              <ThemeSwitcher className="hidden sm:inline-flex" />
               {/* {authHref && authLabel ? (
                 <Button
                   asChild
