@@ -1291,3 +1291,90 @@
   }
 
 }
+
+@layer utilities {
+  html.dark .staff-shell .reverse-search-results {
+    background: var(--card);
+    border-color: var(--border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  html.dark .staff-shell .reverse-search-results__header {
+    border-bottom-color: var(--border);
+    background: linear-gradient(to left, var(--muted), var(--card));
+  }
+
+  html.dark .staff-shell .reverse-search-results__empty-title,
+  html.dark .staff-shell .reverse-search-results__title {
+    color: var(--card-foreground);
+  }
+
+  html.dark .staff-shell .reverse-search-results__empty-desc,
+  html.dark .staff-shell .reverse-search-results__subtitle {
+    color: var(--muted-foreground);
+  }
+
+  html.dark .staff-shell .reverse-search-results__item {
+    border-bottom-color: var(--border);
+  }
+
+  html.dark .staff-shell .reverse-search-results__item:hover {
+    background: color-mix(in srgb, var(--primary) 6%, var(--card));
+  }
+
+  html.dark .staff-shell .reverse-search-results__thumb {
+    border-color: var(--border);
+    background: var(--muted);
+  }
+
+  html.dark .staff-shell .newsroom-tools-hero {
+    border-color: var(--border);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary) 8%, var(--card)) 0%,
+      var(--card) 55%,
+      var(--muted) 100%
+    );
+  }
+
+  html.dark .staff-shell .domain-check-result__hero {
+    border-bottom-color: var(--border);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary) 10%, var(--card)) 0%,
+      var(--card) 72%
+    );
+  }
+
+  html.dark .staff-shell .voice-processing,
+  html.dark .staff-shell .voice-processing--timeout,
+  html.dark .staff-shell .voice-processing--failed {
+    background: linear-gradient(135deg, var(--muted) 0%, var(--card) 72%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  }
+
+  html.dark .staff-shell .voice-processing--timeout {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, #f59e0b 14%, var(--card)) 0%,
+      var(--card) 72%
+    );
+  }
+
+  html.dark .staff-shell .voice-processing--failed {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary) 12%, var(--card)) 0%,
+      var(--card) 72%
+    );
+  }
+
+  html.dark .staff-shell .credibility-verdict--unverified {
+    background: color-mix(in srgb, #6b7280 22%, var(--card));
+  }
+
+  html.dark .staff-shell .newsroom-tools-hero__badge {
+    background: color-mix(in srgb, var(--primary) 12%, var(--card));
+    border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  }
+}

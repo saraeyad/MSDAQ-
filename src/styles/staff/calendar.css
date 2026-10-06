@@ -1551,3 +1551,90 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+@layer utilities {
+  html.dark .staff-shell .calendar-hero {
+    border-color: var(--border);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary) 8%, var(--card)) 0%,
+      var(--card) 55%,
+      var(--muted) 100%
+    );
+  }
+
+  html.dark .staff-shell .calendar-toolbar {
+    background: var(--card);
+    border-color: var(--border);
+  }
+
+  html.dark .staff-shell .calendar-color-picker,
+  html.dark .staff-shell .calendar-view-header__nav,
+  html.dark .staff-shell .calendar-view-header__view-select {
+    background: var(--card);
+    border-color: var(--border);
+  }
+
+  html.dark .staff-shell .calendar-color-picker__eyedropper {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--muted-foreground);
+  }
+
+  html.dark .staff-shell .calendar-color-picker__eyedropper:hover:not(:disabled) {
+    background: var(--muted);
+    border-color: var(--border);
+    color: var(--foreground);
+  }
+
+  html.dark .staff-shell .team-calendar .fc .fc-col-header-cell-cushion,
+  html.dark .staff-shell .team-calendar .fc .fc-daygrid-day-number {
+    color: var(--muted-foreground);
+  }
+
+  html.dark .staff-shell .team-calendar .fc .fc-scrollgrid,
+  html.dark .staff-shell .team-calendar .fc .fc-scrollgrid-section > td {
+    border-color: var(--border);
+  }
+
+  html.dark .staff-shell .calendar-schedule-row__chip--active {
+    background: color-mix(in srgb, var(--primary) 18%, var(--card));
+    color: var(--primary);
+  }
+
+  html.dark .staff-shell .calendar-schedule-row__chip--locked {
+    background: var(--muted);
+    color: var(--muted-foreground);
+  }
+
+  html.dark .staff-shell .calendar-page,
+  html.dark .staff-shell .team-calendar {
+    --calendar-surface-muted: var(--muted);
+  }
+
+  html.dark .staff-shell .team-calendar {
+    --fc-list-event-hover-bg-color: color-mix(in srgb, var(--primary) 12%, var(--card));
+    --fc-neutral-text-color: var(--muted-foreground);
+  }
+
+  html.dark .staff-shell .calendar-color-picker__value {
+    background: var(--card);
+    border-color: var(--border);
+  }
+
+  html.dark .staff-shell .calendar-color-picker__hex {
+    color: var(--card-foreground);
+  }
+
+  html.dark .staff-shell .calendar-color-picker__opacity {
+    color: var(--muted-foreground);
+  }
+
+  html.dark .staff-shell .calendar-color-picker__divider {
+    background: var(--border);
+  }
+
+  html.dark .staff-shell .calendar-view-header__today-btn {
+    border-inline-color: var(--border) !important;
+  }
+}

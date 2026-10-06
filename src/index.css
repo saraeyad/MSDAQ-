@@ -401,6 +401,87 @@ html.light {
   color: #475569;
 }
 
+html.dark .sabbara-toast {
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border-color: var(--border);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.38),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .sabbara-toast [data-icon],
+html.dark .sabbara-toast__icon {
+  background: var(--muted);
+}
+
+html.dark .sabbara-toast__title {
+  color: var(--popover-foreground);
+}
+
+html.dark .sabbara-toast__description {
+  color: var(--muted-foreground);
+}
+
+html.dark .sabbara-toaster [data-close-button],
+html.dark .sabbara-toast__close {
+  color: var(--muted-foreground) !important;
+}
+
+html.dark .sabbara-toaster [data-close-button]:hover,
+html.dark .sabbara-toast__close:hover {
+  background: var(--muted) !important;
+  color: var(--popover-foreground) !important;
+}
+
+html.dark .sabbara-toast--success {
+  background: color-mix(in srgb, #22c55e 16%, var(--popover));
+  border-color: color-mix(in srgb, #22c55e 32%, var(--border));
+  border-inline-start-color: #22c55e;
+}
+
+html.dark .sabbara-toast--success .sabbara-toast__icon,
+html.dark .sabbara-toast--success [data-icon] {
+  background: color-mix(in srgb, #22c55e 22%, var(--muted));
+  color: #4ade80;
+}
+
+html.dark .sabbara-toast--error {
+  background: color-mix(in srgb, #ef4444 16%, var(--popover));
+  border-color: color-mix(in srgb, #ef4444 32%, var(--border));
+  border-inline-start-color: #ef4444;
+}
+
+html.dark .sabbara-toast--error .sabbara-toast__icon,
+html.dark .sabbara-toast--error [data-icon] {
+  background: color-mix(in srgb, #ef4444 22%, var(--muted));
+  color: #f87171;
+}
+
+html.dark .sabbara-toast--warning {
+  background: color-mix(in srgb, var(--primary) 16%, var(--popover));
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  border-inline-start-color: var(--primary);
+}
+
+html.dark .sabbara-toast--warning .sabbara-toast__icon,
+html.dark .sabbara-toast--warning [data-icon] {
+  background: color-mix(in srgb, var(--primary) 22%, var(--muted));
+  color: #f0a8b4;
+}
+
+html.dark .sabbara-toast--info {
+  background: color-mix(in srgb, var(--foreground) 5%, var(--popover));
+  border-color: var(--border);
+  border-inline-start-color: #94a3b8;
+}
+
+html.dark .sabbara-toast--info .sabbara-toast__icon,
+html.dark .sabbara-toast--info [data-icon] {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
 .login-page {
   position: relative;
   isolation: isolate;
@@ -663,8 +744,9 @@ html.light {
   }
 }
 
-/* Dark mode: warm ink page; cards + navbar share --public-surface-paper */
-html.dark
+/* Dark mode: warm ink page; cards + navbar share --public-surface-paper.
+   Staff workspace keeps its own dark --card (do not cream-paint .bg-card there). */
+html.dark:not(.staff-workspace)
   :is(
     .bg-card:not(.trust-index-dialog):not(.trust-index-dialog *),
     .content-card,
@@ -867,14 +949,20 @@ html.dark .home-latest-masthead__corner {
 html.dark .home-latest-masthead__kicker {
   color: var(--primary);
   border-color: rgba(196, 30, 58, 0.35);
-  background: color-mix(in srgb, var(--primary) 8%, var(--public-surface-paper));
+  background: color-mix(
+    in srgb,
+    var(--primary) 8%,
+    var(--public-surface-paper)
+  );
 }
 
 html.dark .home-latest-masthead__index-headline {
   color: var(--card-foreground);
 }
 
-html.dark .home-latest-masthead__index-row:hover .home-latest-masthead__index-headline {
+html.dark
+  .home-latest-masthead__index-row:hover
+  .home-latest-masthead__index-headline {
   color: var(--primary);
 }
 
@@ -885,11 +973,19 @@ html.dark .home-latest-masthead__index-date {
 html.dark .home-latest-masthead__index-num {
   color: var(--primary);
   border-color: rgba(196, 30, 58, 0.3);
-  background: color-mix(in srgb, var(--primary) 7%, var(--public-surface-paper));
+  background: color-mix(
+    in srgb,
+    var(--primary) 7%,
+    var(--public-surface-paper)
+  );
 }
 
 html.dark .home-latest-masthead__index-row:hover {
-  background: color-mix(in srgb, var(--primary) 6%, var(--public-surface-paper));
+  background: color-mix(
+    in srgb,
+    var(--primary) 6%,
+    var(--public-surface-paper)
+  );
 }
 
 html.dark .home-latest-masthead__index-skeleton {
@@ -1019,13 +1115,13 @@ html.dark .article-meta-row__facts {
   color: var(--public-caption);
 }
 
-html.dark .bg-card.text-foreground {
+html.dark:not(.staff-workspace) .bg-card.text-foreground {
   color: var(--card-foreground);
 }
 
-html.dark .bg-card .text-muted-foreground,
-html.dark .news-card-enter .text-muted-foreground,
-html.dark
+html.dark:not(.staff-workspace) .bg-card .text-muted-foreground,
+html.dark:not(.staff-workspace) .news-card-enter .text-muted-foreground,
+html.dark:not(.staff-workspace)
   :is(.content-card, .home-feed-stack-item, .tools-folio-card)
   .text-muted-foreground {
   color: var(--card-muted);

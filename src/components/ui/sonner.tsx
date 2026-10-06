@@ -1,3 +1,4 @@
+import { useTheme } from "@/context/theme";
 import {
   CircleAlert,
   CircleCheck,
@@ -8,9 +9,11 @@ import { Toaster as Sonner, type ToasterProps } from "sonner";
 import "sonner/dist/styles.css";
 
 export function Toaster(props: ToasterProps) {
+  const { theme } = useTheme();
+
   return (
     <Sonner
-      theme="light"
+      theme={theme}
       dir="rtl"
       className="sabbara-toaster"
       closeButton

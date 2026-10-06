@@ -6387,6 +6387,12 @@ html.dark .home-bbc-promo-row {
   font-weight: 900;
 }
 
+.home-editorial__title--hero-long {
+  font-size: clamp(1.12rem, 2vw, 1.55rem);
+  line-height: 1.28;
+  font-weight: 800;
+}
+
 .home-bbc-frontpage .home-editorial--hero .home-editorial__title-text {
   -webkit-line-clamp: 5;
   line-clamp: 5;

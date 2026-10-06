@@ -421,6 +421,9 @@ export function HomeArticleCard({
               className={cn(
                 "home-editorial__title",
                 isHero && "home-editorial__title--hero",
+                isHero &&
+                  article.title.trim().split(/\s+/).filter(Boolean).length > 3 &&
+                  "home-editorial__title--hero-long",
               )}
             >
               {englishPending ? (

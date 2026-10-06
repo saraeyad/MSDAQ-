@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { reloadIfStaleChunk } from "@/router/lazy-route";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface Props {
@@ -14,10 +15,12 @@ export class RouteErrorBoundary extends Component<Props, State> {
   state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {
+    reloadIfStaleChunk(error);
     return { error };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    if (reloadIfStaleChunk(error)) return;
     console.error("Route crash:", error, info.componentStack);
   }
 
