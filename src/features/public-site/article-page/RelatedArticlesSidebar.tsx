@@ -83,37 +83,39 @@ export function RelatedArticlesSidebar({
           {related.map((item) => {
             const itemPending = isEnglishArticlePending(item, locale);
             return (
-            <li key={item.id}>
-              <Link
-                to={articlePath(item.id)}
-                className="group flex gap-3 rounded-xl border border-border/70 bg-card p-3 transition-colors hover:border-primary/30 hover:bg-accent/40"
-              >
-                <PublicArticleCover
-                  article={item}
-                  alt=""
-                  className="size-16 shrink-0 rounded-lg object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-primary">
-                    {(item.category
-                      ? localizedCategoryName(item.category, locale)
-                      : null) ??
-                      publicMediaTypeLabelFromCopy(copy, item.media_type)}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug group-hover:text-primary">
-                    {itemPending ? (
-                      <PublicArticleEnglishPendingBadge />
-                    ) : (
-                      item.title
-                    )}
-                  </p>
-                  <time className="mt-1 block text-xs text-muted-foreground">
-                    {new Date(item.published_at).toLocaleDateString(dateLocale)}
-                  </time>
-                </div>
-              </Link>
-            </li>
-          );
+              <li key={item.id}>
+                <Link
+                  to={articlePath(item.id)}
+                  className="group flex gap-3 rounded-xl border border-border/70 bg-card p-3 transition-colors hover:border-primary/30 hover:bg-accent/40"
+                >
+                  <PublicArticleCover
+                    article={item}
+                    alt=""
+                    className="size-16 shrink-0 rounded-lg object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-primary">
+                      {(item.category
+                        ? localizedCategoryName(item.category, locale)
+                        : null) ??
+                        publicMediaTypeLabelFromCopy(copy, item.media_type)}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug group-hover:text-primary">
+                      {itemPending ? (
+                        <PublicArticleEnglishPendingBadge />
+                      ) : (
+                        item.title
+                      )}
+                    </p>
+                    <time className="mt-1 block text-xs text-muted-foreground">
+                      {new Date(item.published_at).toLocaleDateString(
+                        dateLocale,
+                      )}
+                    </time>
+                  </div>
+                </Link>
+              </li>
+            );
           })}
         </ul>
       )}

@@ -701,6 +701,14 @@ html.dark
   --border: var(--card-border);
 }
 
+html.dark .home-news-board .news-card-enter,
+html.dark .home-bbc-front .news-card-enter {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: var(--foreground);
+}
+
 html.dark .public-page-hero:not(.category-feed__hero) {
   background:
     linear-gradient(
@@ -768,6 +776,13 @@ html.dark .home-feed-skeleton__card {
 html.dark .news-card-enter h3,
 html.dark .news-card-enter .font-headline {
   color: var(--card-foreground);
+}
+
+html.dark .home-news-board .news-card-enter h3,
+html.dark .home-news-board .news-card-enter .font-headline,
+html.dark .home-news-board .home-editorial__title,
+html.dark .home-news-board .home-editorial__title-text {
+  color: var(--foreground);
 }
 
 html.dark .home-feed-stack-item__title,
@@ -1051,7 +1066,7 @@ html.dark .news-rail__meta {
 }
 
 html.dark .home-tools-bench {
-  --tools-bench-bg: #ffffff;
+  --tools-bench-bg: #c4bdb2;
   --tools-plate-bg: var(--public-surface-paper);
   --tools-plate-border: var(--card-border);
   --tools-ink: var(--card-foreground);
@@ -1061,18 +1076,18 @@ html.dark .home-tools-bench {
   background:
     radial-gradient(
       32rem 20rem at 8% 0%,
-      rgba(196, 30, 58, 0.035) 0%,
+      rgba(196, 30, 58, 0.05) 0%,
       transparent 58%
     ),
     radial-gradient(
       28rem 18rem at 100% 100%,
-      rgba(45, 74, 45, 0.04) 0%,
+      rgba(45, 74, 45, 0.05) 0%,
       transparent 55%
     ),
     var(--tools-bench-bg);
   color: var(--tools-ink);
-  border-top-color: #e8e4dc;
-  box-shadow: 0 -18px 42px rgba(17, 17, 17, 0.22);
+  border-top-color: rgba(17, 17, 17, 0.12);
+  box-shadow: 0 -18px 42px rgba(17, 17, 17, 0.18);
 }
 
 html.dark .home-tools-bench__title {
@@ -1126,4 +1141,10 @@ html.dark .trust-index-dialog [data-slot="textarea"] {
   background-color: #1f1c19 !important;
   color: #f3ead8 !important;
   border-color: #5a5348 !important;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .site-footer__inner {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.25fr);
+  }
 }

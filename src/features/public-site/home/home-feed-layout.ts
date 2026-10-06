@@ -3,8 +3,10 @@ import type { PublicArticle, PublicCategory } from "@/types";
 
 export const HOME_DESK_ARTICLE_LIMIT = 4;
 export const HOME_AUDIO_DESK_LIMIT = 5;
-/** Side (2) + text rail (up to 4), BBC-style front grid. */
-export const HOME_FRONT_STACK_SIZE = 6;
+/** Rail (2) + promo row (5) under the lead, BBC-style front grid. */
+export const HOME_FRONT_RAIL_SIZE = 2;
+export const HOME_FRONT_PROMO_SIZE = 5;
+export const HOME_FRONT_STACK_SIZE = HOME_FRONT_RAIL_SIZE + HOME_FRONT_PROMO_SIZE;
 export const HOME_MOSAIC_PODCAST_LIMIT = 4;
 export const HOME_MOSAIC_HUMAN_LIMIT = 4;
 export const HOME_MOSAIC_VISUAL_LIMIT = 4;
@@ -361,23 +363,17 @@ export function splitFrontPack(articles: PublicArticle[]): HomeFrontPack {
   };
 }
 
-/** Split stack into side column (image cards) and headline rail. */
+/** Split stack into a headline rail and a 4-up photo row. */
 export function partitionFrontStack(stack: PublicArticle[]): {
-  side: PublicArticle[];
   rail: PublicArticle[];
+  promos: PublicArticle[];
 } {
-  if (stack.length === 0) {
-    return { side: [], rail: [] };
-  }
-  if (stack.length === 1) {
-    return { side: [stack[0]!], rail: [] };
-  }
-  if (stack.length === 2) {
-    return { side: [stack[0]!], rail: [stack[1]!] };
-  }
   return {
-    side: stack.slice(0, 2),
-    rail: stack.slice(2),
+    rail: stack.slice(0, HOME_FRONT_RAIL_SIZE),
+    promos: stack.slice(
+      HOME_FRONT_RAIL_SIZE,
+      HOME_FRONT_RAIL_SIZE + HOME_FRONT_PROMO_SIZE,
+    ),
   };
 }
 

@@ -17,6 +17,7 @@ import {
   buildHomeMosaic,
   deskArticleLimit,
   getDeskLayout,
+  HOME_MOSAIC_PODCAST_LIMIT,
   isAudioCategoryBand,
   isHumanStoriesCategoryBand,
   findPhotoReportsCategory,
@@ -176,6 +177,7 @@ export default function HomePage() {
 
   const mosaic = useMemo(() => {
     const built = buildHomeMosaic(desks, categories);
+    const packIds = frontPackArticleIds(frontPack);
 
     const fillDesk = (
       current: HomeCategoryDesk | null,
@@ -191,7 +193,7 @@ export default function HomePage() {
         if (!slug) continue;
         for (const article of articles) {
           const id = String(article.id);
-          if (have.has(id)) continue;
+          if (have.has(id) || packIds.has(id)) continue;
           if (!matchesFilter(article, slug, parentSlugMap)) continue;
           have.add(id);
           extra.push(article);
@@ -201,7 +203,7 @@ export default function HomePage() {
         0,
         deskArticleLimit(current?.layout ?? "grid"),
       );
-      if (articlesForDesk.length === 0) return current;
+      if (articlesForDesk.length === 0) return null;
       return { slug: titleSlug, articles: articlesForDesk, layout: "grid" };
     };
 
@@ -225,18 +227,33 @@ export default function HomePage() {
       isHumanStoriesCategoryBand(category.slug, categories),
     )?.slug;
 
+    const withoutFront = (items: PublicArticle[]) =>
+      items.filter((item) => !packIds.has(String(item.id)));
+
     return {
       ...built,
-      human: fillDesk(built.human, [humanSlug]),
+      podcasts: withoutFront(built.podcasts).slice(0, HOME_MOSAIC_PODCAST_LIMIT),
+      aside: (() => {
+        if (!built.aside) return null;
+        const articles = withoutFront(built.aside.articles);
+        return articles.length > 0 ? { ...built.aside, articles } : null;
+      })(),
+      human: fillDesk(
+        built.human
+          ? { ...built.human, articles: withoutFront(built.human.articles) }
+          : null,
+        [humanSlug],
+      ),
       visual: fillDesk(
         photoReportsSlug
           ? {
               slug: photoReportsSlug,
-              articles:
+              articles: withoutFront(
                 desks.find((desk) => desk.slug === photoReportsSlug)
                   ?.articles ??
-                deskQueries[photoReportsFromApi]?.data?.articles ??
-                [],
+                  deskQueries[photoReportsFromApi]?.data?.articles ??
+                  [],
+              ),
               layout: "grid",
             }
           : null,
@@ -251,6 +268,7 @@ export default function HomePage() {
     orderedCategories,
     deskQueries,
     locale,
+    frontPack,
   ]);
 
   const podcastMoreHref = useMemo(() => {
@@ -341,7 +359,7 @@ export default function HomePage() {
                                   {podcastTitle}
                                 </h3>
                               </div>
-                              <div className="home-feed-podcasts home-bbc-audio-scroll home-audio-wave-band__scroll">
+                              <div className="home-feed-podcasts home-bbc-audio-scroll home-audio-wave-band__scroll home-strip home-strip--audio">
                                 {mosaic.podcasts.map((article, index) => (
                                   <HomeArticleCard
                                     key={article.id}
@@ -360,13 +378,6 @@ export default function HomePage() {
                               ) : null}
                             </div>
                           </section>
-                        ) : null}
-                        {mosaic.human ? (
-                          <HomeCategoryDeskSection
-                            desk={mosaic.human}
-                            title={categoryDeskTitle(mosaic.human.slug)}
-                            cardIndexOffset={7}
-                          />
                         ) : null}
                         {mosaic.visual || mosaic.aside ? (
                           <div
@@ -444,6 +455,13 @@ export default function HomePage() {
                               </div>
                             ) : null}
                           </div>
+                        ) : null}
+                        {mosaic.human ? (
+                          <HomeCategoryDeskSection
+                            desk={mosaic.human}
+                            title={categoryDeskTitle(mosaic.human.slug)}
+                            cardIndexOffset={7}
+                          />
                         ) : null}
                         {extraDesks.map((desk, deskIndex) => (
                           <HomeCategoryDeskSection

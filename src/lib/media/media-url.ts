@@ -1,5 +1,25 @@
 import { apiOrigin } from "../api/api-origin";
 
+/**
+ * Prefer the original file over Spatie conversion thumbs
+ * (`…/conversions/name-thumb.webp` → `…/name.webp`).
+ */
+export function preferFullSizeMediaUrl(
+  url: string | null | undefined,
+): string | null {
+  const resolved = resolveMediaUrl(url);
+  if (!resolved) return null;
+  const withoutConversion = resolved.replace(
+    /\/conversions\/([^/?]+?)-(?:thumb|crop|preview)(\.[a-zA-Z0-9]+)(\?[^/]*)?$/i,
+    "/$1$2$3",
+  );
+  if (withoutConversion !== resolved) return withoutConversion;
+  return resolved.replace(
+    /-(?:thumb|crop|preview)(\.[a-zA-Z0-9]+)(\?[^/]*)?$/i,
+    "$1$2",
+  );
+}
+
 /** Resolve media URLs for `<img src>` — proxy path in dev, absolute in production. */
 export function resolveMediaUrl(url: string | null | undefined): string | null {
   if (!url?.trim()) return null;
@@ -140,11 +160,13 @@ export function publicArticleCoverUrl(article: {
   cover_image?: string | null;
   images?: { thumb?: string; full?: string }[];
 }): string | null {
-  const cover = resolveMediaUrl(article.cover_image);
+  const cover = preferFullSizeMediaUrl(article.cover_image);
   if (cover) return cover;
 
   const first = article.images?.[0];
-  return resolveMediaUrl(first?.full ?? first?.thumb ?? null);
+  return (
+    preferFullSizeMediaUrl(first?.full) ?? preferFullSizeMediaUrl(first?.thumb)
+  );
 }
 
 /** Poster/preview still: video_poster first, then cover. */
@@ -153,7 +175,9 @@ export function publicArticlePosterUrl(article: {
   cover_image?: string | null;
   images?: { thumb?: string; full?: string }[];
 }): string | null {
-  return resolveMediaUrl(article.video_poster) ?? publicArticleCoverUrl(article);
+  return (
+    preferFullSizeMediaUrl(article.video_poster) ?? publicArticleCoverUrl(article)
+  );
 }
 
 const IMAGE_EXTENSION = /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?.*)?$/i;

@@ -195,7 +195,7 @@ export function DesktopSiteNav() {
   const navItems = useSiteNavItems();
 
   return (
-    <nav className="site-header-nav hidden flex-1 items-center justify-center lg:flex">
+    <nav className="site-header-nav hidden flex-1 items-center justify-center min-[900px]:flex">
       {navItems.map((item) =>
         item.type === "link" ? (
           <NavLinkItem key={item.to + item.label} item={item} />
@@ -319,7 +319,7 @@ export function MobileSiteNav({
         <Button
           variant="outline"
           size="icon"
-          className="site-mobile-nav-trigger shrink-0 lg:hidden"
+          className="site-mobile-nav-trigger shrink-0 min-[900px]:hidden"
           aria-label={nav.openMenu}
         >
           <Menu className="size-5" />

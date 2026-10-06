@@ -88,7 +88,7 @@ export function PublicArticleVideoPlayer({
     return (
       <div
         className={cn(
-          "article-media-poster relative overflow-hidden rounded-2xl bg-black",
+          "article-media-poster relative overflow-hidden rounded-2xl bg-muted",
           !fill && "aspect-video",
           fill && "h-full aspect-auto rounded-none",
           className,
@@ -100,7 +100,7 @@ export function PublicArticleVideoPlayer({
           poster={poster}
           controls
           autoPlay={requested}
-          className="size-full object-contain"
+          className="size-full object-cover"
           onTimeUpdate={(event) =>
             emitVideoProgress(event.currentTarget, onVideoProgress)
           }
@@ -237,7 +237,7 @@ function YouTubeArticlePlayer({
   return (
     <div
       className={cn(
-        "article-media-poster relative overflow-hidden rounded-2xl bg-black",
+        "article-media-poster relative overflow-hidden rounded-2xl bg-muted",
         !fill && "aspect-video",
         fill && "h-full aspect-auto rounded-none",
         className,

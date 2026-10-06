@@ -267,41 +267,6 @@ function ArticlePageContent({
 
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="min-w-0">
-            {isVideo ? (
-              <PublicArticleVideoPlayer
-                articleId={article.id}
-                title={displayTitle}
-                posterUrl={posterUrl}
-                coverImage={article.cover_image}
-                videoPoster={null}
-                className="mb-8"
-                onVideoProgress={onMediaProgress}
-              />
-            ) : coverUrl ? (
-              <figure className="article-cover-block mb-8">
-                <PublicArticleCover
-                  article={article}
-                  alt={coverCaption || displayTitle}
-                  priority
-                  className="article-cover-block__image aspect-[21/9] w-full object-cover"
-                />
-                {coverCaption ? (
-                  <figcaption className="article-cover-caption">
-                    {coverCaption}
-                  </figcaption>
-                ) : null}
-              </figure>
-            ) : isAudio ? (
-              <div className="relative mb-8 aspect-[21/9] overflow-hidden rounded-2xl">
-                <PodcastAudioPlayer
-                  seed={article.id}
-                  variant="cover"
-                  interactive={false}
-                  className="size-full min-h-[12rem]"
-                />
-              </div>
-            ) : null}
-
             <div className="article-meta-row">
               <div className="article-meta-row__facts">
                 <span className="text-primary">
@@ -335,40 +300,80 @@ function ArticlePageContent({
               </p>
             ) : null}
 
+            {englishPending ? (
+              <>
+                <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
+                  {articleCopy.englishPendingTitle}
+                </h1>
+                <PublicArticleEnglishPendingPanel className="mt-6" />
+              </>
+            ) : (
+              <>
+                <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
+                  <span className="inline-flex flex-wrap items-center gap-2.5">
+                    <span>
+                      <ArticleEntityBody
+                        text={displayArticle.title}
+                        entities={displayArticle.entities}
+                        tone="heading"
+                      />
+                    </span>
+                    <ArticleVerifiedBadge article={article} />
+                  </span>
+                </h1>
+
+                {displayArticle.description &&
+                body !== displayArticle.description ? (
+                  <p className="mt-4 text-lg text-muted-foreground">
+                    <ArticleEntityBody
+                      text={displayArticle.description}
+                      entities={displayArticle.entities}
+                    />
+                  </p>
+                ) : null}
+              </>
+            )}
+
+            {isVideo ? (
+              <PublicArticleVideoPlayer
+                articleId={article.id}
+                title={displayTitle}
+                posterUrl={posterUrl}
+                coverImage={article.cover_image}
+                videoPoster={article.video_poster}
+                className="mt-8 mb-8"
+                onVideoProgress={onMediaProgress}
+              />
+            ) : coverUrl ? (
+              <figure className="article-cover-block mt-8 mb-8">
+                <PublicArticleCover
+                  article={article}
+                  alt={coverCaption || displayTitle}
+                  priority
+                  className="article-cover-block__image aspect-video w-full object-cover"
+                />
+                {coverCaption ? (
+                  <figcaption className="article-cover-caption">
+                    {coverCaption}
+                  </figcaption>
+                ) : null}
+              </figure>
+            ) : isAudio ? (
+              <div className="relative mt-8 mb-8 aspect-video overflow-hidden rounded-2xl bg-muted">
+                <PodcastAudioPlayer
+                  seed={article.id}
+                  variant="cover"
+                  interactive={false}
+                  className="size-full min-h-[12rem]"
+                />
+              </div>
+            ) : null}
+
             <div
               className="article-content"
               dir={contentDir}
               lang={contentLang}
             >
-              {englishPending ? (
-                <PublicArticleEnglishPendingPanel className="mt-6" />
-              ) : (
-                <>
-                  <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
-                    <span className="inline-flex flex-wrap items-center gap-2.5">
-                      <span>
-                        <ArticleEntityBody
-                          text={displayArticle.title}
-                          entities={displayArticle.entities}
-                          tone="heading"
-                        />
-                      </span>
-                      <ArticleVerifiedBadge article={article} />
-                    </span>
-                  </h1>
-
-                  {displayArticle.description &&
-                  body !== displayArticle.description ? (
-                    <p className="mt-4 text-lg text-muted-foreground">
-                      <ArticleEntityBody
-                        text={displayArticle.description}
-                        entities={displayArticle.entities}
-                      />
-                    </p>
-                  ) : null}
-                </>
-              )}
-
               {showLangToggle && (
                 <div className="mt-6 flex flex-wrap gap-2">
                   <Button

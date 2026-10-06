@@ -107,7 +107,7 @@ export default function PublicLayout() {
             </div>
             <DesktopSiteNav />
             <div className="ms-auto flex shrink-0 items-center gap-2">
-              <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
+              <SiteHeaderSearch className="hidden w-40 min-[900px]:block min-[900px]:w-44 xl:w-52" />
               {/* {authHref && authLabel ? (
                 <Button
                   asChild
@@ -149,7 +149,9 @@ export default function PublicLayout() {
           </Suspense>
         ) : null}
         <SiteFooter className="mt-auto" />
-        <PlatformFeedbackFab />
+        {isPublicArticlePath(location.pathname) ? null : (
+          <PlatformFeedbackFab />
+        )}
         <Suspense fallback={null}>
           <PilotLaunchWelcome />
         </Suspense>

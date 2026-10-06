@@ -137,7 +137,6 @@ export function getToolBySlug(slug: string | undefined): ToolConfigEntry | undef
 
 /** First five public cards — same count as the original homepage kit. */
 export const HOME_PREVIEW_TOOL_SLUGS = [
-  "credibility-check",
   "reverse-image",
   "ai-detection",
   "domain-checker",

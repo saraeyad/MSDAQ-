@@ -4,7 +4,6 @@ import {
   isEnglishArticlePending,
   PublicArticleEnglishPendingBadge,
 } from "@/features/public-site/components/PublicArticleEnglishPending";
-import { ArticleTranslateButton } from "@/features/public-site/article-page/ArticleTranslateButton";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
@@ -201,7 +200,7 @@ export function HomeArticleCard({
                 <PublicArticleEnglishPendingBadge />
               ) : (
                 <span className="inline-flex flex-wrap items-center gap-2">
-                  {article.title}
+                  <span className="line-clamp-3">{article.title}</span>
                   <ArticleVerifiedBadge article={article} />
                 </span>
               )}
@@ -214,24 +213,17 @@ export function HomeArticleCard({
             ) : null}
           </Link>
 
-          <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/60 pt-4">
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/60 pt-4">
             <time className="text-xs text-muted-foreground">
               {new Date(article.published_at).toLocaleDateString(dateLocale)}
             </time>
-            <div className="flex items-center gap-2">
-              <ArticleTranslateButton
-                articleId={article.id}
-                contentLang={locale}
-                compact
-              />
-              <Link
-                to={articleHref}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
-              >
-                {common.readMore}
-                <CtaArrow className="size-3.5" />
-              </Link>
-            </div>
+            <Link
+              to={articleHref}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
+            >
+              {common.readMore}
+              <CtaArrow className="size-3.5" />
+            </Link>
           </div>
         </div>
       </article>
@@ -405,14 +397,19 @@ export function HomeArticleCard({
               <PublicArticleCover
                 article={article}
                 priority={isHero || index === 0}
-                className="home-card-cover--fit"
+                className="home-card-cover--fit home-card-cover--fill"
               />
             </Link>
-            <span className="home-editorial__kicker">{badge}</span>
+            {!isHero ? (
+              <span className="home-editorial__kicker">{badge}</span>
+            ) : null}
           </div>
         ) : null}
 
         <div className="home-editorial__body">
+          {isHero ? (
+            <span className="home-editorial__kicker">{badge}</span>
+          ) : null}
           {moreHref && moreLabel ? (
             <Link to={moreHref} className="home-editorial__section-more">
               {moreLabel}
@@ -621,7 +618,7 @@ export function HomeArticleCard({
               <PublicArticleEnglishPendingBadge />
             ) : (
               <span className="inline-flex flex-wrap items-center gap-2">
-                {article.title}
+                <span className="line-clamp-3">{article.title}</span>
                 <ArticleVerifiedBadge article={article} />
               </span>
             )}
@@ -655,20 +652,13 @@ export function HomeArticleCard({
           <time className="text-xs text-muted-foreground">
             {new Date(article.published_at).toLocaleDateString(dateLocale)}
           </time>
-          <div className="flex items-center gap-2">
-            <ArticleTranslateButton
-              articleId={article.id}
-              contentLang={locale}
-              compact
-            />
-            <Link
-              to={articleHref}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-all duration-300 group-hover:opacity-100"
-            >
-              {isAudio ? common.listenNow : common.readMore}
-              <CtaArrow className="size-3.5" />
-            </Link>
-          </div>
+          <Link
+            to={articleHref}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-all duration-300 group-hover:opacity-100"
+          >
+            {isAudio ? common.listenNow : common.readMore}
+            <CtaArrow className="size-3.5" />
+          </Link>
         </div>
       </div>
     </article>
