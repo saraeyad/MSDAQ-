@@ -1637,4 +1637,99 @@
   html.dark .staff-shell .calendar-view-header__today-btn {
     border-inline-color: var(--border) !important;
   }
+
+  html.dark.staff-workspace .calendar-create-dialog,
+  html.dark .staff-shell .calendar-form-panel {
+    background: var(--popover);
+    color: var(--popover-foreground);
+  }
+
+  html.dark.staff-workspace .calendar-form-title-input,
+  html.dark.staff-workspace .calendar-form-textarea,
+  html.dark.staff-workspace .calendar-form-select,
+  html.dark .staff-shell .calendar-form-title-input,
+  html.dark .staff-shell .calendar-form-textarea,
+  html.dark .staff-shell .calendar-form-select {
+    background: var(--input) !important;
+    border-color: var(--border) !important;
+    color: var(--foreground);
+  }
+
+  html.dark.staff-workspace .calendar-form-title-input::placeholder,
+  html.dark.staff-workspace .calendar-form-textarea::placeholder,
+  html.dark.staff-workspace .calendar-form-select::placeholder,
+  html.dark .staff-shell .calendar-form-title-input::placeholder,
+  html.dark .staff-shell .calendar-form-textarea::placeholder,
+  html.dark .staff-shell .calendar-form-select::placeholder {
+    color: var(--muted-foreground);
+  }
+
+  html.dark.staff-workspace .calendar-create-dialog__footer,
+  html.dark.staff-workspace .calendar-form-panel__actions,
+  html.dark .staff-shell .calendar-form-panel__actions {
+    background: var(--muted);
+    border-top-color: var(--border);
+  }
+
+  html.dark.staff-workspace .calendar-color-trigger,
+  html.dark .staff-shell .calendar-color-trigger {
+    background: var(--input);
+    border-color: var(--border);
+    color: var(--card-foreground);
+  }
+
+  html.dark.staff-workspace .calendar-color-trigger:hover,
+  html.dark .staff-shell .calendar-color-trigger:hover {
+    background: var(--muted);
+  }
+
+  html.dark.staff-workspace .calendar-user-select__list,
+  html.dark .staff-shell .calendar-user-select__list {
+    background: var(--muted);
+    border-color: var(--border);
+    color: var(--card-foreground);
+  }
+
+  html.dark.staff-workspace .calendar-user-select__item,
+  html.dark .staff-shell .calendar-user-select__item {
+    color: var(--card-foreground);
+  }
+
+  html.dark.staff-workspace .calendar-user-select__item:hover,
+  html.dark .staff-shell .calendar-user-select__item:hover {
+    background: color-mix(in srgb, var(--primary) 12%, var(--muted));
+  }
+
+  html.dark.staff-workspace .calendar-schedule-row__chip,
+  html.dark .staff-shell .calendar-schedule-row__chip {
+    background: var(--muted);
+    color: var(--card-foreground);
+  }
+
+  html.dark.staff-workspace .calendar-schedule-row__chip:hover:not(:disabled),
+  html.dark .staff-shell .calendar-schedule-row__chip:hover:not(:disabled) {
+    background: var(--input);
+  }
+
+  html.dark.staff-workspace .calendar-schedule-row__chip--active,
+  html.dark .staff-shell .calendar-schedule-row__chip--active {
+    background: color-mix(in srgb, var(--primary) 18%, var(--card));
+    color: var(--primary);
+  }
+
+  html.dark.staff-workspace .calendar-schedule-row__chip--locked,
+  html.dark .staff-shell .calendar-schedule-row__chip--locked {
+    background: var(--muted);
+    color: var(--muted-foreground);
+  }
+
+  html.dark.staff-workspace .calendar-create-dialog__pick-btn {
+    background: var(--muted);
+    border-color: var(--border);
+    color: var(--card-foreground);
+  }
+
+  html.dark.staff-workspace .calendar-color-picker__hex {
+    color: var(--card-foreground);
+  }
 }
