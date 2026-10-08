@@ -1836,7 +1836,7 @@
     min-width: 0;
     flex: 1 1 auto;
     font-family: var(--font-headline);
-    font-size: clamp(1.35rem, 3.2vw, 1.95rem);
+    font-size: clamp(1.2rem, 0.85rem + 0.85vw, 1.95rem);
     font-weight: 800;
     line-height: 1.2;
     letter-spacing: 0.02em;
@@ -2736,7 +2736,7 @@
   .home-tools-bench__title {
     margin: 0;
     font-family: var(--font-headline);
-    font-size: clamp(1.7rem, 3.6vw, 2.4rem);
+    font-size: clamp(1.45rem, 0.95rem + 1vw, 2.4rem);
     font-weight: 800;
     line-height: 1.15;
     color: var(--tools-ink);
@@ -3921,7 +3921,7 @@
   .home-cinematic-hero__title {
     margin-top: 0;
     font-family: var(--font-headline);
-    font-size: clamp(1.4rem, 3.2vw, 2.25rem);
+    font-size: clamp(1.25rem, 0.85rem + 1.05vw, 2.25rem);
     font-weight: 800;
     line-height: 1.08;
     letter-spacing: -0.02em;
@@ -3935,7 +3935,7 @@
   .home-cinematic-hero__brand {
     margin-top: 0.35rem;
     font-family: var(--font-headline);
-    font-size: clamp(1.85rem, 4.6vw, 3.1rem);
+    font-size: clamp(1.7rem, 1.15rem + 1.5vw, 3.1rem);
     font-weight: 900;
     line-height: 1.05;
     letter-spacing: 0.01em;
@@ -3949,7 +3949,7 @@
   .home-cinematic-hero__lead {
     margin-top: 0.4rem;
     max-width: 26rem;
-    font-size: clamp(0.88rem, 1.5vw, 1rem);
+    font-size: clamp(0.82rem, 0.72rem + 0.28vw, 1rem);
     line-height: 1.55;
     color: rgba(255, 255, 255, 0.78);
   }
@@ -4025,7 +4025,7 @@
 
   .home-cinematic-hero__script-text {
     font-family: "Aref Ruqaa Ink", "Segoe Script", cursive;
-    font-size: clamp(1.35rem, 3.2vw, 2rem);
+    font-size: clamp(1.2rem, 0.75rem + 1vw, 2rem);
     font-weight: 700;
     line-height: 1.2;
     color: rgba(255, 255, 255, 0.94);
@@ -4258,7 +4258,7 @@
   .news-rail__title {
     margin: 0;
     font-family: var(--font-headline);
-    font-size: clamp(0.92rem, 1.6vw, 1.08rem);
+    font-size: clamp(0.84rem, 0.7rem + 0.28vw, 1.08rem);
     font-weight: 800;
     line-height: 1.35;
     color: rgba(255, 255, 255, 0.94);
@@ -6382,13 +6382,13 @@ html.dark .home-bbc-promo-row {
 }
 
 .home-editorial__title--hero {
-  font-size: clamp(1.45rem, 2.8vw, 2.2rem);
+  font-size: clamp(1.25rem, 0.9rem + 0.9vw, 2.2rem);
   line-height: 1.18;
   font-weight: 900;
 }
 
 .home-editorial__title--hero-long {
-  font-size: clamp(1.12rem, 2vw, 1.55rem);
+  font-size: clamp(1.05rem, 0.78rem + 0.55vw, 1.55rem);
   line-height: 1.28;
   font-weight: 800;
 }
@@ -7397,4 +7397,76 @@ html.dark .home-news-board .home-podcast__foot,
 html.dark .home-news-board .home-feed-audio-row__date,
 html.dark .home-news-board .home-feed-stack-item__date {
   color: var(--muted-foreground);
+}
+
+/*
+  Laptop and scaled-desktop band.
+  1366×768, 1280×720, and 1920×1080 at 125% (1536px) all land here.
+  Wide desktops above 1536px keep the full header and card size.
+  Short windows (150% scale) shrink even when the CSS width is larger.
+*/
+@media (min-width: 768px) and (max-width: 1536px),
+  (min-width: 768px) and (max-height: 800px) {
+  .site-header .nav-link,
+  .site-header .nav-dropdown-trigger {
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+  }
+
+  .site-header__brand,
+  .site-header__brand .site-brand-link,
+  .site-header__brand .brand-logo {
+    height: 3.15rem;
+  }
+
+  .site-header .brand-logo__img {
+    height: 3.55rem;
+    max-width: 10.4rem;
+    transform: translateY(-0.28rem);
+  }
+
+  .site-header__cdmc,
+  .site-header__cdmc img {
+    height: 2.05rem;
+  }
+
+  .home-bbc-frontpage .home-editorial--side .home-editorial__title-text,
+  .home-bbc-card-grid .home-editorial--side .home-editorial__title-text,
+  .home-bbc-promo-row .home-editorial--promo .home-editorial__title-text {
+    font-size: 0.86rem;
+  }
+
+  .home-editorial__title:not(.home-editorial__title--hero):not(
+      .home-editorial__title--hero-long
+    ) {
+    font-size: 0.84rem;
+  }
+
+  .home-podcast__title {
+    font-size: 0.88rem;
+  }
+
+  .home-bbc-frontpage .home-editorial--hero .home-editorial__hero-copy {
+    font-size: 0.84rem;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 800px) {
+  .home-cinematic-hero {
+    min-height: 11.25rem;
+    height: min(24vh, 12.75rem);
+    max-height: 12.75rem;
+  }
+
+  .home-cinematic-hero__content {
+    padding-block: 0.75rem 0.65rem;
+  }
+
+  .home-cinematic-hero__brand {
+    margin-top: 0.2rem;
+  }
+
+  .home-cinematic-hero__lead {
+    margin-top: 0.25rem;
+  }
 }
