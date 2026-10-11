@@ -21,7 +21,7 @@ export function reloadIfStaleChunk(error: unknown): boolean {
   return true;
 }
 
-export function lazyRoute<T extends ComponentType>(
+export function lazyRoute<T extends ComponentType<any>>(
   loader: () => Promise<{ default: T }>,
 ): LazyExoticComponent<T> {
   return lazy(async () => {
