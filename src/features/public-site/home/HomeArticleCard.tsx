@@ -251,30 +251,32 @@ export function HomeArticleCard({
             </Link>
           ) : null}
 
-          <Link to={articleHref} className="home-editorial__title-link">
-            <h3
-              className={cn(
-                "home-editorial__title",
-                isHero && "home-editorial__title--hero",
-              )}
-            >
-              {englishPending ? (
-                <PublicArticleEnglishPendingBadge />
-              ) : (
-                <span className="home-editorial__title-text">
-                  {article.title}
-                </span>
-              )}
-            </h3>
-          </Link>
+          <div className="home-editorial__lead">
+            <Link to={articleHref} className="home-editorial__title-link">
+              <h3
+                className={cn(
+                  "home-editorial__title",
+                  isHero && "home-editorial__title--hero",
+                )}
+              >
+                {englishPending ? (
+                  <PublicArticleEnglishPendingBadge />
+                ) : (
+                  <span className="home-editorial__title-text">
+                    {article.title}
+                  </span>
+                )}
+              </h3>
+            </Link>
 
-          {!englishPending ? (
-            <ArticleVerifiedBadge
-              article={article}
-              compact
-              className="home-editorial__verified"
-            />
-          ) : null}
+            {!englishPending ? (
+              <ArticleVerifiedBadge
+                article={article}
+                compact
+                className="home-editorial__verified"
+              />
+            ) : null}
+          </div>
 
           {!englishPending && article.description ? (
             isHero &&

@@ -5104,9 +5104,9 @@ html.dark .partners-strip__logo-cell {
   background:
     linear-gradient(
       to bottom,
-      rgba(17, 17, 17, 0.46) 0%,
-      rgba(17, 17, 17, 0.12) 24%,
-      transparent 40%
+      rgba(17, 17, 17, 0.26) 0%,
+      rgba(17, 17, 17, 0.06) 18%,
+      transparent 34%
     ),
     linear-gradient(
       to top,
@@ -5121,9 +5121,9 @@ html.dark .partners-strip__logo-cell {
   background:
     linear-gradient(
       to bottom,
-      rgba(17, 17, 17, 0.46) 0%,
-      rgba(17, 17, 17, 0.12) 24%,
-      transparent 40%
+      rgba(17, 17, 17, 0.26) 0%,
+      rgba(17, 17, 17, 0.06) 18%,
+      transparent 34%
     ),
     linear-gradient(
       to top,
@@ -5199,8 +5199,29 @@ html.dark
   color: rgba(255, 255, 255, 0.86);
 }
 
+.site-header--overlay:not(.site-header--scrolled) .site-header__brand,
+.site-header--overlay:not(.site-header--scrolled) .site-header__brand .site-brand-link,
+.site-header--overlay:not(.site-header--scrolled) .site-header__brand .brand-logo {
+  height: 4.15rem;
+}
+
 .site-header--overlay:not(.site-header--scrolled) .brand-logo__img {
+  height: 4.15rem;
+  max-width: 11rem;
   filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.4));
+}
+
+@media (min-width: 768px) {
+  .site-header--overlay:not(.site-header--scrolled) .site-header__brand,
+  .site-header--overlay:not(.site-header--scrolled) .site-header__brand .site-brand-link,
+  .site-header--overlay:not(.site-header--scrolled) .site-header__brand .brand-logo {
+    height: 5.35rem;
+  }
+
+  .site-header--overlay:not(.site-header--scrolled) .brand-logo__img {
+    height: 5.35rem;
+    max-width: 13.75rem;
+  }
 }
 
 .site-header--overlay:not(.site-header--scrolled) .site-header__cdmc img {
@@ -5208,10 +5229,10 @@ html.dark
 }
 
 .home-cinematic-hero__photo {
-  object-position: center 58%;
+  object-position: center 52%;
   transform: none;
   transform-origin: 90% 0%;
-  filter: none;
+  filter: brightness(1.08);
 }
 
 .home-cinematic-hero__content {
@@ -5696,7 +5717,7 @@ html.dark .home-bbc-frontpage__rail {
   .home-bbc-frontpage .home-editorial--rail-lead {
     display: grid;
     grid-template-columns: 8.75rem minmax(0, 1fr);
-    gap: 0.65rem 0.9rem;
+    gap: 0.45rem 0.75rem;
     align-items: start;
     padding: 0 0 0.85rem;
     border-bottom: 1px solid rgba(17, 17, 17, 0.1);
@@ -5715,9 +5736,30 @@ html.dark .home-bbc-frontpage__rail {
     aspect-ratio: 3 / 2;
   }
 
+  .home-bbc-frontpage .home-editorial--rail-lead .home-editorial__media {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
   .home-bbc-frontpage .home-editorial--rail-lead .home-editorial__body {
+    display: contents;
     padding: 0;
     min-width: 0;
+  }
+
+  .home-bbc-frontpage .home-editorial--rail-lead .home-editorial__lead {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-self: start;
+  }
+
+  .home-bbc-frontpage .home-editorial--rail-lead .home-editorial__summary,
+  .home-bbc-frontpage .home-editorial--rail-lead .home-editorial__meta {
+    grid-column: 1 / -1;
   }
 
   .home-latest
@@ -6133,6 +6175,13 @@ html.dark .home-editorial--hero .home-editorial__kicker {
   display: flex;
   min-height: 0;
   flex: 1;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.home-editorial__lead {
+  display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 0.35rem;
 }
