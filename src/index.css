@@ -1103,6 +1103,55 @@ html.dark .home-filter-empty {
   color: var(--muted-foreground);
 }
 
+html.dark .articles-index__head,
+html.dark .articles-index__pack,
+html.dark .articles-index__promos,
+html.dark .articles-index__rail-item,
+html.dark .articles-index__more-item,
+html.dark .articles-index__rail {
+  border-color: var(--border);
+}
+
+html.dark .articles-index__head {
+  border-bottom-color: #c41e3a;
+}
+
+html.dark .articles-index__lead-media,
+html.dark .articles-index__promo-media,
+html.dark .articles-index__more-media {
+  background: color-mix(in srgb, var(--muted) 70%, var(--card));
+}
+
+html.dark .articles-index__rail-summary,
+html.dark .articles-index__lead-summary,
+html.dark .articles-index__meta,
+html.dark .articles-index__kicker time,
+html.dark .articles-index__rail-item time {
+  color: var(--muted-foreground);
+}
+
+html.dark .articles-index__more-item .articles-index__kicker {
+  color: #e24b62;
+}
+
+html.dark .articles-index__more-item .articles-index__kicker time {
+  color: #d7e0c8;
+}
+
+html.dark .articles-index__lead-title a,
+html.dark .articles-index__rail-title a,
+html.dark .articles-index__promo-title a,
+html.dark .articles-index__more-title a {
+  color: var(--foreground);
+}
+
+html.dark .articles-index__lead-title a:hover,
+html.dark .articles-index__rail-item:hover .articles-index__rail-title a,
+html.dark .articles-index__promo:hover .articles-index__promo-title a,
+html.dark .articles-index__more-item:hover .articles-index__more-title a {
+  color: #e24b62;
+}
+
 html.dark .site-header .nav-link,
 html.dark .site-header .nav-dropdown-trigger {
   color: var(--public-header-ink);

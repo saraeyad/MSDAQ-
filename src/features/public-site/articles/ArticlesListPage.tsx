@@ -14,9 +14,22 @@ import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
 import { siteLogoUrl } from "@/lib/seo/site-url";
 import { articlePath, ROUTES } from "@/router/routes";
 import { Articles_APIs } from "@/services/api/articles";
+import type { PublicArticle } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+
+function articleKicker(
+  article: PublicArticle,
+  locale: "ar" | "en",
+  copy: ReturnType<typeof usePublicCopy>,
+) {
+  return (
+    (article.category
+      ? localizedCategoryName(article.category, locale)
+      : null) ?? publicMediaTypeLabelFromCopy(copy, article.media_type)
+  );
+}
 
 export default function ArticlesListPage() {
   const [params, setParams] = useSearchParams();
@@ -69,25 +82,27 @@ export default function ArticlesListPage() {
           ogImage: siteLogoUrl(origin),
         }}
       />
-      {isSearchView ? (
-        <>
-          <h1 className="section-title">
-            {pageHero.searchResults(searchQuery)}
-          </h1>
-          <p className="section-description">
-            {isLoading
-              ? pageHero.searching
-              : articles.length > 0
-                ? pageHero.resultCount(pagination?.total ?? articles.length)
-                : pageHero.noSearchResults}
-          </p>
-        </>
-      ) : (
-        <>
-          <h1 className="section-title">{pageHero.articles}</h1>
-          <p className="section-description">{pageHero.articlesLead}</p>
-        </>
-      )}
+      <header className="articles-index__head">
+        {isSearchView ? (
+          <>
+            <h1 className="section-title">
+              {pageHero.searchResults(searchQuery)}
+            </h1>
+            <p className="section-description">
+              {isLoading
+                ? pageHero.searching
+                : articles.length > 0
+                  ? pageHero.resultCount(pagination?.total ?? articles.length)
+                  : pageHero.noSearchResults}
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="section-title">{pageHero.articles}</h1>
+            <p className="section-description">{pageHero.articlesLead}</p>
+          </>
+        )}
+      </header>
 
       {isLoading ? (
         <PageLoading className="mt-8" />
@@ -99,55 +114,7 @@ export default function ArticlesListPage() {
         </p>
       ) : (
         <>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article, index) => {
-              const englishPending = isEnglishArticlePending(article, locale);
-              return (
-                <article
-                  key={article.id}
-                  className="content-card articles-list-card overflow-hidden"
-                >
-                  <Link to={articlePath(article.id)} className="block">
-                    {article.cover_image ? (
-                      <PublicArticleCover
-                        article={article}
-                        priority={index === 0}
-                        className="aspect-video w-full object-cover"
-                      />
-                    ) : null}
-                    <div className="p-4">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-primary">
-                          {(article.category
-                            ? localizedCategoryName(article.category, locale)
-                            : null) ??
-                            publicMediaTypeLabelFromCopy(
-                              copy,
-                              article.media_type,
-                            )}
-                        </span>
-                      </div>
-                      <h2 className="mt-1 font-headline text-lg font-semibold">
-                        {englishPending ? (
-                          <PublicArticleEnglishPendingBadge />
-                        ) : (
-                          <span className="inline-flex flex-wrap items-center gap-2">
-                            <span className="line-clamp-3">{article.title}</span>
-                            <ArticleVerifiedBadge article={article} compact />
-                          </span>
-                        )}
-                      </h2>
-                      {!englishPending && article.description && (
-                        <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                          {article.description}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
-                </article>
-              );
-            })}
-          </div>
+          <ArticlesNewsSplit articles={articles} locale={locale} copy={copy} />
 
           {pagination && pagination.last_page > 1 && (
             <div className="mt-10 flex items-center justify-center gap-4">
@@ -176,6 +143,179 @@ export default function ArticlesListPage() {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+type Copy = ReturnType<typeof usePublicCopy>;
+
+function publishedLabel(article: PublicArticle, locale: "ar" | "en") {
+  return new Date(article.published_at).toLocaleDateString(
+    locale === "en" ? "en" : "ar",
+  );
+}
+
+function ArticleTitle({
+  article,
+  locale,
+  className,
+}: {
+  article: PublicArticle;
+  locale: "ar" | "en";
+  className: string;
+}) {
+  const englishPending = isEnglishArticlePending(article, locale);
+  return (
+    <h2 className={className}>
+      <Link to={articlePath(article.id)} className="font-headline">
+        {englishPending ? <PublicArticleEnglishPendingBadge /> : article.title}
+      </Link>
+    </h2>
+  );
+}
+
+/** Lead, text rail, photo row, then a two-column headline list. */
+function ArticlesNewsSplit({
+  articles,
+  locale,
+  copy,
+}: {
+  articles: PublicArticle[];
+  locale: "ar" | "en";
+  copy: Copy;
+}) {
+  const lead = articles[0];
+  const rail = articles.slice(1, 5);
+  const promos = articles.slice(5, 9);
+  const more = articles.slice(9);
+  if (!lead) return null;
+
+  const leadPending = isEnglishArticlePending(lead, locale);
+
+  return (
+    <div className="articles-index">
+      <div className="articles-index__pack">
+        <article className="articles-index__lead">
+          <Link to={articlePath(lead.id)} className="articles-index__lead-media">
+            <PublicArticleCover
+              article={lead}
+              priority
+              className="articles-index__cover"
+            />
+          </Link>
+          <p className="articles-index__kicker">
+            {articleKicker(lead, locale, copy)}
+          </p>
+          <ArticleTitle
+            article={lead}
+            locale={locale}
+            className="articles-index__lead-title"
+          />
+          {!leadPending ? (
+            <ArticleVerifiedBadge
+              article={lead}
+              compact
+              className="articles-index__verified"
+            />
+          ) : null}
+          {!leadPending && lead.description ? (
+            <p className="articles-index__lead-summary">{lead.description}</p>
+          ) : null}
+          <p className="articles-index__meta">
+            <time dateTime={lead.published_at}>
+              {publishedLabel(lead, locale)}
+            </time>
+          </p>
+        </article>
+
+        {rail.length > 0 ? (
+          <div className="articles-index__rail">
+            {rail.map((article) => {
+              const pending = isEnglishArticlePending(article, locale);
+              return (
+                <article key={article.id} className="articles-index__rail-item">
+                  <ArticleTitle
+                    article={article}
+                    locale={locale}
+                    className="articles-index__rail-title"
+                  />
+                  {!pending ? (
+                    <ArticleVerifiedBadge article={article} compact />
+                  ) : null}
+                  {!pending && article.description ? (
+                    <p className="articles-index__rail-summary">
+                      {article.description}
+                    </p>
+                  ) : null}
+                  <p className="articles-index__kicker">
+                    {articleKicker(article, locale, copy)}
+                    <time dateTime={article.published_at}>
+                      {publishedLabel(article, locale)}
+                    </time>
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+
+      {promos.length > 0 ? (
+        <div className="articles-index__promos">
+          {promos.map((article) => (
+            <article key={article.id} className="articles-index__promo">
+              <Link
+                to={articlePath(article.id)}
+                className="articles-index__promo-media"
+              >
+                <PublicArticleCover
+                  article={article}
+                  className="articles-index__cover"
+                />
+              </Link>
+              <p className="articles-index__kicker">
+                {articleKicker(article, locale, copy)}
+              </p>
+              <ArticleTitle
+                article={article}
+                locale={locale}
+                className="articles-index__promo-title"
+              />
+            </article>
+          ))}
+        </div>
+      ) : null}
+
+      {more.length > 0 ? (
+        <div className="articles-index__more">
+          {more.map((article) => (
+            <article key={article.id} className="articles-index__more-item">
+              <Link
+                to={articlePath(article.id)}
+                className="articles-index__more-media"
+              >
+                <PublicArticleCover
+                  article={article}
+                  className="articles-index__cover"
+                />
+              </Link>
+              <div>
+                <p className="articles-index__kicker">
+                  {articleKicker(article, locale, copy)}
+                  <time dateTime={article.published_at}>
+                    {publishedLabel(article, locale)}
+                  </time>
+                </p>
+                <ArticleTitle
+                  article={article}
+                  locale={locale}
+                  className="articles-index__more-title"
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
