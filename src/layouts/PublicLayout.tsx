@@ -138,9 +138,9 @@ export default function PublicLayout() {
               <SiteBrandLink linkToHome />
             </div>
             <DesktopSiteNav />
-            <div className="ms-auto flex shrink-0 items-center gap-2">
-              <SiteHeaderSearch className="hidden w-40 min-[900px]:block min-[900px]:w-44 xl:w-52" />
-              <div className="site-header__tools">
+            <div className="ms-auto flex min-w-0 items-center gap-2">
+              <SiteHeaderSearch className="hidden w-40 min-w-0 shrink min-[900px]:block min-[900px]:w-44 xl:w-52" />
+              <div className="site-header__tools shrink-0">
                 <LocaleSwitcher />
                 <ThemeSwitcher />
               </div>
