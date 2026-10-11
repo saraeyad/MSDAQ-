@@ -204,8 +204,15 @@ export function isRequiredStepComplete(
   }
 }
 
+function hasStandardsCheck(article: StaffArticle): boolean {
+  const gate = article.gate;
+  if (!gate || article.media_type !== "text") return false;
+  return !!gate.standards_checked_at || gate.fusha_passed === true;
+}
+
 /** Whether a step has real content — used for stepper checkmarks. */
 export function isStepFilled(step: number, article: StaffArticle): boolean {
+  if (step === 4) return hasStandardsCheck(article);
   if (step === 6) {
     return article.media_type === "text" && hasLocalization(article);
   }
