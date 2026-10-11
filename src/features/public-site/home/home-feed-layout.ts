@@ -1,29 +1,16 @@
 import { findCategoryByFilterKey } from "@/lib/publishing";
 import type { PublicArticle, PublicCategory } from "@/types";
 
-export const HOME_DESK_ARTICLE_LIMIT = 4;
-export const HOME_AUDIO_DESK_LIMIT = 5;
 /** Rail (2) + promo row (5) under the lead, BBC-style front grid. */
 export const HOME_FRONT_RAIL_SIZE = 2;
 export const HOME_FRONT_PROMO_SIZE = 5;
 export const HOME_FRONT_STACK_SIZE = HOME_FRONT_RAIL_SIZE + HOME_FRONT_PROMO_SIZE;
-export const HOME_MOSAIC_PODCAST_LIMIT = 4;
-export const HOME_MOSAIC_HUMAN_LIMIT = 4;
-export const HOME_MOSAIC_VISUAL_LIMIT = 4;
-export const HOME_MOSAIC_ASIDE_LIMIT = 8;
-export const HOME_MAX_EXTRA_DESKS = 8;
 
 export type HomeFeedDeskLayout = "grid" | "wide" | "audio" | "video";
 
 export type HomeFrontPack = {
   lead: PublicArticle | null;
   stack: PublicArticle[];
-};
-
-export type HomeCategoryDesk = {
-  slug: string;
-  articles: PublicArticle[];
-  layout: HomeFeedDeskLayout;
 };
 
 function foldArabic(value: string): string {
@@ -60,25 +47,12 @@ function photoReportsNameMatch(names: string, slugLower: string): boolean {
   );
 }
 
-export function findPhotoReportsCategory(
-  categories: PublicCategory[],
-): PublicCategory | undefined {
-  return categories.find((category) => {
-    const raw = `${category.name_ar ?? ""} ${category.name_en ?? ""}`;
-    if (raw.includes("قصص") && raw.includes("مصور")) return false;
-    if (raw.includes("تقارير") && raw.includes("مصور")) return true;
-    return photoReportsNameMatch(
-      foldedCategoryNames(category),
-      category.slug.toLowerCase(),
-    );
-  });
-}
-
-export function isPhotoReportsCategoryBand(
+function isPhotoReportsCategoryBand(
   slug: string,
   categories: PublicCategory[],
 ): boolean {
-  const category = findCategoryByFilterKey(categories, slug) ??
+  const category =
+    findCategoryByFilterKey(categories, slug) ??
     categories.find((item) => item.slug === slug);
   const names = foldedCategoryNames(category);
   const nameEn = category?.name_en?.trim().toLowerCase() ?? "";
@@ -89,29 +63,7 @@ export function isPhotoReportsCategoryBand(
   return photoReportsNameMatch(names, slugLower);
 }
 
-export function isVisualStoriesCategoryBand(
-  slug: string,
-  categories: PublicCategory[],
-): boolean {
-  const category = findCategoryByFilterKey(categories, slug);
-  const names = foldedCategoryNames(category);
-  const nameEn = category?.name_en?.trim().toLowerCase() ?? "";
-  const slugLower = slug.toLowerCase();
-
-  if (names.includes("قصص مصوره")) return true;
-  if (names.includes("قصص") && names.includes("مصوره")) return true;
-  if (nameEn.includes("visual stor") || nameEn.includes("photo stor")) {
-    return true;
-  }
-  return (
-    slugLower.includes("visual-stor") ||
-    slugLower.includes("photo-stor") ||
-    slugLower.includes("qasas-musaw") ||
-    slugLower.includes("qisas-musaw")
-  );
-}
-
-export function isVideoCategoryBand(
+function isVideoCategoryBand(
   slug: string,
   categories: PublicCategory[],
 ): boolean {
@@ -126,7 +78,7 @@ export function isVideoCategoryBand(
   return slugLower === "video" || slugLower.includes("video");
 }
 
-export function isAudioCategoryBand(
+function isAudioCategoryBand(
   slug: string,
   categories: PublicCategory[],
 ): boolean {
@@ -152,193 +104,6 @@ export function isAudioCategoryBand(
     slugLower.includes("masmu") ||
     slugLower.includes("masmo")
   );
-}
-
-function deskTier(slug: string, categories: PublicCategory[]): number {
-  if (
-    isPhotoReportsCategoryBand(slug, categories) ||
-    isVisualStoriesCategoryBand(slug, categories)
-  ) {
-    return 1;
-  }
-  if (isVideoCategoryBand(slug, categories)) return 2;
-  if (isAudioCategoryBand(slug, categories)) return 3;
-  return 0;
-}
-
-/** Photo / visual desks before video and audio; other categories keep API order. */
-export function orderCategoriesForDesks(
-  categories: PublicCategory[],
-): PublicCategory[] {
-  return [...categories]
-    .map((cat, index) => ({
-      cat,
-      index,
-      tier: deskTier(cat.slug, categories),
-    }))
-    .sort((a, b) => {
-      if (a.tier !== b.tier) return a.tier - b.tier;
-      return a.index - b.index;
-    })
-    .map(({ cat }) => cat);
-}
-
-export function isHumanStoriesCategoryBand(
-  slug: string,
-  categories: PublicCategory[],
-): boolean {
-  const category = findCategoryByFilterKey(categories, slug);
-  const names = foldedCategoryNames(category);
-  const slugLower = slug.toLowerCase();
-  if (names.includes("قصص انسانيه") || names.includes("قصص انساني")) return true;
-  if (names.includes("قصص") && names.includes("انسان")) return true;
-  return (
-    slugLower.includes("human") ||
-    slugLower.includes("insani") ||
-    slugLower.includes("insania") ||
-    slugLower.includes("humanitarian")
-  );
-}
-
-export function isSuccessStoriesCategoryBand(
-  slug: string,
-  categories: PublicCategory[],
-): boolean {
-  const category = findCategoryByFilterKey(categories, slug);
-  const names = categoryNamesBlob(category);
-  const nameAr = category?.name_ar?.trim() ?? "";
-  const nameEn = category?.name_en?.trim().toLowerCase() ?? "";
-  const slugLower = slug.toLowerCase();
-  if (names.includes("قصص نجاح") || nameAr.includes("قصص نجاح")) return true;
-  if (nameAr === "نجاح" || names.includes("نجاح")) return true;
-  return (
-    nameEn.includes("success") ||
-    slugLower.includes("success") ||
-    slugLower.includes("najah")
-  );
-}
-
-/** How many stories a desk shows so the front stays even. */
-export function deskArticleLimit(layout: HomeFeedDeskLayout): number {
-  if (layout === "audio") return HOME_AUDIO_DESK_LIMIT;
-  return HOME_DESK_ARTICLE_LIMIT;
-}
-
-export function isStudiesCategoryBand(
-  slug: string,
-  categories: PublicCategory[],
-): boolean {
-  const category = findCategoryByFilterKey(categories, slug);
-  const names = categoryNamesBlob(category);
-  const nameAr = category?.name_ar?.trim() ?? "";
-  const nameEn = category?.name_en?.trim().toLowerCase() ?? "";
-  const slugLower = slug.toLowerCase();
-  if (names.includes("دراسات") || nameAr.includes("دراسات")) return true;
-  return nameEn.includes("stud") || slugLower.includes("stud");
-}
-
-export type HomeMosaic = {
-  podcasts: PublicArticle[];
-  podcastSlug: string | null;
-  human: HomeCategoryDesk | null;
-  visual: HomeCategoryDesk | null;
-  aside: HomeCategoryDesk | null;
-  asideSuccessSlug: string | null;
-  asideStudiesSlug: string | null;
-};
-
-/**
- * After the latest lead + stack:
- * a podcasts band, four human stories,
- * then photo reports beside a success/studies stack.
- */
-export function buildHomeMosaic(
-  desks: HomeCategoryDesk[],
-  categories: PublicCategory[],
-): HomeMosaic {
-  const audio =
-    desks.find((desk) => desk.layout === "audio") ??
-    desks.find((desk) => isAudioCategoryBand(desk.slug, categories)) ??
-    null;
-  const humanDesk =
-    desks.find((desk) => isHumanStoriesCategoryBand(desk.slug, categories)) ??
-    null;
-  const photoReportsCategory = findPhotoReportsCategory(categories);
-  const visualDesk =
-    desks.find((desk) => desk.slug === photoReportsCategory?.slug) ??
-    desks.find((desk) => isPhotoReportsCategoryBand(desk.slug, categories)) ??
-    null;
-  const visualFallbackDesk =
-    desks.find((desk) => isVisualStoriesCategoryBand(desk.slug, categories)) ??
-    desks.find((desk) => desk.layout === "video") ??
-    null;
-  const successDesk =
-    desks.find((desk) => isSuccessStoriesCategoryBand(desk.slug, categories)) ??
-    null;
-  const studiesDesk =
-    desks.find((desk) => isStudiesCategoryBand(desk.slug, categories)) ??
-    null;
-
-  const podcasts = (audio?.articles ?? []).slice(0, HOME_MOSAIC_PODCAST_LIMIT);
-  const humanArticles = (humanDesk?.articles ?? []).slice(
-    0,
-    HOME_MOSAIC_HUMAN_LIMIT,
-  );
-  const visualSeen = new Set<string>();
-  const visualArticles: PublicArticle[] = [];
-  for (const article of [
-    ...(visualDesk?.articles ?? []),
-    ...(visualFallbackDesk?.articles ?? []),
-  ]) {
-    const id = String(article.id);
-    if (visualSeen.has(id)) continue;
-    visualSeen.add(id);
-    visualArticles.push(article);
-    if (visualArticles.length >= HOME_MOSAIC_VISUAL_LIMIT) break;
-  }
-  const seenAside = new Set<string>();
-  const asideArticles: PublicArticle[] = [];
-  for (const article of [
-    ...(successDesk?.articles ?? []),
-    ...(studiesDesk?.articles ?? []),
-  ]) {
-    const id = String(article.id);
-    if (seenAside.has(id)) continue;
-    seenAside.add(id);
-    asideArticles.push(article);
-    if (asideArticles.length >= HOME_MOSAIC_ASIDE_LIMIT) break;
-  }
-
-  return {
-    podcasts,
-    podcastSlug: audio?.slug ?? null,
-    human:
-      humanDesk && humanArticles.length > 0
-        ? { ...humanDesk, articles: humanArticles, layout: "grid" }
-        : null,
-    visual:
-      visualArticles.length > 0
-        ? {
-            slug:
-              photoReportsCategory?.slug ??
-              visualDesk?.slug ??
-              visualFallbackDesk?.slug ??
-              "",
-            articles: visualArticles,
-            layout: "grid",
-          }
-        : null,
-    aside:
-      asideArticles.length > 0
-        ? {
-            slug: successDesk?.slug ?? studiesDesk?.slug ?? "",
-            articles: asideArticles,
-            layout: "grid",
-          }
-        : null,
-    asideSuccessSlug: successDesk?.slug ?? null,
-    asideStudiesSlug: studiesDesk?.slug ?? null,
-  };
 }
 
 export function getDeskLayout(
@@ -377,55 +142,6 @@ export function partitionFrontStack(stack: PublicArticle[]): {
   };
 }
 
-export function mosaicConsumedSlugs(mosaic: HomeMosaic): Set<string> {
-  const slugs = new Set<string>();
-  if (mosaic.podcastSlug) slugs.add(mosaic.podcastSlug);
-  if (mosaic.human?.slug) slugs.add(mosaic.human.slug);
-  if (mosaic.visual?.slug) slugs.add(mosaic.visual.slug);
-  if (mosaic.asideSuccessSlug) slugs.add(mosaic.asideSuccessSlug);
-  if (mosaic.asideStudiesSlug) slugs.add(mosaic.asideStudiesSlug);
-  if (mosaic.aside?.slug) slugs.add(mosaic.aside.slug);
-  return slugs;
-}
-
-export function mosaicArticleIds(mosaic: HomeMosaic): Set<string> {
-  const ids = new Set<string>();
-  for (const article of mosaic.podcasts) {
-    ids.add(String(article.id));
-  }
-  for (const desk of [mosaic.human, mosaic.visual, mosaic.aside]) {
-    if (!desk) continue;
-    for (const article of desk.articles) {
-      ids.add(String(article.id));
-    }
-  }
-  return ids;
-}
-
-/** Category desks not already represented in the mosaic band. */
-export function desksBeyondMosaic(
-  desks: HomeCategoryDesk[],
-  mosaic: HomeMosaic,
-  excludeArticleIds: ReadonlySet<string>,
-): HomeCategoryDesk[] {
-  const usedSlugs = mosaicConsumedSlugs(mosaic);
-  const result: HomeCategoryDesk[] = [];
-
-  for (const desk of desks) {
-    if (usedSlugs.has(desk.slug)) continue;
-    const articles = dedupeDeskArticles(
-      desk.articles,
-      excludeArticleIds,
-      deskArticleLimit(desk.layout),
-    );
-    if (articles.length === 0) continue;
-    result.push({ ...desk, articles });
-    if (result.length >= HOME_MAX_EXTRA_DESKS) break;
-  }
-
-  return result;
-}
-
 export function frontPackArticleIds(pack: HomeFrontPack): Set<string> {
   const ids = new Set<string>();
   if (pack.lead) ids.add(String(pack.lead.id));
@@ -433,33 +149,4 @@ export function frontPackArticleIds(pack: HomeFrontPack): Set<string> {
     ids.add(String(article.id));
   }
   return ids;
-}
-
-export function dedupeDeskArticles(
-  articles: PublicArticle[],
-  excludeIds: ReadonlySet<string>,
-  limit = HOME_DESK_ARTICLE_LIMIT,
-): PublicArticle[] {
-  const result: PublicArticle[] = [];
-  for (const article of articles) {
-    if (excludeIds.has(String(article.id))) continue;
-    result.push(article);
-    if (result.length >= limit) break;
-  }
-  return result;
-}
-
-/** Filter chip: lead + stack from the feed, remainder as one desk. */
-export function buildFilteredCategoryDesk(
-  articles: PublicArticle[],
-  categorySlug: string,
-  categories: PublicCategory[],
-): HomeCategoryDesk | null {
-  const rest = articles.slice(4);
-  if (rest.length === 0) return null;
-  return {
-    slug: categorySlug,
-    articles: rest.slice(0, deskArticleLimit(getDeskLayout(categorySlug, categories))),
-    layout: getDeskLayout(categorySlug, categories),
-  };
 }

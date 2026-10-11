@@ -11,14 +11,13 @@ type HomeBbcFrontpageProps = {
 };
 
 export function HomeBbcFrontpage({ frontPack, className }: HomeBbcFrontpageProps) {
-  const { rail: railStories, promos } = partitionFrontStack(frontPack.stack);
+  const { rail: railStories } = partitionFrontStack(frontPack.stack);
   const railLead = railStories[0] ?? null;
   const railRest = railStories.slice(1);
   const hasHero = Boolean(frontPack.lead);
   const hasRail = railStories.length > 0;
-  const hasPromos = promos.length > 0;
 
-  if (!hasHero && !hasRail && !hasPromos) {
+  if (!hasHero && !hasRail) {
     return null;
   }
 
@@ -63,20 +62,6 @@ export function HomeBbcFrontpage({ frontPack, className }: HomeBbcFrontpageProps
           </aside>
         ) : null}
       </div>
-
-      {hasPromos ? (
-        <div className="home-bbc-promo-row home-strip">
-          {promos.map((article, index) => (
-            <HomeArticleCard
-              key={article.id}
-              article={article}
-              index={index + 5}
-              variant="editorialSide"
-              className="home-editorial--promo"
-            />
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

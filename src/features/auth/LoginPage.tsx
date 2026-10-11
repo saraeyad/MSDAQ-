@@ -13,7 +13,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
-const LOGIN_PHOTO = "/images/hero-people.webp";
+const LOGIN_PHOTO = "/images/hero-people-hd.png";
 const LOGIN_FALLBACK = "/images/hero-verification.webp";
 
 const WORKSPACE_PERMISSIONS = [

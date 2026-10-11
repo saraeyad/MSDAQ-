@@ -36,10 +36,7 @@ const MEDIA_ICONS: Record<PublicMediaType, typeof FileText> = {
 
 type HomeArticleCardVariant =
   | "default"
-  | "compact"
-  | "audioRow"
   | "podcast"
-  | "lead"
   | "editorialHero"
   | "editorialSide"
   | "editorialText";
@@ -119,165 +116,6 @@ export function HomeArticleCard({
   const articleHref = articlePath(article.id);
   const posterUrl = publicArticleCoverUrl(article);
   const edgeShift = cardEdgeShift(article.id, index);
-
-  if (variant === "lead") {
-    return (
-      <article
-        style={{ animationDelay: `${index * 60}ms` }}
-        className={cn(
-          "home-article-card home-article-card--lead news-card-enter group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-primary/25 lg:flex-row lg:items-stretch",
-          className,
-        )}
-      >
-        <div className="home-article-card__media w-full shrink-0 lg:w-[44%]">
-          <div className="home-article-card__media-frame">
-            {isVideo && mediaStarted ? (
-              <Suspense
-                fallback={
-                  <PublicArticleCover
-                    article={article}
-                    priority
-                    className="home-card-cover--fit"
-                  />
-                }
-              >
-                <PublicArticleVideoPlayer
-                  articleId={article.id}
-                  title={article.title}
-                  posterUrl={posterUrl}
-                  coverImage={article.cover_image}
-                  fill
-                  startOnMount
-                  className="size-full"
-                />
-              </Suspense>
-            ) : isVideo ? (
-              <button
-                type="button"
-                className="article-media-poster home-article-card__media-link"
-                onClick={() => setMediaStarted(true)}
-                aria-label={articleCopy.playVideo(
-                  englishPending
-                    ? articleCopy.englishPendingTitle
-                    : article.title,
-                )}
-              >
-                <PublicArticleCover
-                  article={article}
-                  priority
-                  className="home-card-cover--fit article-media-poster__image"
-                />
-                <span className="article-media-poster__scrim" aria-hidden />
-                <span className="article-media-poster__play" aria-hidden>
-                  <Play className="size-7 fill-current" />
-                </span>
-              </button>
-            ) : (
-              <Link to={articleHref} className="home-article-card__media-link">
-                <PublicArticleCover
-                  article={article}
-                  priority
-                  className="home-card-cover--fit"
-                />
-              </Link>
-            )}
-            <span
-              className="home-article-card__media-type pointer-events-none"
-              aria-hidden
-            >
-              <Icon className="size-4" />
-            </span>
-          </div>
-          <span className="home-article-card__category">{badge}</span>
-        </div>
-
-        <div className="relative flex min-w-0 flex-1 flex-col p-5 lg:p-6">
-          <div className="absolute start-0 top-0 hidden h-full w-1 rounded-full bg-primary lg:block" />
-
-          <Link to={articleHref} className="block">
-            <h3 className="font-headline text-xl font-bold leading-snug transition-colors group-hover:text-primary md:text-2xl">
-              {englishPending ? (
-                <PublicArticleEnglishPendingBadge />
-              ) : (
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  <span className="line-clamp-3">{article.title}</span>
-                  <ArticleVerifiedBadge article={article} />
-                </span>
-              )}
-            </h3>
-
-            {!englishPending && article.description ? (
-              <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-muted-foreground md:text-base">
-                {article.description}
-              </p>
-            ) : null}
-          </Link>
-
-            <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/60 pt-4">
-            <time className="text-xs text-muted-foreground">
-              {new Date(article.published_at).toLocaleDateString(dateLocale)}
-            </time>
-            <Link
-              to={articleHref}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
-            >
-              {common.readMore}
-              <CtaArrow className="size-3.5" />
-            </Link>
-          </div>
-        </div>
-      </article>
-    );
-  }
-
-  if (variant === "compact") {
-    return (
-      <article
-        style={{ animationDelay: `${index * 40}ms`, ...edgeShift }}
-        className={cn("home-feed-stack-item news-card-enter group", className)}
-      >
-        <div className="home-feed-stack-item__link">
-          <span className="home-feed-stack-item__body">
-            {moreHref && moreLabel ? (
-              <Link to={moreHref} className="home-feed-stack-item__more">
-                {moreLabel}
-                <CtaArrow className="size-3.5" />
-              </Link>
-            ) : null}
-            <Link to={articleHref} className="home-feed-stack-item__title">
-              {englishPending ? (
-                <PublicArticleEnglishPendingBadge />
-              ) : (
-                <>
-                  <span className="home-feed-stack-item__headline">
-                    {article.title}
-                  </span>
-                  <ArticleVerifiedBadge article={article} compact />
-                </>
-              )}
-            </Link>
-            <time className="home-feed-stack-item__date">
-              {new Date(article.published_at).toLocaleDateString(dateLocale)}
-            </time>
-          </span>
-          <div className="home-feed-stack-item__visual">
-            <Link to={articleHref} className="home-feed-stack-item__thumb-link">
-              <span className="home-feed-stack-item__thumb">
-                <PublicArticleCover
-                  article={article}
-                  className="home-card-cover--fit"
-                />
-                <span className="home-feed-stack-item__media" aria-hidden>
-                  <Icon className="size-3.5" />
-                </span>
-              </span>
-            </Link>
-            <span className="home-feed-stack-item__category">{badge}</span>
-          </div>
-        </div>
-      </article>
-    );
-  }
 
   if (variant === "podcast") {
     return (
@@ -407,9 +245,6 @@ export function HomeArticleCard({
         ) : null}
 
         <div className="home-editorial__body">
-          {isHero ? (
-            <span className="home-editorial__kicker">{badge}</span>
-          ) : null}
           {moreHref && moreLabel ? (
             <Link to={moreHref} className="home-editorial__section-more">
               {moreLabel}
@@ -421,9 +256,6 @@ export function HomeArticleCard({
               className={cn(
                 "home-editorial__title",
                 isHero && "home-editorial__title--hero",
-                isHero &&
-                  article.title.trim().split(/\s+/).filter(Boolean).length > 3 &&
-                  "home-editorial__title--hero-long",
               )}
             >
               {englishPending ? (
@@ -445,7 +277,9 @@ export function HomeArticleCard({
           ) : null}
 
           {!englishPending && article.description ? (
-            isHero && heroExcerpt ? (
+            isHero &&
+            heroExcerpt &&
+            heroExcerpt.body.trim().length >= 18 ? (
               <div className="home-editorial__excerpt home-editorial__excerpt--hero">
                 <p className="home-editorial__summary-lead">
                   {heroExcerpt.lead}
@@ -456,7 +290,9 @@ export function HomeArticleCard({
               <p
                 className={cn(
                   "home-editorial__summary",
-                  isHero ? "home-editorial__summary--hero-single" : "line-clamp-2",
+                  isHero
+                    ? "home-editorial__summary--hero-single home-editorial__summary-lead"
+                    : "line-clamp-2",
                 )}
               >
                 {article.description}
@@ -476,54 +312,6 @@ export function HomeArticleCard({
             </span>
             <span className="home-editorial__meta-category">{badge}</span>
           </p>
-        </div>
-      </article>
-    );
-  }
-
-  if (variant === "audioRow") {
-    return (
-      <article
-        style={{ animationDelay: `${index * 40}ms`, ...edgeShift }}
-        className={cn("home-feed-audio-row news-card-enter group", className)}
-      >
-        <div className="home-feed-audio-row__main">
-          <Link to={articleHref} className="home-feed-audio-row__copy">
-            <span className="home-feed-audio-row__badge">{badge}</span>
-            <h3 className="home-feed-audio-row__title">
-              {englishPending ? (
-                <PublicArticleEnglishPendingBadge />
-              ) : (
-                <span className="inline-flex flex-wrap items-center gap-1.5">
-                  {article.title}
-                  <ArticleVerifiedBadge article={article} />
-                </span>
-              )}
-            </h3>
-            {!englishPending && article.description ? (
-              <p className="home-feed-audio-row__summary">
-                {article.description}
-              </p>
-            ) : null}
-            <p className="home-feed-audio-row__meta">
-              <time dateTime={article.published_at}>
-                {new Date(article.published_at).toLocaleDateString(dateLocale)}
-              </time>
-              <span className="home-feed-audio-row__meta-sep" aria-hidden>
-                |
-              </span>
-              <span className="home-feed-audio-row__meta-category">{badge}</span>
-            </p>
-          </Link>
-          <div className="home-feed-audio-row__actions">
-            <Link
-              to={articleHref}
-              className="home-card-listen home-card-listen--inline"
-            >
-              <Play className="size-4 fill-current" />
-              {common.listenNow}
-            </Link>
-          </div>
         </div>
       </article>
     );

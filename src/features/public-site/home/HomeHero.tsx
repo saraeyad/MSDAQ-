@@ -18,11 +18,11 @@ export function HomeHero() {
     <section className="home-cinematic-hero" aria-labelledby="home-hero-title">
       <div className="home-cinematic-hero__bg" aria-hidden>
         <img
-          src={HERO_IMAGE}
+          src={`${HERO_IMAGE}?v=2`}
           alt=""
           className="home-cinematic-hero__photo"
-          width={1024}
-          height={265}
+          width={1280}
+          height={292}
           sizes="100vw"
           loading="eager"
           fetchPriority="high"
@@ -63,7 +63,6 @@ export function HomeHero() {
 
           <p className="home-cinematic-hero__brand">{hero.brandLine}</p>
           <p className="home-cinematic-hero__lead">{hero.lead}</p>
-          {/* <div className="home-cinematic-hero__actions" aria-hidden /> */}
         </div>
       </div>
 

@@ -15,7 +15,7 @@ import {
 } from "@/lib/site";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { cn } from "@/lib/utils";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 const HomeToolsSection = lazy(() =>
@@ -78,11 +78,43 @@ export default function PublicLayout() {
       : undefined
     : nav.login;
 
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+
   useEffect(() => {
     resetArticleViewDedupe(location.pathname);
     if (isPublicArticlePath(location.pathname)) return;
     trackPageView(`${location.pathname}${location.search}`);
   }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!isHome) {
+      setHeaderScrolled(false);
+      return;
+    }
+    const onScroll = () => setHeaderScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isHome]);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!isHome || !header) return;
+    const syncOffset = () => {
+      document.documentElement.style.setProperty(
+        "--home-header-offset",
+        `${header.offsetHeight}px`,
+      );
+    };
+    syncOffset();
+    const observer = new ResizeObserver(syncOffset);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--home-header-offset");
+    };
+  }, [isHome]);
 
 
   return (
@@ -93,14 +125,14 @@ export default function PublicLayout() {
           isHome && "public-home",
         )}
       >
-        <header className="site-header site-header--paper">
-          <div className="site-header__utility">
-            <div className="site-header__utility-inner container-page">
-              <LocaleSwitcher className="site-header__utility-locale" />
-              <span className="site-header__utility-sep" aria-hidden />
-              <ThemeSwitcher className="site-header__utility-theme" />
-            </div>
-          </div>
+        <header
+          ref={headerRef}
+          className={cn(
+            "site-header",
+            isHome ? "site-header--overlay" : "site-header--paper",
+            isHome && headerScrolled && "site-header--scrolled",
+          )}
+        >
           <div className="site-header__inner container-page flex min-h-12 items-center gap-2 py-1 sm:min-h-16 sm:gap-3 md:gap-5">
             <div className="site-header__brand">
               <SiteBrandLink linkToHome />
@@ -108,6 +140,10 @@ export default function PublicLayout() {
             <DesktopSiteNav />
             <div className="ms-auto flex shrink-0 items-center gap-2">
               <SiteHeaderSearch className="hidden w-40 min-[900px]:block min-[900px]:w-44 xl:w-52" />
+              <div className="site-header__tools">
+                <LocaleSwitcher />
+                <ThemeSwitcher />
+              </div>
               {/* {authHref && authLabel ? (
                 <Button
                   asChild

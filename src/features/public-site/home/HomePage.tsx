@@ -1,7 +1,6 @@
 import { HomeBbcFrontpage } from "@/features/public-site/home/HomeBbcFrontpage";
-import { HomePodcastWaveDecor } from "@/features/public-site/home/HomePodcastWaveDecor";
-import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
-import { HomeCategoryDesk as HomeCategoryDeskSection, HomeBandMoreLink } from "@/features/public-site/home/HomeCategoryDesk";
+import { HomeBandMoreLink } from "@/features/public-site/home/HomeBandMoreLink";
+import { HomeFilterBoard } from "@/features/public-site/home/HomeFilterBoard";
 import { HomeHero } from "@/features/public-site/home/HomeHero";
 import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { useLocale, usePublicCopy } from "@/context/locale";
@@ -10,23 +9,10 @@ import { siteLogoUrl } from "@/lib/seo/site-url";
 import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import { usePublicCategories } from "@/hooks/public";
 import {
-  buildParentSlugMap,
-  findCategoryByFilterKey,
-} from "@/lib/publishing";
-import {
-  buildHomeMosaic,
-  deskArticleLimit,
   getDeskLayout,
-  HOME_MOSAIC_PODCAST_LIMIT,
-  isAudioCategoryBand,
-  isHumanStoriesCategoryBand,
-  findPhotoReportsCategory,
-  orderCategoriesForDesks,
   splitFrontPack,
   frontPackArticleIds,
-  desksBeyondMosaic,
-  mosaicArticleIds,
-  type HomeCategoryDesk,
+  partitionFrontStack,
 } from "@/features/public-site/home/home-feed-layout";
 import { cn } from "@/lib/utils";
 import { Articles_APIs } from "@/services/api/articles";
@@ -37,6 +23,8 @@ import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
 import { categoryPath } from "@/router/routes";
 
 const MOBILE_CARD_LIMIT = 10;
+const ALL_FEED_LIMIT = 24;
+const ALL_FEED_MOBILE = 16;
 const DESKTOP_CARD_MQ = "(min-width: 768px)";
 
 function subscribeDesktopCards(onChange: () => void) {
@@ -55,20 +43,24 @@ const NewsSlider = lazy(() =>
   })),
 );
 
-function matchesFilter(
-  article: PublicArticle,
-  filterId: string,
-  slugSets: Map<string, Set<string>>,
-): boolean {
-  if (filterId === "all") return true;
-  const articleSlug = article.category?.slug?.trim();
-  if (articleSlug) {
-    const allowedSlugs = slugSets.get(filterId);
-    if (allowedSlugs?.has(articleSlug) || articleSlug === filterId) {
-      return true;
+function uniqueArticles(groups: PublicArticle[][]): PublicArticle[] {
+  const seen = new Set<string>();
+  const items: PublicArticle[] = [];
+  for (const group of groups) {
+    for (const article of group) {
+      const id = String(article.id);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      items.push(article);
     }
   }
-  return false;
+  return items;
+}
+
+function byPublishedAt(a: PublicArticle, b: PublicArticle) {
+  return (
+    new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+  );
 }
 
 function HomeFeedSkeleton() {
@@ -88,10 +80,9 @@ function HomeFeedSkeleton() {
   );
 }
 
-function HomeDeskSkeleton() {
+function HomeFilterSkeleton() {
   return (
     <div className="home-feed-skeleton home-feed-skeleton--desks" aria-hidden>
-      <div className="home-feed-skeleton__band-title" />
       <div className="home-feed-skeleton__grid">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="home-feed-skeleton__card" />
@@ -103,6 +94,8 @@ function HomeDeskSkeleton() {
 
 export default function HomePage() {
   const [expandedMobile, setExpandedMobile] = useState(false);
+  const [expandedFilter, setExpandedFilter] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("all");
   const isDesktop = useSyncExternalStore(
     subscribeDesktopCards,
     desktopCardsSnapshot,
@@ -120,14 +113,15 @@ export default function HomePage() {
     ogImage: siteLogoUrl(origin),
   };
 
-  const parentSlugMap = useMemo(
-    () => buildParentSlugMap(categories),
-    [categories],
-  );
-
-  const orderedCategories = useMemo(
-    () => orderCategoriesForDesks(categories),
-    [categories],
+  const filters = useMemo(
+    () => [
+      { id: "all", label: home.allFilter },
+      ...categories.map((category) => ({
+        id: category.slug,
+        label: localizedCategoryName(category, locale),
+      })),
+    ],
+    [categories, home.allFilter, locale],
   );
 
   const { data: latestData, isLoading: latestLoading } = useQuery({
@@ -136,7 +130,7 @@ export default function HomePage() {
   });
 
   const deskQueries = useQueries({
-    queries: orderedCategories.map((category) => ({
+    queries: categories.map((category) => ({
       queryKey: ["home-desk", locale, category.slug],
       queryFn: () => PublicCategories_APIs.getBySlug(category.slug, 1, locale),
       enabled: categories.length > 0,
@@ -156,159 +150,71 @@ export default function HomePage() {
     [frontPackSource],
   );
 
-  const desks = useMemo((): HomeCategoryDesk[] => {
-    return orderedCategories
-      .map((category, index) => {
-        const feedArticles = deskQueries[index]?.data?.articles ?? [];
-        const layout = getDeskLayout(category.slug, categories);
-        const deskArticles = feedArticles.slice(
-          0,
-          deskArticleLimit(layout),
-        );
-        if (deskArticles.length === 0) return null;
-        return {
-          slug: category.slug,
-          articles: deskArticles,
-          layout,
-        };
-      })
-      .filter((desk): desk is HomeCategoryDesk => desk !== null);
-  }, [categories, orderedCategories, deskQueries]);
-
-  const mosaic = useMemo(() => {
-    const built = buildHomeMosaic(desks, categories);
-    const packIds = frontPackArticleIds(frontPack);
-
-    const fillDesk = (
-      current: HomeCategoryDesk | null,
-      slugs: Array<string | undefined>,
-    ): HomeCategoryDesk | null => {
-      const titleSlug = slugs.find(Boolean) ?? current?.slug;
-      if (!titleSlug) return current;
-      const have = new Set(
-        (current?.articles ?? []).map((item) => String(item.id)),
-      );
-      const extra: PublicArticle[] = [];
-      for (const slug of slugs) {
-        if (!slug) continue;
-        for (const article of articles) {
-          const id = String(article.id);
-          if (have.has(id) || packIds.has(id)) continue;
-          if (!matchesFilter(article, slug, parentSlugMap)) continue;
-          have.add(id);
-          extra.push(article);
-        }
-      }
-      const articlesForDesk = [...(current?.articles ?? []), ...extra].slice(
-        0,
-        deskArticleLimit(current?.layout ?? "grid"),
-      );
-      if (articlesForDesk.length === 0) return null;
-      return { slug: titleSlug, articles: articlesForDesk, layout: "grid" };
-    };
-
-    const looksLikePhotoReports = (label: string) =>
-      label.includes("تقارير") &&
-      label.includes("مصور") &&
-      !label.includes("قصص");
-
-    const photoReportsSlug =
-      findPhotoReportsCategory(categories)?.slug ??
-      orderedCategories.find((category, index) => {
-        const apiCategory = deskQueries[index]?.data?.category;
-        const label = `${apiCategory?.name_ar ?? ""} ${category.name_ar ?? ""} ${localizedCategoryName(category, locale)}`;
-        return looksLikePhotoReports(label);
-      })?.slug;
-
-    const photoReportsFromApi =
-      orderedCategories.findIndex((category) => category.slug === photoReportsSlug);
-
-    const humanSlug = categories.find((category) =>
-      isHumanStoriesCategoryBand(category.slug, categories),
-    )?.slug;
-
-    const withoutFront = (items: PublicArticle[]) =>
-      items.filter((item) => !packIds.has(String(item.id)));
-
-    return {
-      ...built,
-      podcasts: withoutFront(built.podcasts).slice(0, HOME_MOSAIC_PODCAST_LIMIT),
-      aside: (() => {
-        if (!built.aside) return null;
-        const articles = withoutFront(built.aside.articles);
-        return articles.length > 0 ? { ...built.aside, articles } : null;
-      })(),
-      human: fillDesk(
-        built.human
-          ? { ...built.human, articles: withoutFront(built.human.articles) }
-          : null,
-        [humanSlug],
-      ),
-      visual: fillDesk(
-        photoReportsSlug
-          ? {
-              slug: photoReportsSlug,
-              articles: withoutFront(
-                desks.find((desk) => desk.slug === photoReportsSlug)
-                  ?.articles ??
-                  deskQueries[photoReportsFromApi]?.data?.articles ??
-                  [],
-              ),
-              layout: "grid",
-            }
-          : null,
-        [photoReportsSlug],
-      ),
-    };
-  }, [
-    desks,
-    categories,
-    articles,
-    parentSlugMap,
-    orderedCategories,
-    deskQueries,
-    locale,
-    frontPack,
-  ]);
-
-  const podcastMoreHref = useMemo(() => {
-    const slug =
-      mosaic?.podcastSlug ??
-      categories.find((category) => isAudioCategoryBand(category.slug, categories))
-        ?.slug;
-    return slug ? categoryPath(slug) : null;
-  }, [mosaic?.podcastSlug, categories]);
-
-  const desksLoading =
-    categories.length > 0 && deskQueries.some((query) => query.isPending);
-
-  const canShowMore =
-    !isDesktop && !expandedMobile && articles.length > MOBILE_CARD_LIMIT;
-
-  function categoryDeskTitle(slug: string): string {
-    const category = findCategoryByFilterKey(categories, slug);
-    if (category) {
-      return localizedCategoryName(category, locale);
-    }
-    return slug;
-  }
-
-  const podcastTitle = mosaic?.podcastSlug
-    ? categoryDeskTitle(mosaic.podcastSlug)
-    : home.podcastsTitle;
-
-  const hasFrontPack = Boolean(frontPack.lead) || frontPack.stack.length > 0;
-
   const frontPackIds = useMemo(
     () => frontPackArticleIds(frontPack),
     [frontPack],
   );
 
-  const extraDesks = useMemo(() => {
-    if (!mosaic) return [];
-    const exclude = new Set([...frontPackIds, ...mosaicArticleIds(mosaic)]);
-    return desksBeyondMosaic(desks, mosaic, exclude);
-  }, [desks, mosaic, frontPackIds]);
+  const frontPromoArticles = useMemo(() => {
+    if (frontPack.stack.length === 0) return [];
+    return partitionFrontStack(frontPack.stack).promos;
+  }, [frontPack.stack]);
+
+  const activeDeskIndex = categories.findIndex(
+    (category) => category.slug === activeFilter,
+  );
+  const activeDeskQuery =
+    activeFilter === "all" ? undefined : deskQueries[activeDeskIndex];
+  const activeLayout =
+    activeFilter === "all"
+      ? "grid"
+      : getDeskLayout(activeFilter, categories);
+
+  const filteredArticles = useMemo(() => {
+    if (activeFilter === "all") {
+      return uniqueArticles([
+        articles,
+        ...deskQueries.map((query) => query.data?.articles ?? []),
+      ])
+        .filter((article) => !frontPackIds.has(String(article.id)))
+        .sort(byPublishedAt);
+    }
+    return activeDeskQuery?.data?.articles ?? [];
+  }, [activeFilter, articles, deskQueries, frontPackIds, activeDeskQuery]);
+
+  const olderPromoPool = useMemo(() => {
+    return [...filteredArticles].sort(
+      (a, b) =>
+        new Date(a.published_at).getTime() - new Date(b.published_at).getTime(),
+    );
+  }, [filteredArticles]);
+
+  const isFilterLoading =
+    activeFilter !== "all" &&
+    Boolean(activeDeskQuery?.isPending) &&
+    filteredArticles.length === 0;
+
+  const feedLimit =
+    isDesktop || expandedFilter
+      ? ALL_FEED_LIMIT
+      : ALL_FEED_MOBILE;
+  const visibleArticles =
+    activeFilter === "all"
+      ? filteredArticles.slice(0, feedLimit)
+      : filteredArticles;
+  const canShowMoreFront =
+    !isDesktop && !expandedMobile && articles.length > MOBILE_CARD_LIMIT;
+  const canShowMoreFilter =
+    activeFilter === "all" &&
+    !isDesktop &&
+    !expandedFilter &&
+    filteredArticles.length > ALL_FEED_MOBILE;
+
+  const hasFrontPack = Boolean(frontPack.lead) || frontPack.stack.length > 0;
+  const activeLabel =
+    filters.find((filter) => filter.id === activeFilter)?.label ?? activeFilter;
+  const desksLoading =
+    categories.length > 0 && deskQueries.some((query) => query.isPending);
 
   return (
     <div>
@@ -343,142 +249,81 @@ export default function HomePage() {
                     <HomeBbcFrontpage frontPack={frontPack} />
                   ) : null}
 
-                  {desksLoading ? (
-                      <HomeDeskSkeleton />
-                    ) : mosaic ? (
-                      <>
-                        {mosaic.podcasts.length > 0 ? (
-                          <section
-                            className="home-feed-band home-feed-band--podcasts home-audio-wave-band"
-                            aria-label={podcastTitle}
-                          >
-                            <HomePodcastWaveDecor />
-                            <div className="home-audio-wave-band__inner">
-                              <div className="home-feed-band__header home-audio-wave-band__header">
-                                <h3 className="home-feed-band__title">
-                                  {podcastTitle}
-                                </h3>
-                              </div>
-                              <div className="home-feed-podcasts home-bbc-audio-scroll home-audio-wave-band__scroll home-strip home-strip--audio">
-                                {mosaic.podcasts.map((article, index) => (
-                                  <HomeArticleCard
-                                    key={article.id}
-                                    article={article}
-                                    index={4 + index}
-                                    variant="podcast"
-                                    className="home-podcast--wave"
-                                  />
-                                ))}
-                              </div>
-                              {podcastMoreHref ? (
-                                <HomeBandMoreLink
-                                  to={podcastMoreHref}
-                                  label={home.more}
-                                />
-                              ) : null}
-                            </div>
-                          </section>
-                        ) : null}
-                        {mosaic.visual || mosaic.aside ? (
-                          <div
+                  {filters.length > 1 ? (
+                    <nav
+                      className="home-latest-filters home-latest-filters--split"
+                      aria-label={home.latestTitle}
+                    >
+                      {filters.map((filter) => {
+                        const active = activeFilter === filter.id;
+                        return (
+                          <button
+                            key={filter.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveFilter(filter.id);
+                              setExpandedFilter(false);
+                            }}
                             className={cn(
-                              "home-feed-pair",
-                              !mosaic.aside && "home-feed-pair--single",
-                              !mosaic.visual && "home-feed-pair--single",
+                              "home-latest-filters__item",
+                              active && "home-latest-filters__item--active",
                             )}
                           >
-                            {mosaic.visual ? (
-                              <div className="home-feed-pair__col home-feed-band">
-                                <div className="home-feed-band__header">
-                                  <h3 className="home-feed-band__title">
-                                    {locale === "ar"
-                                      ? "تقارير مصورة"
-                                      : "Photo reports"}
-                                  </h3>
-                                </div>
-                                <div className="home-bbc-card-grid">
-                                  {mosaic.visual.articles.map((article, index) => (
-                                    <HomeArticleCard
-                                      key={article.id}
-                                      article={article}
-                                      index={9 + index}
-                                      variant="editorialSide"
-                                    />
-                                  ))}
-                                </div>
-                                <HomeBandMoreLink
-                                  to={categoryPath(mosaic.visual.slug)}
-                                  label={home.more}
-                                />
-                              </div>
-                            ) : null}
-                            {mosaic.aside ? (
-                              <div className="home-feed-pair__col home-feed-pair__col--rail home-feed-band">
-                                <div className="home-feed-band__header">
-                                  <h3 className="home-feed-band__title">
-                                    {[
-                                      mosaic.asideSuccessSlug
-                                        ? categoryDeskTitle(
-                                            mosaic.asideSuccessSlug,
-                                          )
-                                        : null,
-                                      mosaic.asideStudiesSlug
-                                        ? categoryDeskTitle(
-                                            mosaic.asideStudiesSlug,
-                                          )
-                                        : null,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(" / ")}
-                                  </h3>
-                                </div>
-                                <div className="home-bbc-rail-list">
-                                  {mosaic.aside.articles.map((article, index) => (
-                                    <HomeArticleCard
-                                      key={article.id}
-                                      article={article}
-                                      index={12 + index}
-                                      variant="editorialText"
-                                    />
-                                  ))}
-                                </div>
-                                {mosaic.aside.slug ? (
-                                  <HomeBandMoreLink
-                                    to={categoryPath(
-                                      mosaic.asideSuccessSlug ??
-                                        mosaic.asideStudiesSlug ??
-                                        mosaic.aside.slug,
-                                    )}
-                                    label={home.more}
-                                  />
-                                ) : null}
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : null}
-                        {mosaic.human ? (
-                          <HomeCategoryDeskSection
-                            desk={mosaic.human}
-                            title={categoryDeskTitle(mosaic.human.slug)}
-                            cardIndexOffset={7}
-                          />
-                        ) : null}
-                        {extraDesks.map((desk, deskIndex) => (
-                          <HomeCategoryDeskSection
-                            key={desk.slug}
-                            desk={desk}
-                            title={categoryDeskTitle(desk.slug)}
-                            cardIndexOffset={20 + deskIndex * 6}
-                          />
-                        ))}
-                      </>
-                    ) : null}
+                            {filter.label}
+                          </button>
+                        );
+                      })}
+                    </nav>
+                  ) : null}
+
+                  {isFilterLoading ||
+                  (activeFilter === "all" && desksLoading && visibleArticles.length === 0) ? (
+                    <HomeFilterSkeleton />
+                  ) : visibleArticles.length === 0 ? (
+                    <p className="home-filter-empty">
+                      {activeFilter === "all"
+                        ? home.noFilterMatch
+                        : home.filterEmpty(activeLabel)}
+                    </p>
+                  ) : (
+                    <div
+                      key={activeFilter}
+                      className={cn(
+                        "home-filter-stage",
+                        activeLayout === "audio" && "home-filter-stage--audio",
+                      )}
+                    >
+                      <HomeFilterBoard
+                        articles={visibleArticles}
+                        layout={activeLayout}
+                        frontPromos={
+                          activeFilter === "all" ? frontPromoArticles : []
+                        }
+                        olderPromoPool={olderPromoPool}
+                      />
+                      {activeFilter !== "all" ? (
+                        <HomeBandMoreLink
+                          to={categoryPath(activeFilter)}
+                          label={home.moreInSection(activeLabel)}
+                        />
+                      ) : null}
+                    </div>
+                  )}
                 </div>
-                {canShowMore ? (
+                {canShowMoreFront ? (
                   <button
                     type="button"
                     className="home-latest-more"
                     onClick={() => setExpandedMobile(true)}
+                  >
+                    {home.showMore}
+                  </button>
+                ) : null}
+                {canShowMoreFilter ? (
+                  <button
+                    type="button"
+                    className="home-latest-more"
+                    onClick={() => setExpandedFilter(true)}
                   >
                     {home.showMore}
                   </button>
