@@ -7,6 +7,57 @@ export function ttsInflightArticleKey(articleId: number | string): string {
   return `tts-inflight:article:${articleId}`;
 }
 
+function articleTtsVoiceKey(articleId: number | string): string {
+  return `tts-voice:article:${articleId}`;
+}
+
+function articleTtsPendingKey(articleId: number | string): string {
+  return `tts-pending:article:${articleId}`;
+}
+
+export function readArticleTtsVoice(articleId: number | string): string {
+  try {
+    return sessionStorage.getItem(articleTtsVoiceKey(articleId))?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function writeArticleTtsVoice(
+  articleId: number | string,
+  voice: string,
+): void {
+  try {
+    const slug = voice.trim();
+    if (!slug) {
+      sessionStorage.removeItem(articleTtsVoiceKey(articleId));
+      return;
+    }
+    sessionStorage.setItem(articleTtsVoiceKey(articleId), slug);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+export function readPendingArticleNarrationId(
+  articleId: number | string,
+): number | null {
+  return readInflightGeneratedAudioId(articleTtsPendingKey(articleId));
+}
+
+export function writePendingArticleNarrationId(
+  articleId: number | string,
+  id: number,
+): void {
+  writeInflightGeneratedAudioId(articleTtsPendingKey(articleId), id);
+}
+
+export function clearPendingArticleNarrationId(
+  articleId: number | string,
+): void {
+  clearInflightGeneratedAudioId(articleTtsPendingKey(articleId));
+}
+
 export function readInflightGeneratedAudioId(storageKey: string): number | null {
   try {
     const raw = sessionStorage.getItem(storageKey);

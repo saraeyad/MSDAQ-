@@ -7,7 +7,7 @@ import {
 import { useLocale, usePublicCopy } from "@/context/locale";
 import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
-import { publicArticleCoverUrl } from "@/lib/media";
+import { publicArticleCoverUrl, readPlaybackPosition } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import type { PublicArticle, PublicMediaType } from "@/types";
@@ -25,6 +25,12 @@ import { Link } from "react-router-dom";
 const PublicArticleVideoPlayer = lazy(() =>
   import("@/features/public-site/components/PublicArticleVideoPlayer").then(
     (module) => ({ default: module.PublicArticleVideoPlayer }),
+  ),
+);
+
+const PublicArticleAudioPlayer = lazy(() =>
+  import("@/features/public-site/components/PublicArticleAudioPlayer").then(
+    (module) => ({ default: module.PublicArticleAudioPlayer }),
   ),
 );
 
@@ -100,6 +106,11 @@ export function HomeArticleCard({
   moreLabel,
 }: HomeArticleCardProps) {
   const [mediaStarted, setMediaStarted] = useState(false);
+  const [audioOpen, setAudioOpen] = useState(
+    () => readPlaybackPosition(article.id) >= 1,
+  );
+  const [audioAutoPlay, setAudioAutoPlay] = useState(false);
+  const canResumeAudio = readPlaybackPosition(article.id) >= 1;
   const { locale, dir } = useLocale();
   const CtaArrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const copy = usePublicCopy();
@@ -174,22 +185,40 @@ export function HomeArticleCard({
               <span className="home-podcast__meta-category">{badge}</span>
             </p>
             <span className="home-podcast__play-cluster">
-              <span className="home-podcast__waveform" aria-hidden>
-                <span className="home-podcast__waveform-bar" />
-                <span className="home-podcast__waveform-bar" />
-                <span className="home-podcast__waveform-bar" />
-                <span className="home-podcast__waveform-bar" />
-                <span className="home-podcast__waveform-bar" />
-              </span>
-              <Link
-                to={articleHref}
+              {audioOpen ? null : (
+                <span className="home-podcast__waveform" aria-hidden>
+                  <span className="home-podcast__waveform-bar" />
+                  <span className="home-podcast__waveform-bar" />
+                  <span className="home-podcast__waveform-bar" />
+                  <span className="home-podcast__waveform-bar" />
+                  <span className="home-podcast__waveform-bar" />
+                </span>
+              )}
+              <button
+                type="button"
                 className="home-card-listen home-card-listen--inline"
+                onClick={() => {
+                  setAudioAutoPlay(true);
+                  setAudioOpen(true);
+                }}
               >
                 <Play className="size-4 fill-current" />
-                {common.listenNow}
-              </Link>
+                {canResumeAudio ? common.resumePlayback : common.listenNow}
+              </button>
             </span>
           </div>
+          {audioOpen ? (
+            <Suspense fallback={null}>
+              <PublicArticleAudioPlayer
+                key={audioAutoPlay ? "play" : "hold"}
+                articleId={article.id}
+                variant="inline"
+                className="home-podcast__player"
+                loadOnMount
+                startOnMount={audioAutoPlay}
+              />
+            </Suspense>
+          ) : null}
         </div>
       </article>
     );

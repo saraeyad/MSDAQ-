@@ -5,10 +5,15 @@ import {
   canDeleteVoiceAsset,
   canSaveVoiceAsset,
 } from "@/lib/media";
-import { ToolsVoice_APIs } from "@/services/api/tools";
-import type { GeneratedAudio } from "@/types";
+import { ToolsVoice_APIs, Tts_APIs } from "@/services/api/tools";
+import type { GeneratedAudio, TtsVoice } from "@/types";
+import { useQuery } from "@tanstack/react-query";
 import { VoiceAssetLibraryPage } from "../components/VoiceAssetLibraryPage";
 import { VoiceAssetRow } from "../components/VoiceAssetRow";
+
+function ttsVoiceLabel(slug: string, voices: TtsVoice[] | undefined): string {
+  return voices?.find((v) => v.slug === slug)?.name ?? slug;
+}
 
 function AudioLibraryRow({
   item,
@@ -17,6 +22,7 @@ function AudioLibraryRow({
   onDelete,
   onRenamed,
   isDeleting,
+  voiceLabel,
 }: {
   item: GeneratedAudio;
   canRename: boolean;
@@ -24,6 +30,7 @@ function AudioLibraryRow({
   onDelete: () => void;
   onRenamed: () => void;
   isDeleting: boolean;
+  voiceLabel: string;
 }) {
   const audioUrl =
     item.audio_url != null
@@ -35,7 +42,7 @@ function AudioLibraryRow({
       title={item.name ?? `ملف #${item.id}`}
       meta={
         <>
-          {item.voice}
+          {voiceLabel}
           {item.saved_by ? ` · ${item.saved_by}` : ""}
           {item.saved_at
             ? ` · ${new Date(item.saved_at).toLocaleDateString("ar")}`
@@ -63,6 +70,10 @@ function AudioLibraryRow({
 export function GeneratedAudiosLibraryPage() {
   const { user } = useAuth();
   const isSuperAdmin = useIsSuperAdmin();
+  const { data: voices } = useQuery({
+    queryKey: ["tts-voices"],
+    queryFn: Tts_APIs.getVoices,
+  });
 
   return (
     <VoiceAssetLibraryPage
@@ -74,7 +85,13 @@ export function GeneratedAudiosLibraryPage() {
       getDeleteLabel={(item) => item.name ?? `#${item.id}`}
       canRename={(item) => canSaveVoiceAsset(item, user)}
       canDelete={(item) => canDeleteVoiceAsset(item, user, isSuperAdmin)}
-      renderItem={(props) => <AudioLibraryRow key={props.item.id} {...props} />}
+      renderItem={(props) => (
+        <AudioLibraryRow
+          key={props.item.id}
+          {...props}
+          voiceLabel={ttsVoiceLabel(props.item.voice, voices)}
+        />
+      )}
     />
   );
 }

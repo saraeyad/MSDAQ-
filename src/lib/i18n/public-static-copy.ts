@@ -13,6 +13,7 @@ export type PublicStaticCopy = {
     next: string;
     readMore: string;
     listenNow: string;
+    resumePlayback: string;
     loading: string;
     later: string;
     submitRating: string;
@@ -196,6 +197,7 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
       next: "التالي",
       readMore: "اقرأ المزيد",
       listenNow: "افتح الحلقة",
+      resumePlayback: "استئناف",
       loading: "جاري التحميل...",
       later: "لاحقاً",
       submitRating: "إرسال التقييم",
@@ -455,6 +457,7 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
       next: "Next",
       readMore: "Read more",
       listenNow: "Open episode",
+      resumePlayback: "Resume",
       loading: "Loading…",
       later: "Later",
       submitRating: "Submit rating",

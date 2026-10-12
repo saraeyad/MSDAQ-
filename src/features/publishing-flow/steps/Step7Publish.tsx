@@ -12,10 +12,12 @@ import {
   isoToDatetimeLocal,
   parseDatetimeLocal,
 } from "@/lib/calendar";
+import { ensureArticleNarrationSaved } from "@/lib/publishing/ensure-article-narration";
+import { readArticleTtsVoice } from "@/lib/publishing";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { CalendarClock, CheckCircle2, Loader2, Send, Undo2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ROUTES } from "@/router/routes";
@@ -33,6 +35,17 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   });
   const [scheduledFor, setScheduledFor] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [preparingAudio, setPreparingAudio] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "publish" | "schedule" | null
+  >(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const status = article?.status;
   const isPublished = status === "published";
@@ -46,17 +59,51 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
     );
   }, [article?.scheduled_for]);
 
-  const handlePublish = async () => {
+  const refreshArticle = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["staff-article"] });
+    await queryClient.invalidateQueries({
+      queryKey: ["staff", "article-media", String(articleId)],
+    });
+  };
+
+  const withSavedNarration = async (
+    action: "publish" | "schedule",
+    run: () => Promise<void>,
+  ) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setPublishing(true);
+    setPendingAction(action);
+    setPreparingAudio(true);
     try {
+      await ensureArticleNarrationSaved(articleId, {
+        mediaType: article?.media_type,
+        voice: readArticleTtsVoice(articleId),
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setPreparingAudio(false);
+      await refreshArticle();
+      await run();
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      toast.error(getApiErrorMessage(err));
+    } finally {
+      if (abortRef.current === controller) {
+        setPublishing(false);
+        setPreparingAudio(false);
+        setPendingAction(null);
+      }
+    }
+  };
+
+  const handlePublish = async () => {
+    await withSavedNarration("publish", async () => {
       await ArticlesStaff_APIs.publish(articleId);
       toast.success("تم نشر المقال");
       navigate(ROUTES.NEWSROOM_ARTICLES);
-    } catch (err) {
-      toast.error(getApiErrorMessage(err));
-    } finally {
-      setPublishing(false);
-    }
+    });
   };
 
   const handleSchedule = async () => {
@@ -69,8 +116,7 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
       toast.error("وقت الجدولة يجب أن يكون في المستقبل");
       return;
     }
-    setPublishing(true);
-    try {
+    await withSavedNarration("schedule", async () => {
       const when = dateToUtcIso(parsed);
       const updated = isScheduled
         ? await ArticlesStaff_APIs.reschedule(articleId, when)
@@ -84,11 +130,7 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
       }
       toast.success(isScheduled ? "تم إعادة جدولة المقال" : "تم جدولة النشر");
       navigate(ROUTES.NEWSROOM_ARTICLES);
-    } catch (err) {
-      toast.error(getApiErrorMessage(err));
-    } finally {
-      setPublishing(false);
-    }
+    });
   };
 
   const handleRevert = async () => {
@@ -102,6 +144,13 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   };
 
   const canPublish = Boolean(gate?.can_publish) && !publishing;
+  const needsNarration =
+    article?.media_type === "text" && !article.generated_audio?.trim();
+  const actionLabel = (idle: string, busy: string, action: "publish" | "schedule") => {
+    if (!publishing || pendingAction !== action) return idle;
+    if (preparingAudio) return "جاري تجهيز النسخة الصوتية";
+    return busy;
+  };
 
   return (
     <div className="space-y-6">
@@ -127,6 +176,13 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
         </div>
       ) : null}
 
+      {canGoLive && needsNarration && !isLoading ? (
+        <p className="text-sm text-muted-foreground">
+          لا توجد نسخة صوتية بعد. عند النشر أو الجدولة تُنشأ أولاً بالصوت الذي
+          اخترته، أو بالصوت الافتراضي، ولا يُنشر المقال قبل حفظ الملف.
+        </p>
+      ) : null}
+
       {canGoLive ? (
         <div className="publish-step-publish">
           <div className="publish-flow-card publish-step-publish__card">
@@ -140,8 +196,10 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
               يظهر المقال للجمهور مباشرة بعد التأكد من جاهزية بوابة النشر.
             </p>
             <Button onClick={() => void handlePublish()} disabled={!canPublish}>
-              {publishing && <Loader2 className="size-4 animate-spin" />}
-              نشر الآن
+              {publishing && pendingAction === "publish" && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              {actionLabel("نشر الآن", "جاري النشر", "publish")}
             </Button>
           </div>
 
@@ -166,8 +224,10 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
               onClick={() => void handleSchedule()}
               disabled={!canPublish || !scheduledFor}
             >
-              {publishing && <Loader2 className="size-4 animate-spin" />}
-              جدولة
+              {publishing && pendingAction === "schedule" && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              {actionLabel("جدولة", "جاري الجدولة", "schedule")}
             </Button>
           </div>
         </div>
@@ -195,8 +255,10 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
             onClick={() => void handleSchedule()}
             disabled={!canPublish || !scheduledFor}
           >
-            {publishing && <Loader2 className="size-4 animate-spin" />}
-            إعادة جدولة
+            {publishing && pendingAction === "schedule" && (
+              <Loader2 className="size-4 animate-spin" />
+            )}
+            {actionLabel("إعادة جدولة", "جاري الجدولة", "schedule")}
           </Button>
         </div>
       ) : null}

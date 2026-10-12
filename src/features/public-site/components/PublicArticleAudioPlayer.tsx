@@ -9,6 +9,7 @@ import {
   resolvePublicArticleAudioSource,
 } from "@/lib/media";
 import type { TrustMediaProgress } from "@/lib/site";
+import { useState } from "react";
 
 interface PublicArticleAudioPlayerProps {
   articleId: number | string;
@@ -20,6 +21,8 @@ interface PublicArticleAudioPlayerProps {
   onPlaybackProgress?: (progress: TrustMediaProgress) => void;
   /** Fetch and start playback as soon as this player mounts. */
   startOnMount?: boolean;
+  /** Fetch the source so a saved position can show on the line without playing. */
+  loadOnMount?: boolean;
 }
 
 export function PublicArticleAudioPlayer({
@@ -31,12 +34,14 @@ export function PublicArticleAudioPlayer({
   showSourceLink = false,
   onPlaybackProgress,
   startOnMount = false,
+  loadOnMount = false,
 }: PublicArticleAudioPlayerProps) {
   const { articleMedia } = usePublicCopy();
+  const [playRequested, setPlayRequested] = useState(startOnMount);
   const { media, isLoading, request, requested } = useLazyArticleMedia(
     articleId,
     scope,
-    { requestOnMount: startOnMount },
+    { requestOnMount: startOnMount || loadOnMount },
   );
   const source = media ? resolvePublicArticleAudioSource(media) : null;
   const narrationUrl = media ? publicArticleNarrationUrl(media) : null;
@@ -76,8 +81,12 @@ export function PublicArticleAudioPlayer({
       coverUrl={coverUrl}
       showSourceLink={showSourceLink}
       onPlaybackProgress={onPlaybackProgress}
-      autoPlay={requested && Boolean(fileUrl || soundcloudUrl)}
-      onNeedSource={request}
+      autoPlay={playRequested && requested && Boolean(fileUrl || soundcloudUrl)}
+      resumeId={articleId}
+      onNeedSource={() => {
+        setPlayRequested(true);
+        request();
+      }}
       sourcePending={isLoading}
     />
   );

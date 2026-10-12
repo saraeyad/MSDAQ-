@@ -3,6 +3,7 @@ import { normalizeCredibilityResult } from "@/lib/publishing";
 import { normalizeStandardsResult } from "@/lib/publishing";
 import { appendSttAudioField, normalizeArticleMedia } from "@/lib/media";
 import {
+  CREDIBILITY_REQUEST_TIMEOUT_MS,
   STANDARDS_REQUEST_TIMEOUT_MS,
 } from "@/lib/publishing";
 import type {
@@ -240,6 +241,7 @@ export const ArticlesStaff_APIs = {
     const response = await API.post<ApiResponse<CredibilityCheckResult>>(
       articleUrl(id, "/credibility-check"),
       {},
+      { timeout: CREDIBILITY_REQUEST_TIMEOUT_MS },
     );
     return normalizeCredibilityResult(getApiData(response));
   },
@@ -252,14 +254,18 @@ export const ArticlesStaff_APIs = {
     return getApiData(response);
   },
 
-  /** Article publishing: TTS from article body on server. Not the standalone draft library. */
+  /**
+   * Article publishing: TTS from the article body on the server.
+   * Omit voice so the backend uses its default.
+   */
   textToSpeech: async (
     id: number | string,
-    data: { voice: string; style?: string },
+    data: { voice?: string } = {},
   ): Promise<GeneratedAudio> => {
+    const voice = data.voice?.trim();
     const response = await API.post<ApiResponse<GeneratedAudio>>(
       articleUrl(id, "/text-to-speech"),
-      data,
+      voice ? { voice } : {},
     );
     return getApiData(response);
   },

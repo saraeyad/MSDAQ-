@@ -1,7 +1,21 @@
-﻿import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+﻿import { apiUrlFromCookie, STAGING_API_URL } from "./src/lib/api/api-targets";
+import react from "@vitejs/plugin-react";
+import { defineConfig, type ProxyOptions } from "vite";
 import svgr from "vite-plugin-svgr";
 import tsconfigPaths from "vite-tsconfig-paths";
+
+function devApiProxy(): ProxyOptions {
+  return {
+    target: STAGING_API_URL,
+    changeOrigin: true,
+    secure: true,
+    configure(proxy) {
+      proxy.before("web", "stream", (req, _res, options) => {
+        options.target = new URL(apiUrlFromCookie(req.headers.cookie));
+      });
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [react(), tsconfigPaths(), svgr()],
@@ -44,16 +58,9 @@ export default defineConfig({
     port: 1573,
     strictPort: true,
     proxy: {
-      "/api": {
-        target: "https://api.sabbarapost.org",
-        changeOrigin: true,
-        secure: true,
-      },
-      "/storage": {
-        target: "https://api.sabbarapost.org",
-        changeOrigin: true,
-        secure: true,
-      },
+      "/api": devApiProxy(),
+      "/storage": devApiProxy(),
+      "/voice-samples": devApiProxy(),
     },
   },
 });

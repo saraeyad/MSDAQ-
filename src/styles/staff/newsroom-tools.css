@@ -764,6 +764,11 @@
     gap: 1rem 1.5rem;
   }
 
+  .score-donut-row--center {
+    width: 100%;
+    justify-content: center;
+  }
+
   .credibility-verdict {
     display: inline-flex;
     align-items: center;
@@ -1376,5 +1381,65 @@
   html.dark .staff-shell .newsroom-tools-hero__badge {
     background: color-mix(in srgb, var(--primary) 12%, var(--card));
     border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  }
+
+  .staff-shell .tts-voice-picker__trigger {
+    position: relative;
+    text-align: center;
+  }
+
+  .staff-shell .tts-voice-picker__trigger > :last-child {
+    margin-inline-start: auto;
+  }
+
+  .staff-shell .tts-voice-picker__trigger [data-slot="select-value"] {
+    position: absolute !important;
+    inset-inline: 2.25rem !important;
+    display: flex !important;
+    width: auto !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .tts-voice-picker__trigger--live {
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+  }
+
+  .tts-voice-eq {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .tts-voice-eq span {
+    display: block;
+    width: 2px;
+    height: 40%;
+    border-radius: 999px;
+    background: var(--primary);
+    transform-origin: center bottom;
+    animation: tts-voice-eq 0.9s ease-in-out infinite;
+  }
+
+  .tts-voice-eq span:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+
+  .tts-voice-eq span:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+
+  @keyframes tts-voice-eq {
+    0%,
+    100% {
+      height: 35%;
+    }
+    50% {
+      height: 100%;
+    }
   }
 }

@@ -122,6 +122,7 @@
 
   .podcast-player__wave--seekable {
     cursor: pointer;
+    touch-action: none;
   }
 
   .podcast-player__wave--seekable:hover .waveform-bars__bar {

@@ -7,6 +7,8 @@ import { Step4Standards } from "@/features/publishing-flow/steps/Step4Standards"
 import { Step5Credibility } from "@/features/publishing-flow/steps/Step5Credibility";
 import { Step6Localize } from "@/features/publishing-flow/steps/Step6Localize";
 import { Step7Publish } from "@/features/publishing-flow/steps/Step7Publish";
+import { useStaffArticleMedia } from "@/hooks/useLazyArticleMedia";
+import { mergeArticleMedia } from "@/lib/media";
 import {
   clampArticleStep,
   getNextStep,
@@ -35,7 +37,10 @@ export default function PublishingFlow() {
     queryFn: () => ArticlesStaff_APIs.getArticle(id!),
     enabled: !isNew,
   });
-  const articleView = article;
+  const mediaQuery = useStaffArticleMedia(id, !isNew && !!id);
+  const articleView = article
+    ? mergeArticleMedia(article, mediaQuery.data)
+    : article;
 
   const mediaType = articleView?.media_type ?? "text";
   const inferredStep = articleView ? inferArticleStep(articleView) : 1;
@@ -170,6 +175,7 @@ export default function PublishingFlow() {
 
         {!isNew && articleView && currentStep === 5 && mediaType === "text" && (
           <Step5Credibility
+            articleId={articleView.id}
             sources={articleView.sources ?? []}
             onComplete={advanceStep}
             onBack={goBackStep}
@@ -184,7 +190,6 @@ export default function PublishingFlow() {
             bodyDialect={articleView.content?.dialect}
             generatedAudio={articleView.generated_audio}
             onComplete={advanceStep}
-            onSkip={() => goToStep(7)}
             onBack={goBackStep}
           />
         )}

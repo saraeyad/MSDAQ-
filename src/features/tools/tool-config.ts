@@ -78,7 +78,7 @@ export const TOOL_REGISTRY: ToolConfigEntry[] = [
   {
     slug: "credibility-check",
     label: "فحص المصداقية",
-    description: "هذه الخدمة غير متاحة حاليا",
+    description: "فحص ادعاءات النص ودرجة المصداقية",
     icon: BookOpen,
     permission: PERMISSIONS.RUN_CREDIBILITY_CHECK,
     category: "editorial",

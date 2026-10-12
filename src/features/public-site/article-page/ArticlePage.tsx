@@ -26,7 +26,11 @@ import { useLocale, usePublicCopy } from "@/context/locale";
 import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import type { Locale } from "@/lib/i18n/types";
 import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
-import { publicArticleCoverUrl, resolveMediaUrl } from "@/lib/media";
+import {
+  publicArticleCoverUrl,
+  publicArticleNarrationUrl,
+  resolveMediaUrl,
+} from "@/lib/media";
 import { buildArticleJsonLd, buildArticleSeoHead } from "@/lib/seo/article-seo";
 import { loadLatinUiFont } from "@/lib/site/optional-fonts";
 import { useSiteOrigin } from "@/context/site-origin";
@@ -221,6 +225,9 @@ function ArticlePageContent({
   const coverCaption = article.cover_description?.trim() ?? "";
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
+  const narrationUrl = articleMedia
+    ? publicArticleNarrationUrl(articleMedia)
+    : null;
   const { bodyRef, open, dismiss, openManually, onMediaProgress } =
     useArticleTrustSurvey({
       articleId: article.id,
@@ -404,13 +411,13 @@ function ArticlePageContent({
                 </div>
               )}
 
-              {isAudio ? (
+              {isAudio || narrationUrl ? (
                 <div className="mt-6">
                   <PublicArticleAudioPlayer
                     articleId={article.id}
                     variant="embed"
                     coverUrl={coverUrl ?? undefined}
-                    showSourceLink
+                    showSourceLink={isAudio}
                     onPlaybackProgress={onMediaProgress}
                   />
                 </div>

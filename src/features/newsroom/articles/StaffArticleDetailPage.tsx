@@ -9,9 +9,10 @@ import { PublicArticleVideoPlayer } from "@/features/public-site/components/Publ
 import { ArticleTrustIndexSection } from "@/features/trust-index/components/ArticleTrustIndexSection";
 import { ArticleStatusActions } from "@/features/newsroom/articles/ArticleStatusActions";
 import { usePermission } from "@/hooks/auth";
+import { useStaffArticleMedia } from "@/hooks/useLazyArticleMedia";
 import { getApiErrorMessage } from "@/lib/api";
 import { formatApiDateTime } from "@/lib/calendar";
-import { mediaTypeLabel, resolveMediaUrl } from "@/lib/media";
+import { mediaTypeLabel, mergeArticleMedia, resolveMediaUrl } from "@/lib/media";
 import { derivePublishGate } from "@/lib/publishing";
 import {
   articleAcceptsPublicReviews,
@@ -128,7 +129,10 @@ export default function StaffArticleDetailPage() {
     queryFn: () => ArticlesStaff_APIs.getArticle(id!),
     enabled: !!id,
   });
-  const article = articleData;
+  const mediaQuery = useStaffArticleMedia(id, !!id);
+  const article = articleData
+    ? mergeArticleMedia(articleData, mediaQuery.data)
+    : articleData;
 
   const deleteMutation = useMutation({
     mutationFn: () => ArticlesStaff_APIs.deleteArticle(id!),
