@@ -778,4 +778,111 @@
       font-size: 0.68rem;
     }
   }
+
+  @media (max-height: 860px) {
+    .article-listen-dock {
+      inset-inline: 0.75rem;
+      bottom: 0.6rem;
+      width: auto;
+      gap: 0.4rem 0.65rem;
+      padding: 0.4rem 0.55rem 0.4rem 0.7rem;
+      border: 1px solid rgba(239, 230, 216, 0.14);
+      border-radius: 1rem;
+      background: rgba(46, 38, 31, 0.94);
+      box-shadow:
+        0 14px 36px rgba(0, 0, 0, 0.38),
+        inset 0 1px 0 rgba(239, 230, 216, 0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    .article-listen-dock__thumb {
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 0.45rem;
+    }
+
+    .article-listen-dock__title {
+      -webkit-line-clamp: 1;
+      font-size: 0.75rem;
+    }
+
+    .article-listen-dock__wave,
+    .waveform-bars--dock {
+      height: 1.45rem;
+    }
+
+    .article-listen-dock__time {
+      min-width: 2.1rem;
+      font-size: 0.68rem;
+    }
+
+    .article-listen-dock__skip {
+      width: 1.9rem;
+      height: 1.9rem;
+    }
+
+    .article-listen-dock__play {
+      width: 2.15rem;
+      height: 2.15rem;
+    }
+
+    .article-listen-dock__tool {
+      width: 1.85rem;
+      height: 1.85rem;
+    }
+
+    .article-listen-dock__rate {
+      min-width: 2.7rem;
+      height: 1.6rem;
+      font-size: 0.68rem;
+    }
+
+    body.article-listen-dock-open {
+      padding-bottom: 4.4rem;
+    }
+
+    body.article-listen-dock-open .platform-feedback-fab,
+    body.article-listen-dock-open .trust-index-dock {
+      bottom: 5rem;
+    }
+  }
+
+  @media (max-height: 860px) and (max-width: 860px) {
+    .article-listen-dock {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      grid-template-areas:
+        "clip transport tools"
+        "timeline timeline timeline";
+      row-gap: 0.28rem;
+      padding: 0.45rem 0.55rem 0.4rem;
+    }
+
+    .article-listen-dock__clip {
+      grid-area: clip;
+    }
+
+    .article-listen-dock__transport {
+      grid-area: transport;
+      width: auto;
+      gap: 0.15rem;
+    }
+
+    .article-listen-dock__tools {
+      grid-area: tools;
+    }
+
+    .article-listen-dock__timeline {
+      grid-area: timeline;
+    }
+
+    body.article-listen-dock-open {
+      padding-bottom: 6.4rem;
+    }
+
+    body.article-listen-dock-open .platform-feedback-fab,
+    body.article-listen-dock-open .trust-index-dock {
+      bottom: 7rem;
+    }
+  }
 }

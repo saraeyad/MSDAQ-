@@ -297,7 +297,12 @@ function ArticlePageContent({
       <JsonLd data={jsonLd} />
 
       <article className="container-page py-10">
-        <Button asChild variant="ghost" size="sm" className="mb-6 gap-2">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="mb-2 gap-2 rounded-full border border-border"
+        >
           <Link to={ROUTES.ARTICLES}>
             <ArrowLeft className="size-4" />
             {articleCopy.backToArticles}
@@ -330,14 +335,14 @@ function ArticlePageContent({
 
             {englishPending ? (
               <>
-                <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
+                <h1 className="mt-2 font-headline text-3xl font-bold md:text-4xl">
                   {articleCopy.englishPendingTitle}
                 </h1>
                 <PublicArticleEnglishPendingPanel className="mt-6" />
               </>
             ) : (
               <>
-                <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
+                <h1 className="mt-2 font-headline text-3xl font-bold md:text-4xl">
                   <span className="inline-flex flex-wrap items-center gap-2.5">
                     <span>
                       <ArticleEntityBody
