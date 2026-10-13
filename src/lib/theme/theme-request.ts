@@ -52,6 +52,6 @@ export function applyThemeClass(theme: Theme): void {
 }
 
 /** Inline boot script source — must stay in sync with readInitialTheme(). */
-export const THEME_BOOT_SCRIPT = `(function(){try{var k="sabbara-theme:v1",c="sabbara-theme",t=null,m=document.cookie.match(new RegExp("(?:^|; )"+c+"=([^;]*)"));if(m)t=decodeURIComponent(m[1]);if(t!=="light"&&t!=="dark"){t=localStorage.getItem(k);}if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}var h=document.documentElement;h.classList.remove("light","dark");h.classList.add(t);h.style.colorScheme=t;}catch(e){}})();`;
+export const THEME_BOOT_SCRIPT = `(function(){try{var k="sabbara-theme:v1",c="sabbara-theme",t=null,m=document.cookie.match(new RegExp("(?:^|; )"+c+"=([^;]*)"));if(m)t=decodeURIComponent(m[1]);if(t!=="light"&&t!=="dark"){t=localStorage.getItem(k);}if(t!=="light"&&t!=="dark"){t="light";}var h=document.documentElement;h.classList.remove("light","dark");h.classList.add(t);h.style.colorScheme=t;}catch(e){}})();`;
 
 export { readInitialTheme };

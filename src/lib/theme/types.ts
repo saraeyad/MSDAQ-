@@ -24,7 +24,7 @@ export function readStoredTheme(): Theme | null {
   return null;
 }
 
-/** Effective theme on first paint: stored choice, else system preference. */
+/** Effective theme on first paint: stored choice, else light. */
 export function readInitialTheme(): Theme {
-  return readStoredTheme() ?? readSystemTheme();
+  return readStoredTheme() ?? "light";
 }

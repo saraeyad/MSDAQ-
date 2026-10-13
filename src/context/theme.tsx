@@ -1,9 +1,5 @@
 import { persistTheme, applyThemeClass } from "@/lib/theme/theme-request";
-import {
-  readInitialTheme,
-  readStoredTheme,
-  type Theme,
-} from "@/lib/theme/types";
+import { readInitialTheme, type Theme } from "@/lib/theme/types";
 import {
   createContext,
   useCallback,
@@ -46,19 +42,6 @@ export function ThemeProvider({
   useEffect(() => {
     applyThemeClass(theme);
   }, [theme]);
-
-  useEffect(() => {
-    if (readStoredTheme() !== null) return;
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => {
-      if (readStoredTheme() !== null) return;
-      const next = media.matches ? "dark" : "light";
-      setThemeState(next);
-      applyThemeClass(next);
-    };
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, []);
 
   const value = useMemo<ThemeContextValue>(
     () => ({ theme, setTheme, toggleTheme }),

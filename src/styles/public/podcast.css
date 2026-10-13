@@ -447,6 +447,12 @@
     border-radius: 0;
   }
 
+  html.dark .podcast-player:not(.podcast-player--embed) {
+    border-color: var(--border);
+    background: color-mix(in srgb, var(--muted) 65%, var(--background));
+    color: var(--foreground);
+  }
+
   html.dark .podcast-player-stack--embed {
     border-color: rgba(236, 230, 220, 0.16);
     background: color-mix(in srgb, #1a1a1a 35%, transparent);

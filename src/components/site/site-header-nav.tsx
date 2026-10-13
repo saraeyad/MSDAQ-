@@ -328,14 +328,13 @@ export function MobileSiteNav({
       <SheetContent
         side={sheetSide}
         className={cn(
-          "site-mobile-nav gap-0 p-0 w-[min(100%,20.5rem)]",
+          "site-mobile-nav gap-0 p-0 max-w-none sm:max-w-none",
           sheetSide === "right"
             ? "site-mobile-nav--right"
             : "site-mobile-nav--left",
         )}
         onOpenAutoFocus={(event) => {
           event.preventDefault();
-          event.currentTarget.focus();
         }}
       >
         <SheetHeader className="site-mobile-nav__header ghazawiya-pattern">
