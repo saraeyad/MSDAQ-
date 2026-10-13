@@ -1,6 +1,13 @@
 import { ROUTES } from "@/router/routes";
 import type { Locale } from "@/lib/i18n/types";
 
+function arabicListenFor(minutes: number): string {
+  if (minutes <= 1) return "استمع (دقيقة)";
+  if (minutes === 2) return "استمع (دقيقتان)";
+  if (minutes <= 10) return `استمع (${minutes} دقائق)`;
+  return `استمع (${minutes} دقيقة)`;
+}
+
 export type TrustDimensionCopy = {
   key: string;
   label: string;
@@ -53,6 +60,9 @@ export type PublicStaticCopy = {
     englishPendingLead: string;
     verifiedLabel: string;
     verifiedTitle: string;
+    verifiedTitleText: string;
+    verifiedTitleAudio: string;
+    verifiedTitleVideo: string;
     showEnglish: string;
     showArabic: string;
     translating: string;
@@ -64,6 +74,18 @@ export type PublicStaticCopy = {
     noAudio: string;
     listenExternal: string;
     listenOnSoundCloud: string;
+    listen: string;
+    listenFor: (minutes: number) => string;
+    share: string;
+    playerClose: string;
+    playerPause: string;
+    playerPlay: string;
+    playerRewind: string;
+    playerForward: string;
+    playerSpeed: string;
+    playerMute: string;
+    playerUnmute: string;
+    playerRegion: string;
     watchExternal: string;
     loadFailed: string;
   };
@@ -241,6 +263,12 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
         "هذا المقال متاح بالعربية. نعمل على نشر ترجمة إنجليزية — عد لاحقاً.",
       verifiedLabel: "موثّق",
       verifiedTitle: "مقال منشور واجتاز التحقق التحريري",
+      verifiedTitleText:
+        "نُشر هذا المقال بعد اجتيازه اختبارات التحقق التحريري: مراجعة المصادر، فحص المعايير المهنية، وتقييم المصداقية.",
+      verifiedTitleAudio:
+        "نُشر هذا التقرير الصوتي بعد مراجعة تحريرية للمحتوى والمصادر، والتأكد من سلامة الملف الصوتي وجاهزيته للنشر.",
+      verifiedTitleVideo:
+        "نُشر هذا التقرير المصوّر بعد مراجعة تحريرية للمحتوى والمصادر، والتأكد من سلامة الفيديو وجاهزيته للنشر.",
       showEnglish: "English",
       showArabic: "العربية",
       translating: "جاري الترجمة…",
@@ -252,6 +280,18 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
       noAudio: "لا يتوفر مصدر صوتي",
       listenExternal: "استمع على المنصة الخارجية",
       listenOnSoundCloud: "استمع على ساوند كلاود",
+      listen: "استمع",
+      listenFor: arabicListenFor,
+      share: "شارك",
+      playerClose: "إغلاق المشغّل",
+      playerPause: "إيقاف مؤقت",
+      playerPlay: "تشغيل",
+      playerRewind: "رجوع 15 ثانية",
+      playerForward: "تقديم 15 ثانية",
+      playerSpeed: "سرعة التشغيل",
+      playerMute: "كتم الصوت",
+      playerUnmute: "إلغاء الكتم",
+      playerRegion: "مشغّل المقال",
       watchExternal: "مشاهدة على المنصة الخارجية",
       loadFailed: "تعذّر تحميل المصدر",
     },
@@ -500,6 +540,12 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
         "This story is available in Arabic. We are preparing an English translation — please check back soon.",
       verifiedLabel: "Verified",
       verifiedTitle: "Published and passed editorial verification",
+      verifiedTitleText:
+        "This article was published after passing editorial checks: source review, professional standards, and a credibility assessment.",
+      verifiedTitleAudio:
+        "This audio report was published after editorial review of the content and sources, and after confirming the audio is ready to publish.",
+      verifiedTitleVideo:
+        "This video report was published after editorial review of the content and sources, and after confirming the video is ready to publish.",
       showEnglish: "English",
       showArabic: "العربية",
       translating: "Translating…",
@@ -511,6 +557,18 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
       noAudio: "No audio source available",
       listenExternal: "Listen on external platform",
       listenOnSoundCloud: "Listen on SoundCloud",
+      listen: "Listen",
+      listenFor: (minutes) => `Listen (${minutes} min)`,
+      share: "Share",
+      playerClose: "Close player",
+      playerPause: "Pause",
+      playerPlay: "Play",
+      playerRewind: "Back 15 seconds",
+      playerForward: "Forward 15 seconds",
+      playerSpeed: "Playback speed",
+      playerMute: "Mute",
+      playerUnmute: "Unmute",
+      playerRegion: "Article player",
       watchExternal: "Watch on external platform",
       loadFailed: "Could not load media",
     },

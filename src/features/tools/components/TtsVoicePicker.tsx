@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,6 +9,7 @@ import {
 import { apiOrigin } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { TtsVoice } from "@/types";
+import { Headphones } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 /** Play a voice sample. Absolute staging URLs stay on that host; in local dev, `/voice-samples` goes through the Vite proxy. */
@@ -66,6 +68,7 @@ export function TtsVoicePicker({
   value,
   onValueChange,
   disabled = false,
+  locked = false,
   placeholder = "اختر صوتاً",
   className,
 }: {
@@ -73,6 +76,8 @@ export function TtsVoicePicker({
   value: string;
   onValueChange: (slug: string) => void;
   disabled?: boolean;
+  /** Keep the current voice, but still allow playing its sample. */
+  locked?: boolean;
   placeholder?: string;
   className?: string;
 }) {
@@ -90,15 +95,32 @@ export function TtsVoicePicker({
     };
   }, []);
 
-  const playSample = (slug: string) => {
-    const src = resolveTtsSampleUrl(
-      voices.find((voice) => voice.slug === slug)?.sample_url,
-    );
+  const voiceLocked = disabled || locked;
+  const selected = voices.find((voice) => voice.slug === value);
+  const sampleUrl = resolveTtsSampleUrl(selected?.sample_url);
+
+  const stopSample = async () => {
+    const token = ++playToken.current;
     const audio = audioRef.current;
-    if (!audio || !src || disabled) return;
+    if (!audio || audio.paused) {
+      setPlayingSlug(null);
+      return;
+    }
+    await rampVolume(audio, 0, 140, fadeFrame.current);
+    if (token !== playToken.current) return;
+    audio.pause();
+    setPlayingSlug(null);
+  };
+
+  const playSample = () => {
+    const audio = audioRef.current;
+    if (!audio || !sampleUrl || !value || disabled) return;
+    if (playingSlug === value) {
+      void stopSample();
+      return;
+    }
 
     const token = ++playToken.current;
-
     void (async () => {
       if (!audio.paused) {
         await rampVolume(audio, 0, 140, fadeFrame.current);
@@ -106,25 +128,25 @@ export function TtsVoicePicker({
         audio.pause();
       }
 
-      audio.src = src;
-      audio.volume = 0;
-      audio.currentTime = 0;
-
       try {
+        if (audio.src !== new URL(sampleUrl, window.location.origin).href) {
+          audio.src = sampleUrl;
+        }
+        audio.volume = 0;
+        if (audio.readyState > 0) audio.currentTime = 0;
         await audio.play();
       } catch {
         if (token === playToken.current) setPlayingSlug(null);
         return;
       }
-
       if (token !== playToken.current) return;
-      setPlayingSlug(slug);
+      setPlayingSlug(value);
       await rampVolume(audio, 0.92, 280, fadeFrame.current);
     })();
   };
 
   return (
-    <>
+    <div className={cn("flex min-w-0 items-center gap-2", className)}>
       <audio
         ref={audioRef}
         preload="none"
@@ -132,26 +154,18 @@ export function TtsVoicePicker({
       />
       <Select
         value={value || undefined}
-        onValueChange={(slug) => {
-          onValueChange(slug);
-          playSample(slug);
+        onValueChange={(next) => {
+          if (voiceLocked) return;
+          onValueChange(next);
         }}
-        disabled={disabled}
+        disabled={voiceLocked}
+        open={locked ? false : undefined}
       >
         <SelectTrigger
-          className={cn(
-            "tts-voice-picker__trigger w-full min-w-48 sm:max-w-md",
-            playingSlug && "tts-voice-picker__trigger--live",
-            className,
-          )}
+          className="tts-voice-picker__trigger w-full min-w-0 flex-1"
+          data-locked={locked ? "true" : undefined}
+          title={locked ? "لا يمكن تغيير نوع الصوت بعد نشر المقال" : undefined}
         >
-          {playingSlug ? (
-            <span className="tts-voice-eq" aria-hidden>
-              <span />
-              <span />
-              <span />
-            </span>
-          ) : null}
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
@@ -162,6 +176,20 @@ export function TtsVoicePicker({
           ))}
         </SelectContent>
       </Select>
-    </>
+      <Button
+        type="button"
+        variant="outline"
+        className={cn(
+          "h-9 shrink-0 rounded-full bg-background px-3.5",
+          playingSlug && "border-primary text-primary",
+        )}
+        disabled={disabled || !sampleUrl}
+        aria-pressed={playingSlug === value}
+        onClick={playSample}
+      >
+        <Headphones className="size-4" />
+        استمع
+      </Button>
+    </div>
   );
 }

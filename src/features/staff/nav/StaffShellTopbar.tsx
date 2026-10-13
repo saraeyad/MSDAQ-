@@ -7,7 +7,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ApiTargetSwitch } from "@/features/staff/nav/ApiTargetSwitch";
 import { StaffHomeLink } from "@/features/staff/nav/StaffHomeLink";
 import { StaffNavLinks } from "@/features/staff/nav/StaffNavLinks";
 import { StaffUserMenu } from "@/features/staff/nav/StaffUserMenu";
@@ -58,7 +57,6 @@ export function StaffShellTopbar({ items }: { items: StaffNavItem[] }) {
       ) : null}
 
       <div className="staff-shell__topbar-actions">
-        <ApiTargetSwitch />
         <StaffHomeLink />
         <StaffUserMenu />
       </div>

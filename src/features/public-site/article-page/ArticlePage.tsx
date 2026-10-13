@@ -136,6 +136,30 @@ interface ArticlePageProps {
   initialArticle?: PublicArticle;
 }
 
+function ArticleMetaFacts({
+  label,
+  date,
+  belowMedia = false,
+}: {
+  label: string;
+  date: string;
+  belowMedia?: boolean;
+}) {
+  return (
+    <div
+      className={
+        belowMedia
+          ? "article-meta-row__facts article-meta-row__facts--below"
+          : "article-meta-row__facts"
+      }
+    >
+      <span className="text-primary">{label}</span>
+      <span aria-hidden="true">•</span>
+      <span>{date}</span>
+    </div>
+  );
+}
+
 function ArticlePageContent({
   article,
   articleUrlId,
@@ -175,6 +199,13 @@ function ArticlePageContent({
   const contentLoading = needsLocalizedFetch && isContentPending;
   const [translationNotice, setTranslationNotice] = useState(false);
   const dateLocale = locale === "ar" ? "ar" : "en-GB";
+  const categoryLabel =
+    (article.category
+      ? localizedCategoryName(article.category, locale)
+      : null) ?? publicMediaTypeLabelFromCopy(copy, article.media_type);
+  const publishedLabel = new Date(article.published_at).toLocaleDateString(
+    dateLocale,
+  );
   const origin = useSiteOrigin();
   const seoHead = buildArticleSeoHead(article, origin);
   const jsonLd = buildArticleJsonLd(article, origin);
@@ -225,6 +256,7 @@ function ArticlePageContent({
   const coverCaption = article.cover_description?.trim() ?? "";
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
+  const hasHero = Boolean(coverUrl) || isVideo || isAudio;
   const narrationUrl = articleMedia
     ? publicArticleNarrationUrl(articleMedia)
     : null;
@@ -275,20 +307,9 @@ function ArticlePageContent({
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="min-w-0">
             <div className="article-meta-row">
-              <div className="article-meta-row__facts">
-                <span className="text-primary">
-                  {(article.category
-                    ? localizedCategoryName(article.category, locale)
-                    : null) ??
-                    publicMediaTypeLabelFromCopy(copy, article.media_type)}
-                </span>
-                <span>•</span>
-                <span>
-                  {new Date(article.published_at).toLocaleDateString(
-                    dateLocale,
-                  )}
-                </span>
-              </div>
+              {hasHero ? null : (
+                <ArticleMetaFacts label={categoryLabel} date={publishedLabel} />
+              )}
               <ArticleTranslateButton
                 contentLang={contentLang}
                 loading={contentLoading}
@@ -341,16 +362,35 @@ function ArticlePageContent({
               </>
             )}
 
+            {!isAudio && narrationUrl ? (
+              <div className="mt-7">
+                <PublicArticleAudioPlayer
+                  articleId={article.id}
+                  variant="article"
+                  title={displayTitle}
+                  coverUrl={coverUrl ?? undefined}
+                  onPlaybackProgress={onMediaProgress}
+                  loadOnMount
+                />
+              </div>
+            ) : null}
+
             {isVideo ? (
-              <PublicArticleVideoPlayer
-                articleId={article.id}
-                title={displayTitle}
-                posterUrl={posterUrl}
-                coverImage={article.cover_image}
-                videoPoster={article.video_poster}
-                className="mt-8 mb-8"
-                onVideoProgress={onMediaProgress}
-              />
+              <div className="mt-8 mb-8">
+                <PublicArticleVideoPlayer
+                  articleId={article.id}
+                  title={displayTitle}
+                  posterUrl={posterUrl}
+                  coverImage={article.cover_image}
+                  videoPoster={article.video_poster}
+                  onVideoProgress={onMediaProgress}
+                />
+                <ArticleMetaFacts
+                  label={categoryLabel}
+                  date={publishedLabel}
+                  belowMedia
+                />
+              </div>
             ) : coverUrl ? (
               <figure className="article-cover-block mt-8 mb-8">
                 <PublicArticleCover
@@ -359,6 +399,11 @@ function ArticlePageContent({
                   priority
                   className="article-cover-block__image aspect-video w-full object-cover"
                 />
+                <ArticleMetaFacts
+                  label={categoryLabel}
+                  date={publishedLabel}
+                  belowMedia
+                />
                 {coverCaption ? (
                   <figcaption className="article-cover-caption">
                     {coverCaption}
@@ -366,12 +411,19 @@ function ArticlePageContent({
                 ) : null}
               </figure>
             ) : isAudio ? (
-              <div className="relative mt-8 mb-8 aspect-video overflow-hidden rounded-2xl bg-muted">
-                <PodcastAudioPlayer
-                  seed={article.id}
-                  variant="cover"
-                  interactive={false}
-                  className="size-full min-h-[12rem]"
+              <div className="mt-8 mb-8">
+                <div className="relative aspect-video overflow-hidden rounded-2xl bg-muted">
+                  <PodcastAudioPlayer
+                    seed={article.id}
+                    variant="cover"
+                    interactive={false}
+                    className="size-full min-h-[12rem]"
+                  />
+                </div>
+                <ArticleMetaFacts
+                  label={categoryLabel}
+                  date={publishedLabel}
+                  belowMedia
                 />
               </div>
             ) : null}
@@ -411,14 +463,15 @@ function ArticlePageContent({
                 </div>
               )}
 
-              {isAudio || narrationUrl ? (
+              {isAudio ? (
                 <div className="mt-6">
                   <PublicArticleAudioPlayer
                     articleId={article.id}
                     variant="embed"
                     coverUrl={coverUrl ?? undefined}
-                    showSourceLink={isAudio}
+                    showSourceLink
                     onPlaybackProgress={onMediaProgress}
+                    loadOnMount
                   />
                 </div>
               ) : null}

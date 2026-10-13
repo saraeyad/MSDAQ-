@@ -255,7 +255,7 @@ export const ArticlesStaff_APIs = {
   },
 
   /**
-   * Article publishing: TTS from the article body on the server.
+   * Registers the article voice. The backend stores it and starts the job on publish.
    * Omit voice so the backend uses its default.
    */
   textToSpeech: async (

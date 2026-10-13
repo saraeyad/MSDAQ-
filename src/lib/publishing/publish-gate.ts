@@ -402,7 +402,9 @@ export function derivePublishGate(
     if (article.generated_audio !== undefined) {
       const ready = hasNarration(article);
       checks.push({
-        label: ready ? "النسخة الصوتية" : "النسخة الصوتية (تُنشأ عند النشر)",
+        label: ready
+          ? "النسخة الصوتية"
+          : "النسخة الصوتية (ينشئها الخادم عند النشر)",
         passed: ready,
         blocking: false,
       });

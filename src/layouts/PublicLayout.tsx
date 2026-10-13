@@ -4,6 +4,8 @@ import { SiteBrandLink } from "@/features/public-site/components/site-brand-link
 import { SiteHeaderSearch } from "@/components/site/site-header-search";
 import { DesktopSiteNav, MobileSiteNav } from "@/components/site/site-header-nav";
 import { SiteFooter } from "@/components/site/site-footer";
+import { PersistentArticleListenPlayer } from "@/components/podcast-audio-player/PersistentArticleListenPlayer";
+import { ArticleListenProvider } from "@/context/article-listen";
 import { PlatformFeedbackProvider } from "@/context/platform-feedback";
 import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/PlatformFeedbackFab";
 import { useAuth } from "@/context/auth";
@@ -119,6 +121,7 @@ export default function PublicLayout() {
 
   return (
     <PlatformFeedbackProvider>
+      <ArticleListenProvider>
       <div
         className={cn(
           "flex min-h-screen flex-col page-gradient",
@@ -191,7 +194,9 @@ export default function PublicLayout() {
         <Suspense fallback={null}>
           <PilotLaunchWelcome />
         </Suspense>
+        <PersistentArticleListenPlayer />
       </div>
+      </ArticleListenProvider>
     </PlatformFeedbackProvider>
   );
 }

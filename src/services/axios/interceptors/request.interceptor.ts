@@ -9,7 +9,11 @@ export const setupRequestInterceptor = (axiosInstance: AxiosInstance) => {
     config.headers["Accept"] = "application/json";
     config.headers["Accept-Language"] =
       resolveAcceptLanguageForRequest(requestUrl);
-    config.headers["Authorization"] = token ? `Bearer ${token}` : "";
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
+    }
 
     if (!(config.data instanceof FormData)) {
       config.headers["Content-Type"] ??= "application/json";

@@ -1,6 +1,6 @@
-import { STAGING_API_URL } from "./api-targets";
+import { API_URL } from "./api-targets";
 
-export const DEFAULT_API_URL = STAGING_API_URL;
+export const DEFAULT_API_URL = API_URL;
 
 /** Absolute API origin (no trailing slash). */
 export function apiOrigin(): string {

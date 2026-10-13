@@ -185,10 +185,9 @@ export default function PublishingFlow() {
         {!isNew && articleView && currentStep === 6 && mediaType === "text" && (
           <Step6Localize
             articleId={articleView.id}
-            bodyFormal={articleView.content?.formal}
             bodySimplified={articleView.content?.simplified}
             bodyDialect={articleView.content?.dialect}
-            generatedAudio={articleView.generated_audio}
+            published={articleView.status === "published"}
             onComplete={advanceStep}
             onBack={goBackStep}
           />

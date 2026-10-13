@@ -333,6 +333,10 @@ export function MobileSiteNav({
             ? "site-mobile-nav--right"
             : "site-mobile-nav--left",
         )}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          event.currentTarget.focus();
+        }}
       >
         <SheetHeader className="site-mobile-nav__header ghazawiya-pattern">
           <SheetTitle className="site-mobile-nav__title">

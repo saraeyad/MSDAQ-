@@ -12,6 +12,7 @@ import {
 } from "@/lib/media";
 import type { TrustMediaProgress } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { useArticleListen } from "@/context/article-listen";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import { ArrowUpLeft, ArrowUpRight, Loader2, Pause, Play } from "lucide-react";
 import {
@@ -22,6 +23,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
+import { ArticleListenDock, ArticleListenRow } from "./ArticleListenDock";
 import { WaveformBars } from "./WaveformBars";
 
 function SoundCloudMark({ className }: { className?: string }) {
@@ -40,7 +42,7 @@ function SoundCloudMark({ className }: { className?: string }) {
   );
 }
 
-type PodcastAudioPlayerVariant = "inline" | "embed" | "cover";
+type PodcastAudioPlayerVariant = "inline" | "embed" | "cover" | "article" | "dock";
 
 interface PodcastAudioPlayerProps {
   seed: number | string;
@@ -64,14 +66,13 @@ interface PodcastAudioPlayerProps {
 
 function waveBarCount(variant: PodcastAudioPlayerVariant) {
   if (variant === "cover") return 88;
-  if (variant === "embed") return 72;
+  if (variant === "embed") return 96;
   return 56;
 }
 
 function waveBarClass(variant: PodcastAudioPlayerVariant) {
-  const isDark = variant === "embed" || variant === "cover";
   return cn(
-    isDark && "waveform-bars--dark",
+    variant === "cover" && "waveform-bars--dark",
     variant === "cover" && "waveform-bars--cover",
     variant === "inline" && "waveform-bars--inline",
     variant === "embed" && "waveform-bars--embed",
@@ -88,11 +89,18 @@ interface WaveformPlayerShellProps {
   isPlaying: boolean;
   currentTime: number;
   durationSeconds: number;
+  durationKnown?: boolean;
+  playbackRate?: number;
+  muted?: boolean;
   playDisabled?: boolean;
   playPending?: boolean;
   onPlayClick: (event: MouseEvent<HTMLButtonElement>) => void;
   onSeek?: (ratio: number) => void;
   onSeekEnd?: () => void;
+  onSkip?: (seconds: number) => void;
+  onCycleRate?: () => void;
+  onToggleMute?: () => void;
+  onPause?: () => void;
   hiddenBridge?: ReactNode;
   sourceUrl?: string | null;
 }
@@ -107,18 +115,31 @@ function WaveformPlayerShell({
   isPlaying,
   currentTime,
   durationSeconds,
+  durationKnown = false,
+  playbackRate = 1,
+  muted = false,
   playDisabled = false,
   playPending = false,
   onPlayClick,
   onSeek,
   onSeekEnd,
+  onSkip,
+  onCycleRate,
+  onToggleMute,
+  onPause,
   hiddenBridge,
   sourceUrl,
 }: WaveformPlayerShellProps) {
+  const persist = useArticleListen();
   const { dir } = useLocale();
   const { articleMedia } = usePublicCopy();
   const waveRef = useRef<HTMLDivElement | null>(null);
+  const [dockOpen, setDockOpen] = useState(false);
   const isDark = variant === "embed";
+
+  useEffect(() => {
+    if (variant === "article" && isPlaying) setDockOpen(true);
+  }, [variant, isPlaying]);
   const ExternalArrow = dir === "rtl" ? ArrowUpLeft : ArrowUpRight;
 
   const progress =
@@ -158,6 +179,99 @@ function WaveformPlayerShell({
     event.stopPropagation();
     onSeekEnd?.();
   };
+
+  if (variant === "dock") {
+    return (
+      <>
+        {hiddenBridge}
+        <ArticleListenDock
+          seed={seed}
+          title={title}
+          coverUrl={coverUrl}
+          isPlaying={isPlaying}
+          playPending={playPending}
+          currentTime={currentTime}
+          durationSeconds={durationSeconds}
+          durationKnown={durationKnown}
+          progress={progress}
+          playbackRate={playbackRate}
+          muted={muted}
+          onPlayClick={onPlayClick}
+          onPause={() => onPause?.()}
+          onSeek={onSeek}
+          onSeekEnd={onSeekEnd}
+          onSkip={onSkip}
+          onCycleRate={onCycleRate}
+          onToggleMute={onToggleMute}
+          onClose={() => {
+            onPause?.();
+            persist?.close();
+          }}
+        />
+      </>
+    );
+  }
+
+  if (variant === "article") {
+    return (
+      <div className={className}>
+        {hiddenBridge}
+        <ArticleListenRow
+          isPlaying={isPlaying}
+          playPending={playPending}
+          playDisabled={playDisabled}
+          durationSeconds={durationSeconds}
+          durationKnown={durationKnown}
+          onPlayClick={(event) => {
+            setDockOpen(true);
+            onPlayClick(event);
+          }}
+        />
+        {dockOpen ? (
+          <ArticleListenDock
+            seed={seed}
+            title={title}
+            coverUrl={coverUrl}
+            isPlaying={isPlaying}
+            playPending={playPending}
+            currentTime={currentTime}
+            durationSeconds={durationSeconds}
+            durationKnown={durationKnown}
+            progress={progress}
+            playbackRate={playbackRate}
+            muted={muted}
+            onPlayClick={onPlayClick}
+            onPause={() => onPause?.()}
+            onSeek={onSeek}
+            onSeekEnd={onSeekEnd}
+            onSkip={onSkip}
+            onCycleRate={onCycleRate}
+            onToggleMute={onToggleMute}
+            onClose={() => setDockOpen(false)}
+          />
+        ) : null}
+        {sourceUrl ? (
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            dir={dir}
+            className="podcast-soundcloud-link"
+            aria-label={articleMedia.listenOnSoundCloud}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="podcast-soundcloud-link__icon">
+              <SoundCloudMark />
+            </span>
+            <span className="podcast-soundcloud-link__label">
+              {articleMedia.listenOnSoundCloud}
+            </span>
+            <ExternalArrow className="podcast-soundcloud-link__arrow" />
+          </a>
+        ) : null}
+      </div>
+    );
+  }
 
   if (variant === "cover") {
     return (
@@ -325,6 +439,8 @@ function PodcastAudioPlayerDecorative({
   );
 }
 
+const PLAYBACK_RATES = [1, 1.25, 1.5, 2] as const;
+
 function PodcastAudioPlayerFile({
   seed,
   url,
@@ -338,6 +454,7 @@ function PodcastAudioPlayerFile({
   autoPlay = false,
   resumeId,
 }: PodcastAudioPlayerProps & { url: string }) {
+  const persist = useArticleListen();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onProgressRef = useRef(onPlaybackProgress);
   onProgressRef.current = onPlaybackProgress;
@@ -353,6 +470,11 @@ function PodcastAudioPlayerFile({
   const [durationSeconds, setDurationSeconds] = useState(
     () => duration ?? estimateDurationFromSeed(seed),
   );
+  const [durationKnown, setDurationKnown] = useState(
+    () => duration != null && duration > 0,
+  );
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [muted, setMuted] = useState(false);
 
   const remember = (seconds: number, force = false) => {
     const id = resumeIdRef.current;
@@ -370,6 +492,7 @@ function PodcastAudioPlayerFile({
     const saved = resumeId != null ? readPlaybackPosition(resumeId) : 0;
     resumeAtRef.current = saved;
     setCurrentTime(saved);
+    setDurationKnown(duration != null && duration > 0);
     if (autoPlay) setStarting(true);
 
     const applyResume = () => {
@@ -388,6 +511,7 @@ function PodcastAudioPlayerFile({
     const syncDuration = () => {
       if (Number.isFinite(audio.duration) && audio.duration > 0) {
         setDurationSeconds(audio.duration);
+        setDurationKnown(true);
       }
       applyResume();
     };
@@ -458,13 +582,36 @@ function PodcastAudioPlayerFile({
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [url, autoPlay, resumeId]);
+  }, [url, autoPlay, resumeId, duration]);
 
   useEffect(() => {
     if (duration != null && duration > 0) {
       setDurationSeconds(duration);
+      setDurationKnown(true);
     }
   }, [duration]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.playbackRate = playbackRate;
+    audio.muted = muted;
+  }, [playbackRate, muted, url]);
+
+  const bindEngine = persist?.bindEngine;
+  useEffect(() => {
+    if (variant !== "dock" || !bindEngine) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    return bindEngine({
+      toggle: () => {
+        if (startingRef.current) return;
+        if (!audio.paused) audio.pause();
+        else void audio.play().catch(() => undefined);
+      },
+      pause: () => audio.pause(),
+    });
+  }, [variant, bindEngine, url]);
 
   const handlePlay = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -499,6 +646,33 @@ function PodcastAudioPlayerFile({
     });
   };
 
+  const pausePlayback = () => {
+    audioRef.current?.pause();
+  };
+
+  const skipBy = (delta: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const max =
+      Number.isFinite(audio.duration) && audio.duration > 0
+        ? audio.duration
+        : durationSeconds;
+    const next = Math.min(Math.max(0, audio.currentTime + delta), Math.max(0, max));
+    audio.currentTime = next;
+    setCurrentTime(next);
+    resumeAtRef.current = next;
+    remember(next, true);
+  };
+
+  const cycleRate = () => {
+    setPlaybackRate((current) => {
+      const index = PLAYBACK_RATES.indexOf(
+        current as (typeof PLAYBACK_RATES)[number],
+      );
+      return PLAYBACK_RATES[(index + 1) % PLAYBACK_RATES.length];
+    });
+  };
+
   return (
     <WaveformPlayerShell
       seed={seed}
@@ -510,10 +684,17 @@ function PodcastAudioPlayerFile({
       isPlaying={isPlaying}
       currentTime={currentTime}
       durationSeconds={durationSeconds}
+      durationKnown={durationKnown}
+      playbackRate={playbackRate}
+      muted={muted}
       playPending={starting && !isPlaying}
       onPlayClick={handlePlay}
       onSeek={variant === "cover" ? undefined : handleSeek}
       onSeekEnd={variant === "cover" ? undefined : handleSeekEnd}
+      onSkip={skipBy}
+      onCycleRate={cycleRate}
+      onToggleMute={() => setMuted((value) => !value)}
+      onPause={pausePlayback}
       hiddenBridge={
         <audio
           ref={audioRef}
@@ -556,6 +737,9 @@ function PodcastAudioPlayerSoundCloud({
   const [durationSeconds, setDurationSeconds] = useState(
     () => duration ?? estimateDurationFromSeed(seed),
   );
+  const [durationKnown, setDurationKnown] = useState(
+    () => duration != null && duration > 0,
+  );
   const isPlayingRef = useRef(false);
   const pendingPlayRef = useRef(autoPlay);
   const [widgetArmed, setWidgetArmed] = useState(autoPlay);
@@ -588,7 +772,10 @@ function PodcastAudioPlayerSoundCloud({
         widget.bind(Events.READY, () => {
           if (cancelled) return;
           widget.getDuration((ms) => {
-            if (ms > 0) setDurationSeconds(ms / 1000);
+            if (ms > 0) {
+              setDurationSeconds(ms / 1000);
+              setDurationKnown(true);
+            }
           });
           const savedMs = resumeAtRef.current * 1000;
           if (savedMs >= 1000) {
@@ -683,6 +870,7 @@ function PodcastAudioPlayerSoundCloud({
   useEffect(() => {
     if (duration != null && duration > 0) {
       setDurationSeconds(duration);
+      setDurationKnown(true);
     }
   }, [duration]);
 
@@ -726,6 +914,23 @@ function PodcastAudioPlayerSoundCloud({
     widget.play();
   };
 
+  const pausePlayback = () => {
+    const widget = widgetRef.current;
+    if (!widget) return;
+    pendingPlayRef.current = false;
+    widget.pause();
+  };
+
+  const skipBy = (delta: number) => {
+    const widget = widgetRef.current;
+    if (!widget || durationSeconds <= 0) return;
+    const next = Math.min(Math.max(0, currentTime + delta), durationSeconds);
+    widget.seekTo(next * 1000);
+    setCurrentTime(next);
+    resumeAtRef.current = next;
+    if (resumeIdRef.current != null) writePlaybackPosition(resumeIdRef.current, next);
+  };
+
   return (
     <WaveformPlayerShell
       seed={seed}
@@ -737,10 +942,13 @@ function PodcastAudioPlayerSoundCloud({
       isPlaying={isPlaying}
       currentTime={currentTime}
       durationSeconds={durationSeconds}
+      durationKnown={durationKnown}
       playPending={starting && !isPlaying}
       onPlayClick={handlePlay}
       onSeek={variant === "cover" ? undefined : handleSeek}
       onSeekEnd={variant === "cover" ? undefined : handleSeekEnd}
+      onSkip={skipBy}
+      onPause={pausePlayback}
       sourceUrl={showSourceLink ? pageUrl : null}
       hiddenBridge={
         widgetArmed ? (
