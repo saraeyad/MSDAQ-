@@ -299,7 +299,9 @@ export function ArticleListenDock({
         <button
           type="button"
           className="article-listen-dock__tool"
-          onClick={() => {
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
             onPause();
             onClose();
           }}

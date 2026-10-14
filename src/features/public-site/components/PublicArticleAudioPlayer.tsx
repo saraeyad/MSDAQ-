@@ -11,7 +11,7 @@ import {
   resolvePublicArticleAudioSource,
 } from "@/lib/media";
 import type { TrustMediaProgress } from "@/lib/site";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PublicArticleAudioPlayerProps {
   articleId: number | string;
@@ -46,6 +46,7 @@ export function PublicArticleAudioPlayer({
   const persist = useArticleListen();
   const { articleMedia } = usePublicCopy();
   const [playRequested, setPlayRequested] = useState(startOnMount);
+  const ownsSessionRef = useRef(false);
   const { media, isLoading, request, requested } = useLazyArticleMedia(
     articleId,
     scope,
@@ -69,7 +70,16 @@ export function PublicArticleAudioPlayer({
 
   useEffect(() => {
     if (!persistArticle || !persist || !playRequested || !fileUrl) return;
-    if (persist.isCurrent(articleId)) return;
+    if (persist.isCurrent(articleId)) {
+      ownsSessionRef.current = true;
+      return;
+    }
+    if (ownsSessionRef.current && persist.track == null) {
+      ownsSessionRef.current = false;
+      setPlayRequested(false);
+      return;
+    }
+    ownsSessionRef.current = true;
     persist.start({
       articleId,
       seed: articleId,

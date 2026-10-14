@@ -137,8 +137,11 @@ function WaveformPlayerShell({
   const [dockOpen, setDockOpen] = useState(false);
   const isDark = variant === "embed";
 
+  const dockDismissedRef = useRef(false);
+
   useEffect(() => {
-    if (variant === "article" && isPlaying) setDockOpen(true);
+    if (variant !== "article" || !isPlaying || dockDismissedRef.current) return;
+    setDockOpen(true);
   }, [variant, isPlaying]);
   const ExternalArrow = dir === "rtl" ? ArrowUpLeft : ArrowUpRight;
 
@@ -223,6 +226,7 @@ function WaveformPlayerShell({
           durationSeconds={durationSeconds}
           durationKnown={durationKnown}
           onPlayClick={(event) => {
+            dockDismissedRef.current = false;
             setDockOpen(true);
             onPlayClick(event);
           }}
@@ -247,7 +251,11 @@ function WaveformPlayerShell({
             onSkip={onSkip}
             onCycleRate={onCycleRate}
             onToggleMute={onToggleMute}
-            onClose={() => setDockOpen(false)}
+            onClose={() => {
+              dockDismissedRef.current = true;
+              onPause?.();
+              setDockOpen(false);
+            }}
           />
         ) : null}
         {sourceUrl ? (
