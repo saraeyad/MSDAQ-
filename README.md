@@ -1,83 +1,69 @@
-# صبارة بوست
+# صبّارة بوست
 
-**Investigate. Verify. Publish with trust.**
+منصة إعلام فلسطيني من [مركز التنمية والإعلام المجتمعي](https://www.cdmc.ps/) في غزة. الموقع العام يقدّم القصص للجمهور، وغرفة الأخبار تدير التحرير والتحقق والنشر.
 
-صبارة بوست is an Arabic-first internal newsroom platform. Staff use a **Newsroom Workspace** and **Admin** area on top of one backend; readers get a plain, read-only public site (no scores, no login).
+![الصفحة الرئيسية لصبّارة بوست وهي تعمل](docs/sabbara-home.png)
 
----
+## مسار النشر
 
-## What we build
+أغلب أدوات التحرير والتحقق والصوت تعمل داخل مسار نشر المقال. الفيديو يشرح الخطوات السبع لمقال النص: التفاصيل والمصادر، الغلاف وفحص الصورة، المحتوى وأدوات المحرر، فحص المعايير، فحص المصداقية، اللهجة والصوت، ثم النشر. الصوت والفيديو يختصران الخطوات الوسطى.
 
-| Area            | Purpose                                                                           |
-| --------------- | --------------------------------------------------------------------------------- |
-| **Public site** | Home, articles, categories, about, partners, static pages                         |
-| **Newsroom**    | Article list, publishing flow (7 steps), standalone tools, file library, calendar |
-| **Admin**       | Dashboard, team, roles & permissions, categories                                  |
+[![شرح مسار النشر](docs/publishing-flow-poster.png)](docs/publishing-flow.mp4)
 
-Publishing enforces gates (sources, cover, standards, credibility, localization) before publish. Standalone tools mirror many editorial checks outside the article flow.
+[شاهد فيديو مسار النشر](docs/publishing-flow.mp4)
 
----
+## المشكلة والفئة المستهدفة
 
-## Tech stack
+الحرب على غزة رفعت حجم الشائعات والصور المنزوعة من سياقها. القارئ يحتاج قصة يمكن تتبّع مصدرها، والمحرّر يحتاج مسارًا يمنع نشر مادة قبل اكتمال التحقق.
 
-| Layer       | Technology                                                 |
-| ----------- | ---------------------------------------------------------- |
-| Frontend    | React 19 + TypeScript                                      |
-| Routing     | React Router v7                                            |
-| Data        | TanStack Query v5                                          |
-| Styling     | Tailwind CSS v4 + Radix UI (shadcn-style `components/ui/`) |
-| Build       | Vite 8                                                     |
-| SSR         | Express + Vite middleware (`server/index.ts`, `src/ssr/`)  |
-| Backend API | Laravel (Railway-hosted)                                   |
+المنصة تخاطب ثلاث فئات:
 
----
+- **القرّاء**: جمهور عربي (مع واجهة إنجليزية) يبحث عن قصص موثّقة من غزة وفلسطين، مع مصادر ظاهرة ومؤشر ثقة.
+- **فريق التحرير**: صحفيون ومحررون في المركز يجهّزون المادة، يراجعون المعايير والمصداقية، ثم ينشرونها عبر بوابات مراجعة.
+- **إدارة المنصة**: من يدير الفريق والأدوار والمحتوى الثابت من لوحة الإدارة.
 
-## Project structure
+## أهم الميزات
 
-See **[`src/README.md`](src/README.md)** for the canonical layout. Summary:
+- **موقع عام ثنائي اللغة**: رئيسية، مقالات، أقسام، من نحن، شركاؤنا، وتواصل. العربية من اليمين لليسار والإنجليزية من اليسار لليمين.
+- **غرفة أخبار بمراحل نشر**: القصة لا تُنشر قبل اجتياز التحرير، المصادر، الغلاف، فحص المعايير، وفحص المصداقية.
+- **أدوات تحقق**: البحث العكسي عن الصور، كشف الصور المولَّدة، فحص النطاقات، المعايير الصحفية، المصداقية، والتوطين.
+- **صوت ونص**: تحويل النص إلى كلام، الكلام إلى نص، ومشغّل يروي المقال ويستمر أثناء التنقّل بين الصفحات.
+- **ثقة القارئ**: تقييم الظاهرة وملاحظات القرّاء، مع شارة «موثّق» على القصص التي أكملت المسار.
+- **ثيم داكن دافئ**: الصفحة داكنة والبطاقات تبقى بلون الورق حتى تبقى العناوين مقروءة.
+- **عرض من الخادم وتحسين محركات البحث**: الصفحات العامة تُرسم على الخادم مع بيانات وصفية للمشاركة.
 
-```
-src/
-├── components/          # Shared chrome + ui primitives
-├── features/            # Domain modules (primary org unit)
-│   ├── public-site/
-│   ├── newsroom/
-│   ├── admin/
-│   ├── publishing-flow/
-│   ├── tools/
-│   └── calendar/
-├── layouts/             # PublicLayout, NewsroomLayout, AdminLayout
-├── lib/                 # Utilities, labels, SEO helpers
-├── services/api/        # HTTP clients per API area
-├── router/              # Routes, permissions, guards
-├── types/               # Shared TypeScript types
-└── ssr/                 # SSR handler for public SEO pages
+## تحديات تم حلّها
+
+- **التباين في الوضع الداكن**: الخلفيات الداكنة والبطاقات الفاتحة كانتا تبتلعان العناوين والتواريخ وأسهم التنقّل. الحل فصل لون الصفحة عن لون حبر البطاقة، وتثبيت ذلك في أقسام الرئيسية ومن نحن والشركاء والأدوات.
+- **المشغّل الصوتي**: إغلاق المشغّل كان يعيد تشغيل المقال لأن جلسة الاستماع تُستأنف طالما طلب التشغيل قائم. أُغلقت الجلسة فعليًا، وزر الإغلاق يوقف الصوت ويزيل الشريط.
+- **الشاشات القصيرة**: شريط الاستماع كان يغطي المقال عندما يقل ارتفاع النافذة عن 860px. صار شريطًا عائمًا يتكيّف مع العرض والارتفاع.
+- **بيانات البيئة التجريبية**: الواجهة المحلية والنسخة التجريبية كانتا تقرآن مصدرين مختلفين. صار الاثنان يشيران إلى واجهة الإنتاج `api.sabbarapost.org`.
+- **اتجاه الواجهة**: القوائم، البحث، والشبكة التحريرية تعمل في الاتجاهين دون قلب المكوّنات المشتركة.
+
+## التشغيل محليًا
+
+```bash
+npm install
+cp .env.example .env
+npm run dev
 ```
 
----
+الموقع على `http://localhost:1573`. طلبات `/api` تُمرَّر إلى واجهة الإنتاج.
 
-## Commands
+| الأمر | الوظيفة |
+| --- | --- |
+| `npm run dev` | واجهة Vite مع تحديث فوري |
+| `npm run dev:ssr` | الواجهة مع العرض من الخادم |
+| `npm run build` | بناء ملفات الإنتاج |
+| `npm run build:ssr` | بناء الواجهة والخادم |
+| `npm start` | تشغيل بناء الإنتاج |
 
-| Command             | Use                                    |
-| ------------------- | -------------------------------------- |
-| `npm run dev`       | Client-only SPA (fast HMR)             |
-| `npm run dev:ssr`   | Public site with SSR                   |
-| `npm run build`     | Typecheck + client build               |
-| `npm run build:ssr` | Production client + SSR bundle         |
-| `npm run start`     | Production Node server                 |
-| `npm run check:ssr` | Smoke-check SSR HTML (after `dev:ssr`) |
+## التقنيات
 
----
+React 19، Vite، TypeScript، Tailwind CSS، Radix UI، TanStack Query، وExpress للعرض من الخادم. واجهة البيانات Laravel على نطاق منفصل، والرفع إلى الاستضافة عبر GitHub Actions.
 
-## API naming
+خريطة المجلدات في [`src/README.md`](src/README.md).
 
-- **Public read:** `Articles_APIs`, `PublicCategories_APIs` → `/api/public/...`
-- **Staff write:** `ArticlesStaff_APIs` → `/api/articles/...`
-- **Standalone tools:** `ToolsEditorial_APIs`, `ImageVerification_APIs`, etc. → `/api/tools/...`
-- **Admin:** `AdminDashboard_APIs`, `AdminUsers_APIs`, `AdminRoles_APIs`, …
+## الرخصة
 
----
-
-## License
-
-Private — all rights reserved.
+استخدام خاص. راجع [إشعار الترخيص](LICENSE).
