@@ -5,77 +5,86 @@ import { PageLoading } from "@/components/loading-spinner";
 import ProtectedRoute from "@/router/ProtectedRoute";
 import RequirePermission from "@/router/RequirePermission";
 import RequireSuperAdmin from "@/router/RequireSuperAdmin";
+import { lazyRoute } from "@/router/lazy-route";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
-const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
-const NewsroomLayout = lazy(() => import("@/layouts/NewsroomLayout"));
-const CategoriesManagementPage = lazy(
+const AdminLayout = lazyRoute(() => import("@/layouts/AdminLayout"));
+const NewsroomLayout = lazyRoute(() => import("@/layouts/NewsroomLayout"));
+const CategoriesManagementPage = lazyRoute(
   () => import("@/features/admin/categories/CategoriesManagementPage"),
 );
-const AdminAnalyticsPage = lazy(
+const AdminAnalyticsPage = lazyRoute(
   () => import("@/features/admin/analytics/AdminAnalyticsPage"),
 );
-const AdminDashboardPage = lazy(
+const AdminDashboardPage = lazyRoute(
   () => import("@/features/admin/dashboard/AdminDashboardPage"),
 );
-const LibraryPage = lazy(
+const LibraryPage = lazyRoute(
   () => import("@/features/newsroom/library/LibraryPage"),
 );
-const PlatformFeedbackPage = lazy(
+const PlatformFeedbackPage = lazyRoute(
   () => import("@/features/platform-feedback/PlatformFeedbackPage"),
 );
-const ContentRatingsPage = lazy(
+const ContentRatingsPage = lazyRoute(
   () => import("@/features/trust-index/pages/ContentRatingsPage"),
 );
-const TrustIndexPlatformPage = lazy(
+const TrustIndexPlatformPage = lazyRoute(
   () => import("@/features/trust-index/pages/TrustIndexPlatformPage"),
 );
-const RolesManagementPage = lazy(
+const RolesManagementPage = lazyRoute(
   () => import("@/features/admin/roles/RolesManagementPage"),
 );
-const RoleEditPage = lazy(() => import("@/features/admin/roles/RoleEditPage"));
-const TeamManagementPage = lazy(
+const RoleEditPage = lazyRoute(
+  () => import("@/features/admin/roles/RoleEditPage"),
+);
+const TeamManagementPage = lazyRoute(
   () => import("@/features/admin/team/TeamManagementPage"),
 );
-const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
-const CalendarPage = lazy(() => import("@/features/calendar/CalendarPage"));
-const StaffArticleDetailPage = lazy(
+const LoginPage = lazyRoute(() => import("@/features/auth/LoginPage"));
+const CalendarPage = lazyRoute(
+  () => import("@/features/calendar/CalendarPage"),
+);
+const StaffArticleDetailPage = lazyRoute(
   () => import("@/features/newsroom/articles/StaffArticleDetailPage"),
 );
-const NewsroomArticlesPage = lazy(
+const NewsroomArticlesPage = lazyRoute(
   () => import("@/features/newsroom/articles/NewsroomArticlesPage"),
 );
-const PublishingFlow = lazy(
+const PublishingFlow = lazyRoute(
   () => import("@/features/publishing-flow/PublishingFlow"),
 );
-const CategoryPage = lazy(
+const CategoryPage = lazyRoute(
   () => import("@/features/public-site/categories/CategoryPage"),
 );
-const ArticlePage = lazy(
+const ArticlePage = lazyRoute(
   () => import("@/features/public-site/article-page/ArticlePage"),
 );
-const ArticlesListPage = lazy(
+const ArticlesListPage = lazyRoute(
   () => import("@/features/public-site/articles/ArticlesListPage"),
 );
-const AboutPage = lazy(() => import("@/features/public-site/about/AboutPage"));
-const PartnersPage = lazy(
+const AboutPage = lazyRoute(
+  () => import("@/features/public-site/about/AboutPage"),
+);
+const PartnersPage = lazyRoute(
   () => import("@/features/public-site/partners/PartnersPage"),
 );
-const NewsSectionPage = lazy(
+const NewsSectionPage = lazyRoute(
   () => import("@/features/public-site/sections/NewsSectionPage"),
 );
-const StaticPage = lazy(
+const StaticPage = lazyRoute(
   () => import("@/features/public-site/static-pages/StaticPage"),
 );
-const ToolsOverviewPage = lazy(
+const ToolsOverviewPage = lazyRoute(
   () => import("@/features/public-site/static-pages/ToolsOverviewPage"),
 );
-const StandaloneToolPage = lazy(
+const StandaloneToolPage = lazyRoute(
   () => import("@/features/tools/StandaloneToolPage"),
 );
-const ToolsIndexPage = lazy(() => import("@/features/tools/ToolsIndexPage"));
+const ToolsIndexPage = lazyRoute(
+  () => import("@/features/tools/ToolsIndexPage"),
+);
 
 function RouteFallback() {
   return <PageLoading className="min-h-[50vh]" />;
@@ -244,7 +253,9 @@ export function AppRoutes() {
           <Route
             path={ROUTES.NEWSROOM_PLATFORM_FEEDBACK}
             element={
-              <RequirePermission permission={PERMISSIONS.VIEW_PLATFORM_FEEDBACK}>
+              <RequirePermission
+                permission={PERMISSIONS.VIEW_PLATFORM_FEEDBACK}
+              >
                 <PlatformFeedbackPage />
               </RequirePermission>
             }

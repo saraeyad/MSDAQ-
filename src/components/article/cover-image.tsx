@@ -1,6 +1,5 @@
-import { imageLoadProps } from "@/lib/media";
+import { imageLoadProps, preferFullSizeMediaUrl, resolveMediaUrl } from "@/lib/media";
 import { cn } from "@/lib/utils";
-import { resolveMediaUrl } from "@/lib/media";
 import { useMemo, useState } from "react";
 
 interface CoverImageProps {
@@ -81,9 +80,13 @@ export function PublicArticleCover({
       article.cover_image,
       ...(article.images?.flatMap((image) => [image.full, image.thumb]) ?? []),
     ];
-    const resolved = raw
-      .map(resolveMediaUrl)
-      .filter((url): url is string => Boolean(url));
+    const resolved: string[] = [];
+    for (const value of raw) {
+      const full = preferFullSizeMediaUrl(value);
+      const original = resolveMediaUrl(value);
+      if (full) resolved.push(full);
+      if (original && original !== full) resolved.push(original);
+    }
     return [...new Set(resolved)];
   }, [article.cover_image, article.images, article.video_poster]);
 

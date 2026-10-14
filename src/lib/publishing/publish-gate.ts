@@ -14,7 +14,7 @@ const PUBLISHING_STEPS = [
   { num: 3, label: "المحتوى" },
   { num: 4, label: "فحص المعايير" },
   { num: 5, label: "فحص المصداقية" },
-  { num: 6, label: "التبسيط واللهجة" },
+  { num: 6, label: "اللهجة والصوت" },
   { num: 7, label: "النشر" },
 ] as const;
 
@@ -102,6 +102,12 @@ function hasLocalization(article: Pick<StaffArticle, "content">): boolean {
   );
 }
 
+function hasNarration(
+  article: Pick<StaffArticle, "generated_audio">,
+): boolean {
+  return !!article.generated_audio?.trim();
+}
+
 function hasAudioAsset(
   article: Pick<StaffArticle, "source_audio" | "media_url">,
 ): boolean {
@@ -176,7 +182,7 @@ export function mediaStepComplete(
   }
 }
 
-/** Required steps only — step 6 (localization) is optional. */
+/** Required steps. Localization and narration stay optional until publish. */
 export function isRequiredStepComplete(
   step: number,
   article: StaffArticle,
@@ -204,17 +210,31 @@ export function isRequiredStepComplete(
   }
 }
 
+function hasStandardsCheck(article: StaffArticle): boolean {
+  const gate = article.gate;
+  if (!gate || article.media_type !== "text") return false;
+  return !!gate.standards_checked_at || gate.fusha_passed === true;
+}
+
+function hasCredibilityCheck(article: StaffArticle): boolean {
+  if (article.media_type !== "text") return true;
+  return !!article.gate?.credibility_checked_at;
+}
+
 /** Whether a step has real content — used for stepper checkmarks. */
 export function isStepFilled(step: number, article: StaffArticle): boolean {
+  if (step === 4) return hasStandardsCheck(article);
+  if (step === 5) return hasCredibilityCheck(article);
   if (step === 6) {
-    return article.media_type === "text" && hasLocalization(article);
+    if (article.media_type !== "text") return false;
+    return hasNarration(article) || hasLocalization(article);
   }
   return isRequiredStepComplete(step, article);
 }
 
 /**
  * First step the journalist should work on (next incomplete required step).
- * Optional localization (6) is suggested after credibility when no variants exist.
+ * Step 6 stays available, and missing narration does not block later steps.
  */
 export function inferArticleStep(article: StaffArticle): number {
   if (article.status === "published" || article.status === "scheduled") {
@@ -226,9 +246,10 @@ export function inferArticleStep(article: StaffArticle): number {
   for (const step of steps) {
     if (step === 6) {
       if (
+        article.media_type === "text" &&
         isRequiredStepComplete(5, article) &&
         !hasLocalization(article) &&
-        article.media_type === "text"
+        !hasNarration(article)
       ) {
         return 6;
       }
@@ -245,7 +266,7 @@ export function inferArticleStep(article: StaffArticle): number {
 
 /**
  * Highest step reachable without skipping ahead of incomplete required work.
- * After credibility (text), step 7 is allowed even if localization was skipped.
+ * Missing narration does not stop a text article from reaching publish.
  */
 export function maxAllowedStep(article: StaffArticle): number {
   if (article.status === "published" || article.status === "scheduled") {
@@ -266,13 +287,6 @@ export function maxAllowedStep(article: StaffArticle): number {
     if (i + 1 < steps.length) {
       allowed = steps[i + 1]!;
     }
-  }
-
-  if (
-    article.media_type === "text" &&
-    isRequiredStepComplete(5, article)
-  ) {
-    allowed = Math.max(allowed, 7);
   }
 
   if (
@@ -311,6 +325,7 @@ export function derivePublishGate(
     | "video_poster"
     | "video_status"
     | "cover_image"
+    | "generated_audio"
   >,
 ): DerivedPublishGate {
   const { gate, media_type } = article;
@@ -384,6 +399,16 @@ export function derivePublishGate(
       passed: !!article.cover_image?.trim(),
       blocking: true,
     });
+    if (article.generated_audio !== undefined) {
+      const ready = hasNarration(article);
+      checks.push({
+        label: ready
+          ? "النسخة الصوتية"
+          : "النسخة الصوتية (ينشئها الخادم عند النشر)",
+        passed: ready,
+        blocking: false,
+      });
+    }
   }
 
   if (credibility_score != null) {

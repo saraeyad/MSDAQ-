@@ -7,3 +7,4 @@ export * from "./youtube-iframe";
 export * from "./waveform";
 export * from "./voice-audio";
 export * from "./voice-asset-access";
+export * from "./playback-position";

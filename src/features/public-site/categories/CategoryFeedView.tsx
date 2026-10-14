@@ -1,4 +1,7 @@
-import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
+import {
+  CategoryStoryBoard,
+  CategoryStorySkeleton,
+} from "@/features/public-site/categories/CategoryStories";
 import { Button } from "@/components/ui/button";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import { cn } from "@/lib/utils";
@@ -50,23 +53,23 @@ export function CategoryFeedView({
   const NextIcon = dir === "rtl" ? ChevronLeft : ChevronRight;
 
   return (
-    <div className="pb-16">
-      <section className="public-page-hero border-b border-border py-12 md:py-16">
+    <div className="category-feed">
+      <section className="category-feed__hero">
         <div className="container-page">
           {headerLoading ? (
             <div className="h-10 w-56 max-w-full animate-pulse rounded-lg bg-muted md:h-12" />
           ) : (
-            <h1 className="font-headline text-3xl font-bold md:text-4xl">
+            <h1 className="category-feed__title font-section text-3xl font-extrabold md:text-4xl">
               {title}
             </h1>
           )}
           {!headerLoading && description ? (
-            <p className="mt-3 max-w-2xl text-muted-foreground md:text-lg">
+            <p className="category-feed__lead mt-1.5 max-w-2xl text-sm text-muted-foreground md:text-base">
               {description}
             </p>
           ) : null}
           {!headerLoading && subcategoryLinks.length > 0 ? (
-            <div className="mt-6 flex flex-wrap gap-2">
+            <nav className="category-feed__subnav" aria-label={title}>
               {subcategoryLinks.map((link) => {
                 const active = activeSubcategorySlug === link.slug;
                 return (
@@ -74,31 +77,23 @@ export function CategoryFeedView({
                     key={link.slug}
                     to={categoryPath(link.slug)}
                     className={cn(
-                      "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-                      active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-accent",
+                      "category-feed__subnav-link",
+                      active && "category-feed__subnav-link--active",
                     )}
+                    aria-current={active ? "page" : undefined}
                   >
                     {link.label}
                   </Link>
                 );
               })}
-            </div>
+            </nav>
           ) : null}
         </div>
       </section>
 
-      <section className="container-page py-10 md:py-14">
+      <section className="container-page pb-6 pt-4 md:pb-8 md:pt-5">
         {isLoading ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="min-h-[280px] animate-pulse rounded-2xl bg-muted"
-              />
-            ))}
-          </div>
+          <CategoryStorySkeleton />
         ) : articles.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
             <Sparkles className="mx-auto size-8 text-primary" />
@@ -111,17 +106,7 @@ export function CategoryFeedView({
           </div>
         ) : (
           <>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {articles.map((article, index) => (
-                <HomeArticleCard
-                  key={article.id}
-                  article={article}
-                  index={index}
-                  featured={index === 0}
-                  className={index === 0 ? "sm:col-span-2" : undefined}
-                />
-              ))}
-            </div>
+            <CategoryStoryBoard articles={articles} />
 
             {pagination && pagination.last_page > 1 && (
               <div className="mt-10 flex items-center justify-center gap-4">

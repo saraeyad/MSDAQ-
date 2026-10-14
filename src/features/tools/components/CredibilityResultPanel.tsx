@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { ScoreDonut } from "@/features/tools/components/ScoreDonut";
 import {
   credibilityVerdictClass,
@@ -6,54 +5,42 @@ import {
 } from "@/lib/publishing";
 import type { CredibilityCheckResult } from "@/types";
 
-interface CredibilityResultPanelProps {
+export function CredibilityResultPanel({
+  result,
+}: {
   result: CredibilityCheckResult;
-}
-
-export function CredibilityResultPanel({ result }: CredibilityResultPanelProps) {
-  const claims = result.claims ?? [];
-  const claimCount = result.total_claims ?? claims.length;
-
+}) {
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="p-6">
-          <ScoreDonut
-            value={result.credibility_score}
-            max={100}
-            format="percent"
-            size="md"
-            label="درجة المصداقية"
-            caption={
-              claimCount > 0
-                ? `${claimCount} ادعاء — للمراجعة فقط`
-                : "للمراجعة فقط"
-            }
-          />
-        </CardContent>
-      </Card>
-
-      {claims.length > 0 ? (
-        <div className="space-y-2">
-          {claims.map((claim, index) => (
-            <Card key={`${claim.text}-${index}`}>
-              <CardContent className="space-y-2 p-4 text-sm">
-                <p className="font-medium leading-relaxed">{claim.text}</p>
-                <span
-                  className={`credibility-verdict ${credibilityVerdictClass(claim.verdict)}`}
-                >
-                  {credibilityVerdictLabel(claim.verdict)}
-                </span>
-                {claim.explanation ? (
-                  <p className="text-muted-foreground leading-relaxed">
-                    {claim.explanation}
-                  </p>
-                ) : null}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : null}
+      <div className="score-donut-row score-donut-row--center">
+        <ScoreDonut
+          value={result.credibility_score}
+          max={100}
+          label="درجة المصداقية"
+          caption={`${result.total_claims} ادعاءات`}
+          size="md"
+        />
+      </div>
+      <ul className="space-y-3">
+        {result.claims.map((claim) => (
+          <li
+            key={claim.text}
+            className="rounded-xl border border-border bg-card px-4 py-3"
+          >
+            <span
+              className={`credibility-verdict ${credibilityVerdictClass(claim.verdict)}`}
+            >
+              {credibilityVerdictLabel(claim.verdict)}
+            </span>
+            <p className="mt-2 text-sm font-medium leading-relaxed">{claim.text}</p>
+            {claim.explanation ? (
+              <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                {claim.explanation}
+              </p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { ThemeSwitcher } from "@/components/site/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
-const LOGIN_PHOTO = "/images/hero-people.webp";
+const LOGIN_PHOTO = "/images/hero-people-hd.png";
 const LOGIN_FALLBACK = "/images/hero-verification.webp";
 
 const WORKSPACE_PERMISSIONS = [
@@ -23,7 +24,9 @@ const WORKSPACE_PERMISSIONS = [
 
 function defaultAfterLoginPath(user: AuthUser): string {
   const permissions = user.permissions ?? [];
-  if (WORKSPACE_PERMISSIONS.some((permission) => permissions.includes(permission))) {
+  if (
+    WORKSPACE_PERMISSIONS.some((permission) => permissions.includes(permission))
+  ) {
     return ROUTES.NEWSROOM;
   }
   return ROUTES.HOME;
@@ -33,7 +36,11 @@ function safeInternalPath(value: string | null): string | null {
   if (!value) return null;
   try {
     const path = decodeURIComponent(value);
-    if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) {
+    if (
+      !path.startsWith("/") ||
+      path.startsWith("//") ||
+      path.startsWith("/\\")
+    ) {
       return null;
     }
     return path;
@@ -63,7 +70,9 @@ export default function LoginPage() {
       saveAuth(token, sessionUser);
 
       const redirect = safeInternalPath(searchParams.get("redirect"));
-      navigate(redirect ?? defaultAfterLoginPath(sessionUser), { replace: true });
+      navigate(redirect ?? defaultAfterLoginPath(sessionUser), {
+        replace: true,
+      });
       toast.success(response.data.message || "مرحباً بك");
     } catch (err) {
       toast.error(getApiErrorMessage(err));
@@ -116,10 +125,15 @@ export default function LoginPage() {
         </section>
 
         <div className="login-card">
-          <div className="login-card__top">
-            <Link to={ROUTES.HOME} className="login-card__home" aria-label={brand.homeAria}>
+          <div className="login-card__top flex items-start justify-between gap-3">
+            <Link
+              to={ROUTES.HOME}
+              className="login-card__home"
+              aria-label={brand.homeAria}
+            >
               <BrandLogo size="xl" linkToHome={false} />
             </Link>
+            <ThemeSwitcher className="shrink-0" />
           </div>
 
           <div className="login-card__brand">
@@ -157,7 +171,9 @@ export default function LoginPage() {
                   type="button"
                   className="login-field__toggle"
                   onClick={() => setShowPassword((open) => !open)}
-                  aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                  aria-label={
+                    showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
+                  }
                 >
                   {showPassword ? (
                     <EyeOff className="size-4" />
@@ -167,7 +183,11 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="login-card__submit" disabled={loading}>
+            <Button
+              type="submit"
+              className="login-card__submit"
+              disabled={loading}
+            >
               {loading && <Loader2 className="size-4 animate-spin" />}
               دخول
             </Button>

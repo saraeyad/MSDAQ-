@@ -1,12 +1,11 @@
 import { useAuth } from "@/context/auth";
-import { useLocale, usePublicCopy } from "@/context/locale";
+import { usePublicCopy } from "@/context/locale";
 import {
   TOOL_REGISTRY,
   type ToolCategory,
   type ToolConfigEntry,
 } from "@/features/tools/tool-config";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 
@@ -23,10 +22,8 @@ function toolHref(slug: string, canOpenTools: boolean) {
 
 export default function ToolsOverviewPage() {
   const { toolsPage, toolsCategories, publicToolLabels } = usePublicCopy();
-  const { dir } = useLocale();
   const { token, hasPermission } = useAuth();
   const canOpenTools = Boolean(token) && hasPermission(PERMISSIONS.ACCESS_TOOLS);
-  const Arrow = dir === "rtl" ? ArrowLeft : ArrowRight;
 
   const groups = useMemo(
     () =>
@@ -88,8 +85,6 @@ export default function ToolsOverviewPage() {
                     tool={tool}
                     index={index}
                     canOpenTools={canOpenTools}
-                    openLabel={toolsPage.openTool}
-                    Arrow={Arrow}
                     label={
                       publicToolLabels[tool.slug]?.label ?? tool.label
                     }
@@ -112,16 +107,12 @@ function ToolCard({
   tool,
   index,
   canOpenTools,
-  openLabel,
-  Arrow,
   label,
   description,
 }: {
   tool: ToolConfigEntry;
   index: number;
   canOpenTools: boolean;
-  openLabel: string;
-  Arrow: typeof ArrowLeft;
   label: string;
   description: string;
 }) {
@@ -137,10 +128,6 @@ function ToolCard({
       </span>
       <h3 className="tools-folio-card__title">{label}</h3>
       <p className="tools-folio-card__desc">{description}</p>
-      <span className="tools-folio-card__open">
-        {openLabel}
-        <Arrow className="size-4" />
-      </span>
     </Link>
   );
 }

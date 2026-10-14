@@ -148,9 +148,11 @@ export interface AiDetectionResult {
 }
 
 export interface TtsVoice {
+  slug: string;
+  voice_id: string;
   name: string;
-  description: string;
-  style: string;
+  gender: string;
+  sample_url?: string | null;
 }
 
 export interface VideoUploadResult {

@@ -7,6 +7,34 @@ export function ttsInflightArticleKey(articleId: number | string): string {
   return `tts-inflight:article:${articleId}`;
 }
 
+function articleTtsVoiceKey(articleId: number | string): string {
+  return `tts-voice:article:${articleId}`;
+}
+
+export function readArticleTtsVoice(articleId: number | string): string {
+  try {
+    return sessionStorage.getItem(articleTtsVoiceKey(articleId))?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function writeArticleTtsVoice(
+  articleId: number | string,
+  voice: string,
+): void {
+  try {
+    const slug = voice.trim();
+    if (!slug) {
+      sessionStorage.removeItem(articleTtsVoiceKey(articleId));
+      return;
+    }
+    sessionStorage.setItem(articleTtsVoiceKey(articleId), slug);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 export function readInflightGeneratedAudioId(storageKey: string): number | null {
   try {
     const raw = sessionStorage.getItem(storageKey);
@@ -37,14 +65,9 @@ export function clearInflightGeneratedAudioId(storageKey: string): void {
   }
 }
 
-/** Exponential backoff: 1s → 2s → 4s → 8s (cap). */
-const BACKOFF_MS = [1_000, 2_000, 4_000, 8_000] as const;
+/** Status is checked on a fixed interval, not a short backoff. */
+export const TTS_STATUS_POLL_MS = 10_000;
 const MAX_POLL_DURATION_MS = 40 * 60_000;
-
-function nextBackoffMs(pollIndex: number): number {
-  const idx = Math.min(pollIndex, BACKOFF_MS.length - 1);
-  return BACKOFF_MS[idx] ?? 8_000;
-}
 
 export interface TtsStatusPollCallbacks {
   onStatus?: (status: GeneratedAudioStatus) => void;
@@ -72,7 +95,6 @@ export function startTtsStatusPoll(
   const controller = new AbortController();
   activeControllers.set(audioId, controller);
   const startedAt = Date.now();
-  let pollIndex = 0;
   const { signal } = controller;
 
   const schedule = (delayMs: number) => {
@@ -91,7 +113,7 @@ export function startTtsStatusPoll(
     }
 
     if (document.hidden) {
-      schedule(nextBackoffMs(pollIndex));
+      schedule(TTS_STATUS_POLL_MS);
       return;
     }
 
@@ -113,16 +135,14 @@ export function startTtsStatusPoll(
         return;
       }
 
-      pollIndex += 1;
-      schedule(nextBackoffMs(pollIndex));
+      schedule(TTS_STATUS_POLL_MS);
     } catch {
       if (signal.aborted) return;
-      pollIndex += 1;
-      schedule(nextBackoffMs(pollIndex));
+      schedule(TTS_STATUS_POLL_MS);
     }
   }
 
-  schedule(nextBackoffMs(0));
+  schedule(TTS_STATUS_POLL_MS);
   return controller;
 }
 

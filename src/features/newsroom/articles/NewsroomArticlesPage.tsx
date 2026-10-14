@@ -12,11 +12,16 @@ import { AdminEmptyState } from "@/features/admin/components/AdminEmptyState";
 import { AdminLoadingState } from "@/features/admin/components/AdminLoadingState";
 import { AdminPagination } from "@/features/admin/components/AdminPagination";
 import { StatusBadge } from "@/features/admin/components/StatusBadge";
+import {
+  ArticleListenButton,
+  ArticleListenPlayer,
+} from "@/features/publishing-flow/components/ArticleListenButton";
 import { ArticleStatusActions } from "@/features/newsroom/articles/ArticleStatusActions";
 import { CategoryFlyoutFilter } from "@/features/newsroom/articles/CategoryFlyoutFilter";
 import { usePermission } from "@/hooks/auth";
 import { useAuth } from "@/context/auth";
 import { getApiErrorMessage } from "@/lib/api";
+import { formatApiDateTime } from "@/lib/calendar";
 import { mediaTypeLabel, resolveMediaUrl } from "@/lib/media";
 import {
   collectCategoryFilterKeys,
@@ -77,6 +82,8 @@ function StaffArticleCard({
   onRevert: (article: StaffArticle) => void;
 }) {
   const coverUrl = resolveMediaUrl(article.cover_image);
+  const [listening, setListening] = useState(false);
+  const isTextArticle = article.media_type === "text";
   const { target: reviewTarget, max: reviewMax } =
     articleReviewThresholds(article);
 
@@ -124,7 +131,7 @@ function StaffArticleCard({
             ) : null}
             {article.status === "scheduled" && article.scheduled_for ? (
               <span>
-                مجدول: {new Date(article.scheduled_for).toLocaleString("ar")}
+                مجدول: {formatApiDateTime(article.scheduled_for)}
               </span>
             ) : null}
             <span>{new Date(article.updated_at).toLocaleDateString("ar")}</span>
@@ -149,6 +156,12 @@ function StaffArticleCard({
       </div>
 
       <div className="newsroom-article-card__actions">
+        {isTextArticle ? (
+          <ArticleListenButton
+            pressed={listening}
+            onClick={() => setListening((open) => !open)}
+          />
+        ) : null}
         <Button asChild variant="outline" size="sm">
           <Link to={staffArticlePath(article.id)}>
             <Eye className="size-3.5" />
@@ -188,6 +201,12 @@ function StaffArticleCard({
           </Button>
         ) : null}
       </div>
+
+      {isTextArticle && listening ? (
+        <div className="newsroom-article-card__player">
+          <ArticleListenPlayer articleId={article.id} />
+        </div>
+      ) : null}
     </article>
   );
 }

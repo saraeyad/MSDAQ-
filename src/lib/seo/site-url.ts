@@ -1,4 +1,15 @@
+import { BRAND_LOGO_FULL, BRAND_LOGO_META } from "@/components/brand/brand-logo";
+
 const DEFAULT_SITE_URL = "https://misdaq.ps";
+
+/** Absolute URL for favicon / default share image. */
+export function siteLogoUrl(origin?: string): string {
+  return absoluteUrl(BRAND_LOGO_META, origin);
+}
+
+export function siteFaviconHref(): string {
+  return BRAND_LOGO_FULL;
+}
 
 export function getSiteOrigin(requestOrigin?: string): string {
   if (requestOrigin) {

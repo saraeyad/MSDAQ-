@@ -27,7 +27,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
       title={ready ? copy.locale.switchTo : copy.locale.comingSoon}
     >
       <Globe className="size-3.5 shrink-0 opacity-70" aria-hidden />
-      <span className="locale-switcher__label">{copy.locale.current}</span>
+      <span className="locale-switcher__label">{copy.locale.switchTo}</span>
     </button>
   );
 }

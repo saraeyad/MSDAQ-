@@ -15,10 +15,12 @@ import {
   type CalendarTypeFilter,
 } from "@/lib/calendar";
 import {
+  dateToUtcIso,
   initialMonthRange,
   isoToDatetimeLocal,
   moveToOffsetIso,
   openCreateDatetime,
+  parseIsoToDate,
   startOfLocalDay,
   startOfToday,
 } from "@/lib/calendar";
@@ -171,7 +173,17 @@ export default function CalendarPage({
       return;
     }
 
-    const movedTo = moveToOffsetIso(item.start_at, info.event.start);
+    const viewType = info.view.type;
+    const preserveClock =
+      info.event.allDay ||
+      viewType.startsWith("dayGrid") ||
+      viewType.startsWith("list");
+    const movedTo = moveToOffsetIso(item.start_at, info.event.start, {
+      preserveClock,
+    });
+    const articleWhen = dateToUtcIso(
+      parseIsoToDate(movedTo) ?? info.event.start,
+    );
 
     try {
       if (isTaskMeta(item)) {
@@ -187,7 +199,7 @@ export default function CalendarPage({
           scope,
         });
       } else {
-        await ArticlesStaff_APIs.reschedule(item.source_id, movedTo);
+        await ArticlesStaff_APIs.reschedule(item.source_id, articleWhen);
       }
 
       toast.success(

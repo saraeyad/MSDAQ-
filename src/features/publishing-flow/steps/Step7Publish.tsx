@@ -1,16 +1,25 @@
+import {
+  ArticleListenButton,
+  ArticleListenPlayer,
+} from "@/features/publishing-flow/components/ArticleListenButton";
 import { PublishGatePanel } from "@/features/publishing-flow/components/PublishGatePanel";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
-import { CalendarScheduleRow } from "@/features/calendar/components/CalendarScheduleRow";
+import {
+  CalendarScheduleRow,
+  normalizeScheduleDatetime,
+} from "@/features/calendar/components/CalendarScheduleRow";
 import { Button } from "@/components/ui/button";
 import { usePublishGate } from "@/hooks/publishing";
 import { getApiErrorMessage } from "@/lib/api";
 import {
-  dateToOffsetIso,
+  dateToUtcIso,
   isoToDatetimeLocal,
   parseDatetimeLocal,
 } from "@/lib/calendar";
+import { readArticleTtsVoice } from "@/lib/publishing";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { CalendarClock, CheckCircle2, Loader2, Send, Undo2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -23,11 +32,16 @@ interface Step7PublishProps {
 
 export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: gate, article, isLoading } = usePublishGate(articleId, {
     loadMedia: true,
   });
   const [scheduledFor, setScheduledFor] = useState("");
-  const [publishing, setPublishing] = useState(false);
+  const [busyAction, setBusyAction] = useState<"publish" | "schedule" | null>(
+    null,
+  );
+  const [listening, setListening] = useState(false);
+  const publishing = busyAction !== null;
 
   const status = article?.status;
   const isPublished = status === "published";
@@ -36,19 +50,31 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
 
   useEffect(() => {
     if (!article?.scheduled_for) return;
-    setScheduledFor(isoToDatetimeLocal(article.scheduled_for));
+    setScheduledFor(
+      normalizeScheduleDatetime(isoToDatetimeLocal(article.scheduled_for)),
+    );
   }, [article?.scheduled_for]);
 
+  const registerNarrationVoice = async () => {
+    if (article?.media_type !== "text") return;
+    const voice = readArticleTtsVoice(articleId);
+    await ArticlesStaff_APIs.textToSpeech(
+      articleId,
+      voice ? { voice } : {},
+    );
+  };
+
   const handlePublish = async () => {
-    setPublishing(true);
+    setBusyAction("publish");
     try {
+      await registerNarrationVoice();
       await ArticlesStaff_APIs.publish(articleId);
       toast.success("تم نشر المقال");
       navigate(ROUTES.NEWSROOM_ARTICLES);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
-      setPublishing(false);
+      setBusyAction(null);
     }
   };
 
@@ -62,21 +88,26 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
       toast.error("وقت الجدولة يجب أن يكون في المستقبل");
       return;
     }
-    setPublishing(true);
+    setBusyAction("schedule");
     try {
-      const when = dateToOffsetIso(parsed);
-      if (isScheduled) {
-        await ArticlesStaff_APIs.reschedule(articleId, when);
-        toast.success("تم إعادة جدولة المقال");
+      await registerNarrationVoice();
+      const when = dateToUtcIso(parsed);
+      const updated = isScheduled
+        ? await ArticlesStaff_APIs.reschedule(articleId, when)
+        : await ArticlesStaff_APIs.schedule(articleId, when);
+      if (updated) {
+        queryClient.setQueryData(["staff-article", articleId], updated);
       } else {
-        await ArticlesStaff_APIs.schedule(articleId, when);
-        toast.success("تم جدولة النشر");
+        await queryClient.invalidateQueries({
+          queryKey: ["staff-article", articleId],
+        });
       }
+      toast.success(isScheduled ? "تم إعادة جدولة المقال" : "تم جدولة النشر");
       navigate(ROUTES.NEWSROOM_ARTICLES);
     } catch (err) {
       toast.error(getApiErrorMessage(err));
     } finally {
-      setPublishing(false);
+      setBusyAction(null);
     }
   };
 
@@ -91,6 +122,8 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
   };
 
   const canPublish = Boolean(gate?.can_publish) && !publishing;
+  const needsNarration =
+    article?.media_type === "text" && !article.generated_audio?.trim();
 
   return (
     <div className="space-y-6">
@@ -116,6 +149,20 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
         </div>
       ) : null}
 
+      <div className="publish-flow-card space-y-3">
+        <h3 className="publish-flow-card__title">النسخة الصوتية</h3>
+        <p className="text-sm text-muted-foreground">
+          {needsNarration
+            ? "لا توجد نسخة بعد. نوع الصوت المختار يُرسل الآن، ويبدأ التوليد عند النشر أو عند حلول موعد الجدولة."
+            : "استمع إلى نسخة المقال. نوع الصوت المختار يُرسل الآن، ويبدأ التوليد عند النشر."}
+        </p>
+        <ArticleListenButton
+          pressed={listening}
+          onClick={() => setListening((open) => !open)}
+        />
+        {listening ? <ArticleListenPlayer articleId={articleId} /> : null}
+      </div>
+
       {canGoLive ? (
         <div className="publish-step-publish">
           <div className="publish-flow-card publish-step-publish__card">
@@ -129,8 +176,10 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
               يظهر المقال للجمهور مباشرة بعد التأكد من جاهزية بوابة النشر.
             </p>
             <Button onClick={() => void handlePublish()} disabled={!canPublish}>
-              {publishing && <Loader2 className="size-4 animate-spin" />}
-              نشر الآن
+              {busyAction === "publish" && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              {busyAction === "publish" ? "جاري النشر" : "نشر الآن"}
             </Button>
           </div>
 
@@ -142,7 +191,7 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
               <h3 className="publish-flow-card__title">جدولة النشر</h3>
             </div>
             <p className="publish-step-publish__lead">
-              اختر اليوم ثم الساعة (بتوقيت جهازك) — يُرسل الوقت مع المنطقة الزمنية.
+              اختر اليوم ثم الساعة بتوقيت جهازك. 12 ص = منتصف الليل، 12 م = الظهر.
             </p>
             <CalendarScheduleRow
               value={scheduledFor}
@@ -155,8 +204,10 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
               onClick={() => void handleSchedule()}
               disabled={!canPublish || !scheduledFor}
             >
-              {publishing && <Loader2 className="size-4 animate-spin" />}
-              جدولة
+              {busyAction === "schedule" && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              {busyAction === "schedule" ? "جاري الجدولة" : "جدولة"}
             </Button>
           </div>
         </div>
@@ -182,10 +233,12 @@ export function Step7Publish({ articleId, onBack }: Step7PublishProps) {
           <Button
             variant="outline"
             onClick={() => void handleSchedule()}
-            disabled={!canPublish || !scheduledFor}
+            disabled={!canPublish || !scheduledFor || publishing}
           >
-            {publishing && <Loader2 className="size-4 animate-spin" />}
-            إعادة جدولة
+            {busyAction === "schedule" && (
+              <Loader2 className="size-4 animate-spin" />
+            )}
+            {busyAction === "schedule" ? "جاري الجدولة" : "إعادة جدولة"}
           </Button>
         </div>
       ) : null}

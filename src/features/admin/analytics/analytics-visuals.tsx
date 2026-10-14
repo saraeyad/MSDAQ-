@@ -100,14 +100,14 @@ export function AnalyticsReferrerDonut({
         <div className="analytics-donut">
           <div className="analytics-donut__center">
             <svg width="168" height="168" viewBox="0 0 168 168">
-              <circle cx="84" cy="84" r="64" fill="#f6f7f8" />
+              <circle className="analytics-donut__hole" cx="84" cy="84" r="64" />
               <g transform="rotate(-90 84 84)">
                 <circle
+                  className="analytics-donut__track"
                   cx="84"
                   cy="84"
                   r="52"
                   fill="none"
-                  stroke="#eef0f3"
                   strokeWidth="18"
                 />
                 {items.map((item, index) => {

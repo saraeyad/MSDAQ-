@@ -26,7 +26,11 @@ import { useLocale, usePublicCopy } from "@/context/locale";
 import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import type { Locale } from "@/lib/i18n/types";
 import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
-import { publicArticleCoverUrl, resolveMediaUrl } from "@/lib/media";
+import {
+  publicArticleCoverUrl,
+  publicArticleNarrationUrl,
+  resolveMediaUrl,
+} from "@/lib/media";
 import { buildArticleJsonLd, buildArticleSeoHead } from "@/lib/seo/article-seo";
 import { loadLatinUiFont } from "@/lib/site/optional-fonts";
 import { useSiteOrigin } from "@/context/site-origin";
@@ -132,6 +136,30 @@ interface ArticlePageProps {
   initialArticle?: PublicArticle;
 }
 
+function ArticleMetaFacts({
+  label,
+  date,
+  belowMedia = false,
+}: {
+  label: string;
+  date: string;
+  belowMedia?: boolean;
+}) {
+  return (
+    <div
+      className={
+        belowMedia
+          ? "article-meta-row__facts article-meta-row__facts--below"
+          : "article-meta-row__facts"
+      }
+    >
+      <span className="text-primary">{label}</span>
+      <span aria-hidden="true">•</span>
+      <span>{date}</span>
+    </div>
+  );
+}
+
 function ArticlePageContent({
   article,
   articleUrlId,
@@ -171,6 +199,13 @@ function ArticlePageContent({
   const contentLoading = needsLocalizedFetch && isContentPending;
   const [translationNotice, setTranslationNotice] = useState(false);
   const dateLocale = locale === "ar" ? "ar" : "en-GB";
+  const categoryLabel =
+    (article.category
+      ? localizedCategoryName(article.category, locale)
+      : null) ?? publicMediaTypeLabelFromCopy(copy, article.media_type);
+  const publishedLabel = new Date(article.published_at).toLocaleDateString(
+    dateLocale,
+  );
   const origin = useSiteOrigin();
   const seoHead = buildArticleSeoHead(article, origin);
   const jsonLd = buildArticleJsonLd(article, origin);
@@ -221,6 +256,10 @@ function ArticlePageContent({
   const coverCaption = article.cover_description?.trim() ?? "";
   const isAudio = article.media_type === "audio";
   const isVideo = article.media_type === "video";
+  const hasHero = Boolean(coverUrl) || isVideo || isAudio;
+  const narrationUrl = articleMedia
+    ? publicArticleNarrationUrl(articleMedia)
+    : null;
   const { bodyRef, open, dismiss, openManually, onMediaProgress } =
     useArticleTrustSurvey({
       articleId: article.id,
@@ -258,7 +297,12 @@ function ArticlePageContent({
       <JsonLd data={jsonLd} />
 
       <article className="container-page py-10">
-        <Button asChild variant="ghost" size="sm" className="mb-6 gap-2">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="mb-2 gap-2 rounded-full border border-border"
+        >
           <Link to={ROUTES.ARTICLES}>
             <ArrowLeft className="size-4" />
             {articleCopy.backToArticles}
@@ -267,56 +311,10 @@ function ArticlePageContent({
 
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="min-w-0">
-            {isVideo ? (
-              <PublicArticleVideoPlayer
-                articleId={article.id}
-                title={displayTitle}
-                posterUrl={posterUrl}
-                coverImage={article.cover_image}
-                videoPoster={null}
-                className="mb-8"
-                onVideoProgress={onMediaProgress}
-              />
-            ) : coverUrl ? (
-              <figure className="article-cover-block mb-8">
-                <PublicArticleCover
-                  article={article}
-                  alt={coverCaption || displayTitle}
-                  priority
-                  className="article-cover-block__image aspect-[21/9] w-full object-cover"
-                />
-                {coverCaption ? (
-                  <figcaption className="article-cover-caption">
-                    {coverCaption}
-                  </figcaption>
-                ) : null}
-              </figure>
-            ) : isAudio ? (
-              <div className="relative mb-8 aspect-[21/9] overflow-hidden rounded-2xl">
-                <PodcastAudioPlayer
-                  seed={article.id}
-                  variant="cover"
-                  interactive={false}
-                  className="size-full min-h-[12rem]"
-                />
-              </div>
-            ) : null}
-
             <div className="article-meta-row">
-              <div className="article-meta-row__facts">
-                <span className="text-primary">
-                  {(article.category
-                    ? localizedCategoryName(article.category, locale)
-                    : null) ??
-                    publicMediaTypeLabelFromCopy(copy, article.media_type)}
-                </span>
-                <span>•</span>
-                <span>
-                  {new Date(article.published_at).toLocaleDateString(
-                    dateLocale,
-                  )}
-                </span>
-              </div>
+              {hasHero ? null : (
+                <ArticleMetaFacts label={categoryLabel} date={publishedLabel} />
+              )}
               <ArticleTranslateButton
                 contentLang={contentLang}
                 loading={contentLoading}
@@ -335,40 +333,111 @@ function ArticlePageContent({
               </p>
             ) : null}
 
+            {englishPending ? (
+              <>
+                <h1 className="mt-2 font-headline text-3xl font-bold md:text-4xl">
+                  {articleCopy.englishPendingTitle}
+                </h1>
+                <PublicArticleEnglishPendingPanel className="mt-6" />
+              </>
+            ) : (
+              <>
+                <h1 className="mt-2 font-headline text-3xl font-bold md:text-4xl">
+                  <span className="inline-flex flex-wrap items-center gap-2.5">
+                    <span>
+                      <ArticleEntityBody
+                        text={displayArticle.title}
+                        entities={displayArticle.entities}
+                        tone="heading"
+                      />
+                    </span>
+                    <ArticleVerifiedBadge article={article} />
+                  </span>
+                </h1>
+
+                {displayArticle.description &&
+                body !== displayArticle.description ? (
+                  <p className="mt-4 text-lg text-muted-foreground">
+                    <ArticleEntityBody
+                      text={displayArticle.description}
+                      entities={displayArticle.entities}
+                    />
+                  </p>
+                ) : null}
+              </>
+            )}
+
+            {!isAudio && narrationUrl ? (
+              <div className="mt-7">
+                <PublicArticleAudioPlayer
+                  articleId={article.id}
+                  variant="article"
+                  title={displayTitle}
+                  coverUrl={coverUrl ?? undefined}
+                  onPlaybackProgress={onMediaProgress}
+                  loadOnMount
+                />
+              </div>
+            ) : null}
+
+            {isVideo ? (
+              <div className="mt-8 mb-8">
+                <PublicArticleVideoPlayer
+                  articleId={article.id}
+                  title={displayTitle}
+                  posterUrl={posterUrl}
+                  coverImage={article.cover_image}
+                  videoPoster={article.video_poster}
+                  onVideoProgress={onMediaProgress}
+                />
+                <ArticleMetaFacts
+                  label={categoryLabel}
+                  date={publishedLabel}
+                  belowMedia
+                />
+              </div>
+            ) : coverUrl ? (
+              <figure className="article-cover-block mt-8 mb-8">
+                <PublicArticleCover
+                  article={article}
+                  alt={coverCaption || displayTitle}
+                  priority
+                  className="article-cover-block__image aspect-video w-full object-cover"
+                />
+                <ArticleMetaFacts
+                  label={categoryLabel}
+                  date={publishedLabel}
+                  belowMedia
+                />
+                {coverCaption ? (
+                  <figcaption className="article-cover-caption">
+                    {coverCaption}
+                  </figcaption>
+                ) : null}
+              </figure>
+            ) : isAudio ? (
+              <div className="mt-8 mb-8">
+                <div className="relative aspect-video overflow-hidden rounded-2xl bg-muted">
+                  <PodcastAudioPlayer
+                    seed={article.id}
+                    variant="cover"
+                    interactive={false}
+                    className="size-full min-h-[12rem]"
+                  />
+                </div>
+                <ArticleMetaFacts
+                  label={categoryLabel}
+                  date={publishedLabel}
+                  belowMedia
+                />
+              </div>
+            ) : null}
+
             <div
               className="article-content"
               dir={contentDir}
               lang={contentLang}
             >
-              {englishPending ? (
-                <PublicArticleEnglishPendingPanel className="mt-6" />
-              ) : (
-                <>
-                  <h1 className="mt-4 font-headline text-3xl font-bold md:text-4xl">
-                    <span className="inline-flex flex-wrap items-center gap-2.5">
-                      <span>
-                        <ArticleEntityBody
-                          text={displayArticle.title}
-                          entities={displayArticle.entities}
-                          tone="heading"
-                        />
-                      </span>
-                      <ArticleVerifiedBadge article={article} />
-                    </span>
-                  </h1>
-
-                  {displayArticle.description &&
-                  body !== displayArticle.description ? (
-                    <p className="mt-4 text-lg text-muted-foreground">
-                      <ArticleEntityBody
-                        text={displayArticle.description}
-                        entities={displayArticle.entities}
-                      />
-                    </p>
-                  ) : null}
-                </>
-              )}
-
               {showLangToggle && (
                 <div className="mt-6 flex flex-wrap gap-2">
                   <Button
@@ -407,6 +476,7 @@ function ArticlePageContent({
                     coverUrl={coverUrl ?? undefined}
                     showSourceLink
                     onPlaybackProgress={onMediaProgress}
+                    loadOnMount
                   />
                 </div>
               ) : null}

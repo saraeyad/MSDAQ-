@@ -217,18 +217,62 @@ export function dateToOffsetIso(date: Date): string {
   return `${format(date, "yyyy-MM-dd'T'HH:mm:ss")}${timezoneOffset(date)}`;
 }
 
+/** Absolute instant for APIs that store UTC and drop timezone offsets. */
+export function dateToUtcIso(date: Date): string {
+  return date.toISOString();
+}
+
 export function datetimeLocalToIso(value: string): string {
   const parsed = parseDatetimeLocal(value);
   if (!parsed) return "";
   return dateToOffsetIso(parsed);
 }
 
+const HAS_TIMEZONE = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
+
+/**
+ * Parse an API timestamp to an absolute instant.
+ * Offset / Z strings stay absolute; naive values are treated as UTC
+ * because the backend stores schedule times in UTC.
+ */
+export function parseIsoToDate(iso: string): Date | undefined {
+  if (!iso?.trim()) return undefined;
+
+  const value = iso.trim().includes("T")
+    ? iso.trim()
+    : iso.trim().replace(" ", "T");
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const date = parse(value, "yyyy-MM-dd", new Date());
+    return isValid(date) ? date : undefined;
+  }
+
+  if (
+    !HAS_TIMEZONE.test(value) &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)
+  ) {
+    const stamp = value.length >= 19 ? value.slice(0, 19) : `${value}:00`;
+    const date = new Date(`${stamp}Z`);
+    return isValid(date) ? date : undefined;
+  }
+
+  const date = new Date(value);
+  return isValid(date) ? date : undefined;
+}
+
+/** e.g. 28/9/2026، 12:00 ص — same clock the schedule picker uses. */
+export function formatApiDateTime(iso: string, locale: "ar" | "en" = "ar"): string {
+  const date = parseIsoToDate(iso);
+  if (!date) return "";
+  const datePart = date.toLocaleDateString(locale === "ar" ? "ar" : "en-GB");
+  return `${datePart}، ${formatScheduleTime(date)}`;
+}
+
+/** Convert an API ISO timestamp to a datetime-local string in the user's timezone. */
 export function isoToDatetimeLocal(iso: string): string {
-  const date = new Date(iso);
-  if (!isValid(date)) return "";
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60_000);
-  return local.toISOString().slice(0, 16);
+  const date = parseIsoToDate(iso);
+  if (!date) return "";
+  return format(date, "yyyy-MM-dd'T'HH:mm");
 }
 
 export function openCreateDatetime(date: Date): string {
@@ -269,14 +313,35 @@ export function calendarRangeToOffsetIso(
 }
 
 /** Keep the original clock time while using the calendar day selected by a drop. */
-export function moveToOffsetIso(original: string, droppedOn: Date): string {
-  const originalDate = new Date(original);
+export function moveToOffsetIso(
+  original: string,
+  droppedOn: Date,
+  options?: { preserveClock?: boolean },
+): string {
+  if (!isValid(droppedOn)) return original;
+
   const moved = new Date(droppedOn);
-  moved.setHours(
-    originalDate.getHours(),
-    originalDate.getMinutes(),
-    originalDate.getSeconds(),
-    0,
-  );
+  const preserveClock = options?.preserveClock ?? isMidnightLocal(droppedOn);
+  const originalDate = parseIsoToDate(original);
+
+  if (preserveClock && originalDate) {
+    moved.setHours(
+      originalDate.getHours(),
+      originalDate.getMinutes(),
+      originalDate.getSeconds(),
+      0,
+    );
+  } else {
+    moved.setSeconds(0, 0);
+  }
+
   return dateToOffsetIso(moved);
+}
+
+function isMidnightLocal(date: Date): boolean {
+  return (
+    date.getHours() === 0 &&
+    date.getMinutes() === 0 &&
+    date.getSeconds() === 0
+  );
 }

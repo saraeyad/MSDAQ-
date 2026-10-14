@@ -229,6 +229,7 @@ export function CalendarGrid({
       plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
       locale={arLocale}
       direction="rtl"
+      timeZone="local"
       initialView="dayGridMonth"
       fixedWeekCount={false}
       showNonCurrentDates

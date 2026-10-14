@@ -84,7 +84,6 @@ export function PermissionPicker({
         </span>
       </div>
 
-      {/* Explicit responsive columns — category cards side by side */}
       <div
         className={cn(
           "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4",
@@ -102,21 +101,15 @@ export function PermissionPicker({
           return (
             <section
               key={groupKey}
-              className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm"
+              className="admin-permission-column"
               style={{ ["--perm-accent" as string]: accent }}
             >
-              <header
-                className="flex items-start justify-between gap-2 border-b border-border/60 px-4 py-3"
-                style={{
-                  borderInlineStart: `3px solid ${accent}`,
-                  background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 14%, white) 0%, #fff 72%)`,
-                }}
-              >
+              <header className="admin-permission-column__header">
                 <div className="min-w-0">
-                  <p className="font-headline text-sm font-bold text-foreground">
+                  <p className="admin-permission-column__title">
                     {permissionGroupLabel(groupKey)}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  <p className="admin-permission-column__count">
                     {groupSelected}/{perms.length} صلاحية
                   </p>
                 </div>
@@ -135,7 +128,7 @@ export function PermissionPicker({
                 ) : null}
               </header>
 
-              <div className="flex flex-1 flex-col gap-1.5 p-3">
+              <div className="admin-permission-column__list">
                 {perms.map((perm) => {
                   const active = selected.includes(perm);
                   return (
@@ -146,31 +139,18 @@ export function PermissionPicker({
                       onClick={() => toggle(perm)}
                       title={perm}
                       className={cn(
-                        "flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-start transition-colors",
-                        active
-                          ? "border-transparent text-foreground shadow-sm"
-                          : "border-border/70 bg-muted/30 text-muted-foreground hover:border-border hover:bg-background hover:text-foreground",
+                        "admin-permission-chip",
+                        active && "admin-permission-chip-active",
                         disabled && "cursor-not-allowed opacity-50",
                       )}
-                      style={
-                        active
-                          ? {
-                              background: `color-mix(in srgb, ${accent} 14%, white)`,
-                              borderColor: `color-mix(in srgb, ${accent} 40%, #e5e7eb)`,
-                            }
-                          : undefined
-                      }
                     >
                       <span
-                        className="size-2 shrink-0 rounded-full"
-                        style={{
-                          backgroundColor: active ? accent : "#d1d5db",
-                          boxShadow: active
-                            ? `0 0 0 3px color-mix(in srgb, ${accent} 22%, transparent)`
-                            : undefined,
-                        }}
+                        className={cn(
+                          "admin-permission-chip__dot",
+                          active && "admin-permission-chip__dot--on",
+                        )}
                       />
-                      <span className="min-w-0 text-xs font-semibold leading-snug">
+                      <span className="admin-permission-chip__label">
                         {permissionLabel(perm)}
                       </span>
                     </button>

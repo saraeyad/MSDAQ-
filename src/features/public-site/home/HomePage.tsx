@@ -1,17 +1,30 @@
-import { HomeArticleCard } from "@/features/public-site/home/HomeArticleCard";
+import { HomeBbcFrontpage } from "@/features/public-site/home/HomeBbcFrontpage";
+import { HomeBandMoreLink } from "@/features/public-site/home/HomeBandMoreLink";
+import { HomeFilterBoard } from "@/features/public-site/home/HomeFilterBoard";
 import { HomeHero } from "@/features/public-site/home/HomeHero";
+import { PublicPageHead } from "@/components/seo/PublicPageHead";
 import { useLocale, usePublicCopy } from "@/context/locale";
+import { useSiteOrigin } from "@/context/site-origin";
+import { siteLogoUrl } from "@/lib/seo/site-url";
 import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import { usePublicCategories } from "@/hooks/public";
-import { buildParentSlugMap } from "@/lib/publishing";
+import {
+  getDeskLayout,
+  splitFrontPack,
+  frontPackArticleIds,
+  partitionFrontStack,
+} from "@/features/public-site/home/home-feed-layout";
 import { cn } from "@/lib/utils";
 import { Articles_APIs } from "@/services/api/articles";
 import { PublicCategories_APIs } from "@/services/api/public-categories";
 import type { PublicArticle } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
+import { categoryPath } from "@/router/routes";
 
-const MOBILE_CARD_LIMIT = 6;
+const MOBILE_CARD_LIMIT = 10;
+const ALL_FEED_LIMIT = 24;
+const ALL_FEED_MOBILE = 16;
 const DESKTOP_CARD_MQ = "(min-width: 768px)";
 
 function subscribeDesktopCards(onChange: () => void) {
@@ -30,41 +43,75 @@ const NewsSlider = lazy(() =>
   })),
 );
 
-function matchesFilter(
-  article: PublicArticle,
-  filterId: string,
-  slugSets: Map<string, Set<string>>,
-): boolean {
-  if (filterId === "all") return true;
-  const articleSlug = article.category?.slug?.trim();
-  if (articleSlug) {
-    const allowedSlugs = slugSets.get(filterId);
-    if (allowedSlugs?.has(articleSlug) || articleSlug === filterId) {
-      return true;
+function uniqueArticles(groups: PublicArticle[][]): PublicArticle[] {
+  const seen = new Set<string>();
+  const items: PublicArticle[] = [];
+  for (const group of groups) {
+    for (const article of group) {
+      const id = String(article.id);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      items.push(article);
     }
   }
-  return false;
+  return items;
 }
 
-function cardLayout(index: number) {
-  if (index === 0)
-    return { featured: true, wide: false, className: "sm:col-span-2" };
-  if (index === 3)
-    return { featured: false, wide: true, className: "lg:col-span-2" };
-  return { featured: false, wide: false, className: "" };
+function byPublishedAt(a: PublicArticle, b: PublicArticle) {
+  return (
+    new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+  );
+}
+
+function HomeFeedSkeleton() {
+  return (
+    <div className="home-feed-skeleton" aria-hidden>
+      <div className="home-bbc-frontpage home-bbc-frontpage--skeleton">
+        <div className="home-feed-skeleton__stack-row" />
+        <div className="home-feed-skeleton__lead" />
+        <div className="home-feed-skeleton__stack-row" />
+      </div>
+      <div className="home-feed-skeleton__grid">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="home-feed-skeleton__card" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HomeFilterSkeleton() {
+  return (
+    <div className="home-feed-skeleton home-feed-skeleton--desks" aria-hidden>
+      <div className="home-feed-skeleton__grid">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="home-feed-skeleton__card" />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function HomePage() {
+  const [expandedMobile, setExpandedMobile] = useState(false);
+  const [expandedFilter, setExpandedFilter] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
   const isDesktop = useSyncExternalStore(
     subscribeDesktopCards,
     desktopCardsSnapshot,
     () => false,
   );
   const { data: categories = [] } = usePublicCategories();
-  const { home } = usePublicCopy();
+  const copy = usePublicCopy();
+  const { brand, home } = copy;
   const { locale } = useLocale();
+  const origin = useSiteOrigin();
+  const homeHead = {
+    title: brand.name,
+    canonical: origin,
+    ogType: "website",
+    ogImage: siteLogoUrl(origin),
+  };
 
   const filters = useMemo(
     () => [
@@ -77,45 +124,101 @@ export default function HomePage() {
     [categories, home.allFilter, locale],
   );
 
-  const parentSlugMap = useMemo(
-    () => buildParentSlugMap(categories),
-    [categories],
-  );
-
   const { data: latestData, isLoading: latestLoading } = useQuery({
     queryKey: ["home-articles", locale],
     queryFn: () => Articles_APIs.list({ latest: true, lang: locale }),
   });
 
-  const { data: categoryFeed, isLoading: categoryLoading } = useQuery({
-    queryKey: ["public-category", locale, activeFilter, 1],
-    queryFn: () => PublicCategories_APIs.getBySlug(activeFilter, 1, locale),
-    enabled: activeFilter !== "all",
+  const deskQueries = useQueries({
+    queries: categories.map((category) => ({
+      queryKey: ["home-desk", locale, category.slug],
+      queryFn: () => PublicCategories_APIs.getBySlug(category.slug, 1, locale),
+      enabled: categories.length > 0,
+    })),
   });
 
   const articles = latestData?.items ?? [];
-  const categoryArticles = categoryFeed?.articles ?? [];
-  const isGridLoading =
-    activeFilter === "all" ? latestLoading : categoryLoading;
+  const isFrontLoading = latestLoading;
+
+  const frontPackSource = useMemo(() => {
+    if (isDesktop || expandedMobile) return articles;
+    return articles.slice(0, MOBILE_CARD_LIMIT);
+  }, [articles, isDesktop, expandedMobile]);
+
+  const frontPack = useMemo(
+    () => splitFrontPack(frontPackSource),
+    [frontPackSource],
+  );
+
+  const frontPackIds = useMemo(
+    () => frontPackArticleIds(frontPack),
+    [frontPack],
+  );
+
+  const frontPromoArticles = useMemo(() => {
+    if (frontPack.stack.length === 0) return [];
+    return partitionFrontStack(frontPack.stack).promos;
+  }, [frontPack.stack]);
+
+  const activeDeskIndex = categories.findIndex(
+    (category) => category.slug === activeFilter,
+  );
+  const activeDeskQuery =
+    activeFilter === "all" ? undefined : deskQueries[activeDeskIndex];
+  const activeLayout =
+    activeFilter === "all"
+      ? "grid"
+      : getDeskLayout(activeFilter, categories);
 
   const filteredArticles = useMemo(() => {
-    if (activeFilter === "all") return articles;
-    if (categoryArticles.length > 0) return categoryArticles;
-    return articles.filter((article) =>
-      matchesFilter(article, activeFilter, parentSlugMap),
-    );
-  }, [activeFilter, articles, categoryArticles, parentSlugMap]);
+    if (activeFilter === "all") {
+      return uniqueArticles([
+        articles,
+        ...deskQueries.map((query) => query.data?.articles ?? []),
+      ])
+        .filter((article) => !frontPackIds.has(String(article.id)))
+        .sort(byPublishedAt);
+    }
+    return activeDeskQuery?.data?.articles ?? [];
+  }, [activeFilter, articles, deskQueries, frontPackIds, activeDeskQuery]);
 
-  const showAllMobile = expandedFilter === activeFilter;
+  const olderPromoPool = useMemo(() => {
+    return [...filteredArticles].sort(
+      (a, b) =>
+        new Date(a.published_at).getTime() - new Date(b.published_at).getTime(),
+    );
+  }, [filteredArticles]);
+
+  const isFilterLoading =
+    activeFilter !== "all" &&
+    Boolean(activeDeskQuery?.isPending) &&
+    filteredArticles.length === 0;
+
+  const feedLimit =
+    isDesktop || expandedFilter
+      ? ALL_FEED_LIMIT
+      : ALL_FEED_MOBILE;
   const visibleArticles =
-    isDesktop || showAllMobile
-      ? filteredArticles
-      : filteredArticles.slice(0, MOBILE_CARD_LIMIT);
-  const canShowMore =
-    !isDesktop && !showAllMobile && filteredArticles.length > MOBILE_CARD_LIMIT;
+    activeFilter === "all"
+      ? filteredArticles.slice(0, feedLimit)
+      : filteredArticles;
+  const canShowMoreFront =
+    !isDesktop && !expandedMobile && articles.length > MOBILE_CARD_LIMIT;
+  const canShowMoreFilter =
+    activeFilter === "all" &&
+    !isDesktop &&
+    !expandedFilter &&
+    filteredArticles.length > ALL_FEED_MOBILE;
+
+  const hasFrontPack = Boolean(frontPack.lead) || frontPack.stack.length > 0;
+  const activeLabel =
+    filters.find((filter) => filter.id === activeFilter)?.label ?? activeFilter;
+  const desksLoading =
+    categories.length > 0 && deskQueries.some((query) => query.isPending);
 
   return (
     <div>
+      <PublicPageHead head={homeHead} />
       <HomeHero />
 
       <section className="home-news-rail" aria-label={home.nowLabel}>
@@ -132,102 +235,95 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section
-        className="home-latest relative overflow-hidden py-10 md:py-14"
-        aria-labelledby="home-latest-title"
-      >
+      <section className="home-latest relative overflow-hidden py-8 md:py-10">
         <div className="pointer-events-none absolute inset-0 news-section-bg" />
 
         <div className="container-page relative">
-          <div className="home-latest-masthead">
-            <span className="home-latest-masthead__corner home-latest-masthead__corner--tl" />
-            <span className="home-latest-masthead__corner home-latest-masthead__corner--tr" />
-            <span className="home-latest-masthead__corner home-latest-masthead__corner--bl" />
-            <span className="home-latest-masthead__corner home-latest-masthead__corner--br" />
-
-            <h2 id="home-latest-title" className="home-latest-masthead__title">
-              <span className="home-latest-masthead__title-line">
-                {home.latestTitleLine}
-              </span>
-              <span className="home-latest-masthead__title-accent">
-                {home.latestTitleAccent}
-              </span>
-            </h2>
-
-            <span className="home-latest-masthead__rule" aria-hidden />
-
-            <p className="home-latest-masthead__lead">{home.latestLead}</p>
-          </div>
-
-          {articles.length > 0 && (
-            <nav className="home-latest-filters" aria-label={home.latestTitle}>
-              {filters.map((filter) => {
-                const active = activeFilter === filter.id;
-                return (
-                  <button
-                    key={filter.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveFilter(filter.id);
-                      setExpandedFilter(null);
-                    }}
-                    className={cn(
-                      "home-latest-filters__item",
-                      active && "home-latest-filters__item--active",
-                    )}
-                  >
-                    {filter.label}
-                  </button>
-                );
-              })}
-            </nav>
-          )}
-
-          <div className="mt-10">
-            {isGridLoading ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      "min-h-[280px] animate-pulse rounded-2xl bg-muted/80",
-                      i === 0 && "sm:col-span-2",
-                      i === 3 && "lg:col-span-2",
-                    )}
-                  />
-                ))}
-              </div>
-            ) : articles.length === 0 ? null : filteredArticles.length === 0 ? (
-              <p className="py-16 text-center text-muted-foreground">
-                {activeFilter !== "all"
-                  ? home.filterEmpty(
-                      filters.find((f) => f.id === activeFilter)?.label ??
-                        activeFilter,
-                    )
-                  : home.noFilterMatch}
-              </p>
-            ) : (
+          <div>
+            {isFrontLoading ? (
+              <HomeFeedSkeleton />
+            ) : articles.length === 0 ? null : (
               <>
-                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleArticles.map((article, index) => {
-                    const layout = cardLayout(index);
-                    return (
-                      <HomeArticleCard
-                        key={article.id}
-                        article={article}
-                        index={index}
-                        featured={layout.featured}
-                        wide={layout.wide}
-                        className={layout.className}
+                <div className="home-feed home-news-board">
+                  {hasFrontPack ? (
+                    <HomeBbcFrontpage frontPack={frontPack} />
+                  ) : null}
+
+                  {filters.length > 1 ? (
+                    <nav
+                      className="home-latest-filters home-latest-filters--split"
+                      aria-label={home.latestTitle}
+                    >
+                      {filters.map((filter) => {
+                        const active = activeFilter === filter.id;
+                        return (
+                          <button
+                            key={filter.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveFilter(filter.id);
+                              setExpandedFilter(false);
+                            }}
+                            className={cn(
+                              "home-latest-filters__item",
+                              active && "home-latest-filters__item--active",
+                            )}
+                          >
+                            {filter.label}
+                          </button>
+                        );
+                      })}
+                    </nav>
+                  ) : null}
+
+                  {isFilterLoading ||
+                  (activeFilter === "all" && desksLoading && visibleArticles.length === 0) ? (
+                    <HomeFilterSkeleton />
+                  ) : visibleArticles.length === 0 ? (
+                    <p className="home-filter-empty">
+                      {activeFilter === "all"
+                        ? home.noFilterMatch
+                        : home.filterEmpty(activeLabel)}
+                    </p>
+                  ) : (
+                    <div
+                      key={activeFilter}
+                      className={cn(
+                        "home-filter-stage",
+                        activeLayout === "audio" && "home-filter-stage--audio",
+                      )}
+                    >
+                      <HomeFilterBoard
+                        articles={visibleArticles}
+                        layout={activeLayout}
+                        frontPromos={
+                          activeFilter === "all" ? frontPromoArticles : []
+                        }
+                        olderPromoPool={olderPromoPool}
                       />
-                    );
-                  })}
+                      {activeFilter !== "all" ? (
+                        <HomeBandMoreLink
+                          to={categoryPath(activeFilter)}
+                          label={home.moreInSection(activeLabel)}
+                        />
+                      ) : null}
+                    </div>
+                  )}
                 </div>
-                {canShowMore ? (
+                {canShowMoreFront ? (
                   <button
                     type="button"
                     className="home-latest-more"
-                    onClick={() => setExpandedFilter(activeFilter)}
+                    onClick={() => setExpandedMobile(true)}
+                  >
+                    {home.showMore}
+                  </button>
+                ) : null}
+                {canShowMoreFilter ? (
+                  <button
+                    type="button"
+                    className="home-latest-more"
+                    onClick={() => setExpandedFilter(true)}
                   >
                     {home.showMore}
                   </button>

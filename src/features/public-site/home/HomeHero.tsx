@@ -4,7 +4,7 @@ import { Circle } from "lucide-react";
 import { useEffect } from "react";
 
 const HERO_IMAGE = "/images/hero-people.webp";
-const HERO_FALLBACK = "/images/hero-verification.webp";
+const HERO_FALLBACK = "/images/hero-people.jpg";
 
 export function HomeHero() {
   const copy = usePublicCopy();
@@ -18,11 +18,11 @@ export function HomeHero() {
     <section className="home-cinematic-hero" aria-labelledby="home-hero-title">
       <div className="home-cinematic-hero__bg" aria-hidden>
         <img
-          src={HERO_IMAGE}
+          src={`${HERO_IMAGE}?v=2`}
           alt=""
           className="home-cinematic-hero__photo"
-          width={1600}
-          height={1067}
+          width={1280}
+          height={292}
           sizes="100vw"
           loading="eager"
           fetchPriority="high"
@@ -63,18 +63,7 @@ export function HomeHero() {
 
           <p className="home-cinematic-hero__brand">{hero.brandLine}</p>
           <p className="home-cinematic-hero__lead">{hero.lead}</p>
-          {/* <div className="home-cinematic-hero__actions" aria-hidden /> */}
         </div>
-      </div>
-
-      <div className="home-cinematic-hero__center-logo">
-        <span className="home-cinematic-hero__center-logo-grain" aria-hidden />
-        <img
-          src="/brand/cdmc.webp?v=3"
-          alt={hero.brandLine}
-          loading="lazy"
-          decoding="async"
-        />
       </div>
 
       <div className="home-cinematic-hero__spine" aria-hidden>

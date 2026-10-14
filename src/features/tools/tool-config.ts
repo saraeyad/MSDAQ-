@@ -78,7 +78,7 @@ export const TOOL_REGISTRY: ToolConfigEntry[] = [
   {
     slug: "credibility-check",
     label: "فحص المصداقية",
-    description: "هذه الخدمة غير متاحة حاليا",
+    description: "فحص ادعاءات النص ودرجة المصداقية",
     icon: BookOpen,
     permission: PERMISSIONS.RUN_CREDIBILITY_CHECK,
     category: "editorial",
@@ -137,7 +137,6 @@ export function getToolBySlug(slug: string | undefined): ToolConfigEntry | undef
 
 /** First five public cards — same count as the original homepage kit. */
 export const HOME_PREVIEW_TOOL_SLUGS = [
-  "credibility-check",
   "reverse-image",
   "ai-detection",
   "domain-checker",

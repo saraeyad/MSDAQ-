@@ -44,16 +44,17 @@ export type PublicCopy = {
   home: {
     latestBadge: string;
     latestTitle: string;
-    latestTitleLine: string;
-    latestTitleAccent: string;
     latestKicker: [string, string, string];
-    latestLead: string;
     nowLabel: string;
     allFilter: string;
     noArticles: string;
     noFilterMatch: string;
     filterEmpty: (label: string) => string;
     showMore: string;
+    more: string;
+    moreInSection: (label: string) => string;
+    morePodcasts: string;
+    podcastsTitle: string;
     toolsKicker: [string, string, string];
     toolsTitleLine: string;
     toolsTitleAccent: string;
@@ -95,6 +96,10 @@ export type PublicCopy = {
     switchTo: string;
     current: string;
     comingSoon: string;
+  };
+  theme: {
+    switchToDark: string;
+    switchToLight: string;
   };
   pageHero: {
     articles: string;
@@ -173,16 +178,17 @@ const ar: PublicCopy = {
   home: {
     latestBadge: "أحدث المحتوى",
     latestTitle: "استكشف الأخبار والتحققات",
-    latestTitleLine: "استكشف الأخبار",
-    latestTitleAccent: "تحقق أوضح",
     latestKicker: ["قصص", "تحقق", "غزة"],
-    latestLead: "تصفّح أحدث عشرة مقالات من المنصة",
     nowLabel: "الآن",
     allFilter: "الكل",
     noArticles: "لا توجد مقالات منشورة حالياً.",
     noFilterMatch: "لا توجد مقالات مطابقة لهذا الفلتر.",
     filterEmpty: (label) => `لا توجد مقالات في «${label}».`,
     showMore: "عرض المزيد",
+    more: "المزيد",
+    moreInSection: (label) => `المزيد في ${label}`,
+    morePodcasts: "المزيد من البودكاست",
+    podcastsTitle: "بودكاست",
     toolsKicker: ["تحقق", "صور", "صوت"],
     toolsTitleLine: "أدواتنا.",
     toolsTitleAccent: "للتحقق من الأخبار.",
@@ -226,6 +232,10 @@ const ar: PublicCopy = {
     switchTo: "English",
     current: "العربية",
     comingSoon: "الترجمة قيد الإعداد",
+  },
+  theme: {
+    switchToDark: "الوضع الداكن",
+    switchToLight: "الوضع الفاتح",
   },
   pageHero: {
     articles: "المقالات",
@@ -331,16 +341,17 @@ const en: PublicCopy = {
   home: {
     latestBadge: "Latest",
     latestTitle: "Explore news & verification",
-    latestTitleLine: "Explore the news.",
-    latestTitleAccent: "Clearer verification.",
     latestKicker: ["Stories", "Verify", "Gaza"],
-    latestLead: "Browse the ten most recent articles on the platform",
     nowLabel: "Now",
     allFilter: "All",
     noArticles: "No published articles yet.",
     noFilterMatch: "No articles match this filter.",
     filterEmpty: (label) => `No articles in “${label}”.`,
     showMore: "Show more",
+    more: "More",
+    moreInSection: (label) => `More in ${label}`,
+    morePodcasts: "More from the podcasts",
+    podcastsTitle: "Podcasts",
     toolsKicker: ["Verify", "Images", "Audio"],
     toolsTitleLine: "Our tools.",
     toolsTitleAccent: "For checking the news.",
@@ -385,6 +396,10 @@ const en: PublicCopy = {
     switchTo: "العربية",
     current: "English",
     comingSoon: "Translation coming soon",
+  },
+  theme: {
+    switchToDark: "Dark mode",
+    switchToLight: "Light mode",
   },
   pageHero: {
     articles: "Articles",

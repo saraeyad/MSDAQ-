@@ -4,26 +4,33 @@ import {
   isEnglishArticlePending,
   PublicArticleEnglishPendingBadge,
 } from "@/features/public-site/components/PublicArticleEnglishPending";
-import { ArticleTranslateButton } from "@/features/public-site/article-page/ArticleTranslateButton";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import { localizedCategoryName } from "@/lib/i18n/localized-category";
 import { publicMediaTypeLabelFromCopy } from "@/lib/i18n/public-media-labels";
-import { publicArticleCoverUrl } from "@/lib/media";
+import { publicArticleCoverUrl, readPlaybackPosition } from "@/lib/media";
 import { cn } from "@/lib/utils";
 import { articlePath } from "@/router/routes";
 import type { PublicArticle, PublicMediaType } from "@/types";
-import { ArrowLeft, ArrowRight, FileText, Mic, Play, Video } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  FileText,
+  Mic,
+  Play,
+  Video,
+} from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
+
+const PublicArticleVideoPlayer = lazy(() =>
+  import("@/features/public-site/components/PublicArticleVideoPlayer").then(
+    (module) => ({ default: module.PublicArticleVideoPlayer }),
+  ),
+);
 
 const PublicArticleAudioPlayer = lazy(() =>
   import("@/features/public-site/components/PublicArticleAudioPlayer").then(
     (module) => ({ default: module.PublicArticleAudioPlayer }),
-  ),
-);
-const PublicArticleVideoPlayer = lazy(() =>
-  import("@/features/public-site/components/PublicArticleVideoPlayer").then(
-    (module) => ({ default: module.PublicArticleVideoPlayer }),
   ),
 );
 
@@ -33,22 +40,77 @@ const MEDIA_ICONS: Record<PublicMediaType, typeof FileText> = {
   video: Video,
 };
 
+type HomeArticleCardVariant =
+  | "default"
+  | "podcast"
+  | "editorialHero"
+  | "editorialSide"
+  | "editorialText";
+
+/** Lead + body split for the home hero card excerpt. */
+function splitHeroExcerpt(description: string): {
+  lead: string;
+  body: string;
+} | null {
+  const text = description.replace(/\s+/g, " ").trim();
+  if (text.length < 40) return null;
+
+  const sentenceMatch = text.match(/^(.+?[.!?؟…])(?:\s+)([\s\S]+)$/);
+  if (sentenceMatch?.[1] && sentenceMatch[2]?.trim().length >= 18) {
+    return { lead: sentenceMatch[1].trim(), body: sentenceMatch[2].trim() };
+  }
+
+  const commaIdx = text.indexOf("،");
+  if (commaIdx >= 24 && commaIdx <= text.length - 22) {
+    return {
+      lead: text.slice(0, commaIdx + 1).trim(),
+      body: text.slice(commaIdx + 1).trim(),
+    };
+  }
+
+  return null;
+}
+
+function cardEdgeShift(id: PublicArticle["id"], index: number) {
+  const seed = [...String(id)].reduce(
+    (sum, char) => sum + char.charCodeAt(0),
+    index * 13,
+  );
+  const start = 0.15 + (seed % 7) * 0.22;
+  const end = 0.15 + ((seed * 5) % 6) * 0.22;
+  return {
+    marginInlineStart: `${start.toFixed(2)}rem`,
+    marginInlineEnd: `${end.toFixed(2)}rem`,
+  };
+}
+
 interface HomeArticleCardProps {
   article: PublicArticle;
   featured?: boolean;
   wide?: boolean;
+  variant?: HomeArticleCardVariant;
   index?: number;
   className?: string;
+  moreHref?: string | null;
+  moreLabel?: string;
 }
 
 export function HomeArticleCard({
   article,
   featured = false,
   wide = false,
+  variant = "default",
   index = 0,
   className,
+  moreHref,
+  moreLabel,
 }: HomeArticleCardProps) {
   const [mediaStarted, setMediaStarted] = useState(false);
+  const [audioOpen, setAudioOpen] = useState(
+    () => readPlaybackPosition(article.id) >= 1,
+  );
+  const [audioAutoPlay, setAudioAutoPlay] = useState(false);
+  const canResumeAudio = readPlaybackPosition(article.id) >= 1;
   const { locale, dir } = useLocale();
   const CtaArrow = dir === "rtl" ? ArrowLeft : ArrowRight;
   const copy = usePublicCopy();
@@ -64,79 +126,304 @@ export function HomeArticleCard({
   const isVideo = article.media_type === "video";
   const articleHref = articlePath(article.id);
   const posterUrl = publicArticleCoverUrl(article);
+  const edgeShift = cardEdgeShift(article.id, index);
+
+  if (variant === "podcast") {
+    return (
+      <article
+        style={{ animationDelay: `${index * 40}ms` }}
+        className={cn("home-podcast news-card-enter group", className)}
+      >
+        <Link to={articleHref} className="home-podcast__cover">
+          <PublicArticleCover
+            article={article}
+            className="home-card-cover--fit"
+          />
+          <span className="home-podcast__wave-scrim" aria-hidden>
+            <svg
+              className="home-podcast__wave-svg"
+              viewBox="0 0 320 28"
+              preserveAspectRatio="none"
+            >
+              <path
+                fill="currentColor"
+                d="M0,14 C40,2 80,26 120,14 S200,2 240,14 280,26 320,14 V28 H0 Z"
+              />
+            </svg>
+          </span>
+        </Link>
+        <div className="home-podcast__body">
+          <div className="home-podcast__top">
+            {moreHref && moreLabel ? (
+              <Link to={moreHref} className="home-podcast__more">
+                {moreLabel}
+                <CtaArrow className="size-3.5" />
+              </Link>
+            ) : null}
+          </div>
+          <Link to={articleHref} className="home-podcast__title">
+            {englishPending ? (
+              <PublicArticleEnglishPendingBadge />
+            ) : (
+              <span className="inline-flex flex-wrap items-center gap-2">
+                {article.title}
+                <ArticleVerifiedBadge article={article} />
+              </span>
+            )}
+          </Link>
+          {!englishPending && article.description ? (
+            <p className="home-podcast__deck">{article.description}</p>
+          ) : null}
+          <div className="home-podcast__foot">
+            <p className="home-podcast__meta">
+              <time dateTime={article.published_at}>
+                {new Date(article.published_at).toLocaleDateString(dateLocale)}
+              </time>
+              <span className="home-podcast__meta-sep" aria-hidden>
+                |
+              </span>
+              <span className="home-podcast__meta-category">{badge}</span>
+            </p>
+            <span className="home-podcast__play-cluster">
+              {audioOpen ? null : (
+                <span className="home-podcast__waveform" aria-hidden>
+                  <span className="home-podcast__waveform-bar" />
+                  <span className="home-podcast__waveform-bar" />
+                  <span className="home-podcast__waveform-bar" />
+                  <span className="home-podcast__waveform-bar" />
+                  <span className="home-podcast__waveform-bar" />
+                </span>
+              )}
+              <button
+                type="button"
+                className="home-card-listen home-card-listen--inline"
+                onClick={() => {
+                  setAudioAutoPlay(true);
+                  setAudioOpen(true);
+                }}
+              >
+                <Play className="size-4 fill-current" />
+                {canResumeAudio ? common.resumePlayback : common.listenNow}
+              </button>
+            </span>
+          </div>
+          {audioOpen ? (
+            <Suspense fallback={null}>
+              <PublicArticleAudioPlayer
+                key={audioAutoPlay ? "play" : "hold"}
+                articleId={article.id}
+                variant="inline"
+                className="home-podcast__player"
+                loadOnMount
+                startOnMount={audioAutoPlay}
+              />
+            </Suspense>
+          ) : null}
+        </div>
+      </article>
+    );
+  }
+
+  if (
+    variant === "editorialHero" ||
+    variant === "editorialSide" ||
+    variant === "editorialText"
+  ) {
+    const isHero = variant === "editorialHero";
+    const isText = variant === "editorialText";
+    const publishedLabel = new Date(article.published_at).toLocaleDateString(
+      dateLocale,
+    );
+    const heroExcerpt =
+      isHero && article.description
+        ? splitHeroExcerpt(article.description)
+        : null;
+
+    return (
+      <article
+        style={{ animationDelay: `${index * 50}ms` }}
+        className={cn(
+          "home-editorial news-card-enter group",
+          isHero && "home-editorial--hero",
+          variant === "editorialSide" && "home-editorial--side",
+          isText && "home-editorial--text",
+          className,
+        )}
+      >
+        {!isText ? (
+          <div className="home-editorial__media">
+            <Link
+              to={articleHref}
+              className={cn(
+                "home-editorial__media-frame",
+                isHero
+                  ? "home-editorial__media-frame--hero"
+                  : "home-editorial__media-frame--side",
+              )}
+            >
+              <PublicArticleCover
+                article={article}
+                priority={isHero || index === 0}
+                className="home-card-cover--fit home-card-cover--fill"
+              />
+            </Link>
+            {!isHero ? (
+              <span className="home-editorial__kicker">{badge}</span>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="home-editorial__body">
+          {moreHref && moreLabel ? (
+            <Link to={moreHref} className="home-editorial__section-more">
+              {moreLabel}
+            </Link>
+          ) : null}
+
+          <div className="home-editorial__lead">
+            <Link to={articleHref} className="home-editorial__title-link">
+              <h3
+                className={cn(
+                  "home-editorial__title",
+                  isHero && "home-editorial__title--hero",
+                )}
+              >
+                {englishPending ? (
+                  <PublicArticleEnglishPendingBadge />
+                ) : (
+                  <span className="home-editorial__title-text">
+                    {article.title}
+                  </span>
+                )}
+              </h3>
+            </Link>
+
+            {!englishPending ? (
+              <ArticleVerifiedBadge
+                article={article}
+                compact
+                className="home-editorial__verified"
+              />
+            ) : null}
+          </div>
+
+          {!englishPending && article.description ? (
+            isHero &&
+            heroExcerpt &&
+            heroExcerpt.body.trim().length >= 18 ? (
+              <div className="home-editorial__excerpt home-editorial__excerpt--hero">
+                <p className="home-editorial__summary-lead">
+                  {heroExcerpt.lead}
+                </p>
+                <p className="home-editorial__hero-copy">{heroExcerpt.body}</p>
+              </div>
+            ) : (
+              <p
+                className={cn(
+                  "home-editorial__summary",
+                  isHero
+                    ? "home-editorial__summary--hero-single home-editorial__summary-lead"
+                    : "line-clamp-2",
+                )}
+              >
+                {article.description}
+              </p>
+            )
+          ) : null}
+
+          <p className="home-editorial__meta">
+            <time
+              className="home-editorial__meta-date"
+              dateTime={article.published_at}
+            >
+              {publishedLabel}
+            </time>
+            <span className="home-editorial__meta-sep" aria-hidden>
+              |
+            </span>
+            <span className="home-editorial__meta-category">{badge}</span>
+          </p>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article
-      style={{ animationDelay: `${index * 60}ms` }}
+      style={{ animationDelay: `${index * 60}ms`, ...edgeShift }}
       className={cn(
         "news-card-enter group relative flex overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border/50 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:ring-primary/25",
         wide ? "flex-col lg:flex-row" : "flex-col",
-        featured ? "min-h-[320px] lg:min-h-[360px]" : "min-h-[280px]",
+        featured ? "min-h-[300px] lg:min-h-[320px]" : "min-h-[260px]",
         className,
       )}
     >
       <div
         className={cn(
-          "relative shrink-0 overflow-hidden",
-          wide ? "h-44 lg:h-auto lg:w-2/5" : featured ? "h-48" : "h-36",
+          "home-card-media shrink-0",
+          wide && "home-card-media--wide lg:w-2/5",
+          featured && "home-card-media--featured",
         )}
       >
-        {isVideo && mediaStarted ? (
-          <Suspense
-            fallback={
+        <div
+          className={cn(
+            "home-card-media__frame",
+            wide ? "home-card-media__frame--wide" : featured ? "home-card-media__frame--featured" : "home-card-media__frame--default",
+          )}
+        >
+          {isVideo && mediaStarted ? (
+            <Suspense
+              fallback={
+                <PublicArticleCover
+                  article={article}
+                  priority={featured || index === 0}
+                  className="home-card-cover--fit"
+                />
+              }
+            >
+              <PublicArticleVideoPlayer
+                articleId={article.id}
+                title={article.title}
+                posterUrl={posterUrl}
+                coverImage={article.cover_image}
+                fill
+                startOnMount
+                className="size-full"
+              />
+            </Suspense>
+          ) : isVideo ? (
+            <button
+              type="button"
+              className="article-media-poster home-card-media__link"
+              onClick={() => setMediaStarted(true)}
+              aria-label={articleCopy.playVideo(
+                englishPending ? articleCopy.englishPendingTitle : article.title,
+              )}
+            >
               <PublicArticleCover
                 article={article}
                 priority={featured || index === 0}
-                className="size-full object-cover"
+                className="home-card-cover--fit article-media-poster__image"
               />
-            }
-          >
-            <PublicArticleVideoPlayer
-              articleId={article.id}
-              title={article.title}
-              posterUrl={posterUrl}
-              coverImage={article.cover_image}
-              fill
-              startOnMount
-              className="size-full"
-            />
-          </Suspense>
-        ) : isVideo ? (
-          <button
-            type="button"
-            className="article-media-poster absolute inset-0 h-full aspect-auto rounded-none"
-            onClick={() => setMediaStarted(true)}
-            aria-label={articleCopy.playVideo(
-              englishPending ? articleCopy.englishPendingTitle : article.title,
-            )}
-          >
-            <PublicArticleCover
-              article={article}
-              priority={featured || index === 0}
-              className="article-media-poster__image size-full object-cover"
-            />
-            <span className="article-media-poster__scrim" aria-hidden />
-            <span className="article-media-poster__play" aria-hidden>
-              <Play className="size-7 fill-current" />
-            </span>
-          </button>
-        ) : (
-          <Link to={articleHref} className="absolute inset-0 block">
-            <PublicArticleCover
-              article={article}
-              priority={featured || index === 0}
-              className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
-          </Link>
-        )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
-
-        <span className="pointer-events-none absolute top-3 start-3 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground shadow-md">
-          {badge}
-        </span>
-        <span className="pointer-events-none absolute top-3 end-3 flex size-9 items-center justify-center rounded-xl bg-card/90 text-primary shadow-md backdrop-blur-sm">
-          <Icon className="size-4" />
-        </span>
+              <span className="article-media-poster__scrim" aria-hidden />
+              <span className="article-media-poster__play" aria-hidden>
+                <Play className="size-7 fill-current" />
+              </span>
+            </button>
+          ) : (
+            <Link to={articleHref} className="home-card-media__link">
+              <PublicArticleCover
+                article={article}
+                priority={featured || index === 0}
+                className="home-card-cover--fit"
+              />
+            </Link>
+          )}
+          <span className="home-card-media__type pointer-events-none" aria-hidden>
+            <Icon className="size-4" />
+          </span>
+        </div>
+        <span className="home-card-media__category">{badge}</span>
       </div>
 
       <div className="relative flex flex-1 flex-col p-5">
@@ -153,7 +440,7 @@ export function HomeArticleCard({
               <PublicArticleEnglishPendingBadge />
             ) : (
               <span className="inline-flex flex-wrap items-center gap-2">
-                {article.title}
+                <span className="line-clamp-3">{article.title}</span>
                 <ArticleVerifiedBadge article={article} />
               </span>
             )}
@@ -176,32 +463,10 @@ export function HomeArticleCard({
 
         {isAudio ? (
           <div className="relative z-10 mt-auto pt-3">
-            {mediaStarted ? (
-              <Suspense
-                fallback={
-                  <div className="home-card-listen" aria-hidden>
-                    <Play className="size-4 fill-current" />
-                    <span>{common.loading}…</span>
-                  </div>
-                }
-              >
-                <PublicArticleAudioPlayer
-                  articleId={article.id}
-                  variant="inline"
-                  startOnMount
-                  className="w-full"
-                />
-              </Suspense>
-            ) : (
-              <button
-                type="button"
-                className="home-card-listen"
-                onClick={() => setMediaStarted(true)}
-              >
-                <Play className="size-4 fill-current" />
-                {common.listenNow}
-              </button>
-            )}
+            <Link to={articleHref} className="home-card-listen">
+              <Play className="size-4 fill-current" />
+              {common.listenNow}
+            </Link>
           </div>
         ) : null}
 
@@ -209,20 +474,13 @@ export function HomeArticleCard({
           <time className="text-xs text-muted-foreground">
             {new Date(article.published_at).toLocaleDateString(dateLocale)}
           </time>
-          <div className="flex items-center gap-2">
-            <ArticleTranslateButton
-              articleId={article.id}
-              contentLang={locale}
-              compact
-            />
-            <Link
-              to={articleHref}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-all duration-300 group-hover:opacity-100"
-            >
-              {isAudio ? common.listenNow : common.readMore}
-              <CtaArrow className="size-3.5" />
-            </Link>
-          </div>
+          <Link
+            to={articleHref}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-all duration-300 group-hover:opacity-100"
+          >
+            {isAudio ? common.listenNow : common.readMore}
+            <CtaArrow className="size-3.5" />
+          </Link>
         </div>
       </div>
     </article>

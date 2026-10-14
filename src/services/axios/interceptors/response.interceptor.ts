@@ -6,13 +6,18 @@ const SUCCESS_STATUSES = new Set([200, 201, 202, 204]);
 const UNAUTHORIZED_STATUS = 401;
 const FORBIDDEN_STATUS = 403;
 const AUTH_ATTEMPT_PATHS = ["/api/auth/login"];
+const STAFF_PATH = /^\/(newsroom|admin)(\/|$)/;
 
 const endSession = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
-  setTimeout(() => {
-    window.location.href = ROUTES.LOGIN;
-  }, 500);
+  if (typeof window === "undefined") return;
+
+  const path = window.location.pathname;
+  // Public pages, including the landing page, stay put. Login is opened by hand.
+  if (!STAFF_PATH.test(path)) return;
+
+  window.location.assign(ROUTES.LOGIN);
 };
 
 export const setupResponseInterceptor = (axiosInstance: AxiosInstance) => {

@@ -1,6 +1,9 @@
 import {
+  clearPlaybackPosition,
   estimateDurationFromSeed,
   formatAudioTime,
+  readPlaybackPosition,
+  writePlaybackPosition,
 } from "@/lib/media";
 import {
   buildSoundCloudWidgetUrl,
@@ -9,9 +12,18 @@ import {
 } from "@/lib/media";
 import type { TrustMediaProgress } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { useArticleListen } from "@/context/article-listen";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import { ArrowUpLeft, ArrowUpRight, Loader2, Pause, Play } from "lucide-react";
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
+import { ArticleListenDock, ArticleListenRow } from "./ArticleListenDock";
 import { WaveformBars } from "./WaveformBars";
 
 function SoundCloudMark({ className }: { className?: string }) {
@@ -30,7 +42,7 @@ function SoundCloudMark({ className }: { className?: string }) {
   );
 }
 
-type PodcastAudioPlayerVariant = "inline" | "embed" | "cover";
+type PodcastAudioPlayerVariant = "inline" | "embed" | "cover" | "article" | "dock";
 
 interface PodcastAudioPlayerProps {
   seed: number | string;
@@ -48,18 +60,19 @@ interface PodcastAudioPlayerProps {
   autoPlay?: boolean;
   onNeedSource?: () => void;
   sourcePending?: boolean;
+  /** Persist and restore playback position for this article. */
+  resumeId?: number | string;
 }
 
 function waveBarCount(variant: PodcastAudioPlayerVariant) {
   if (variant === "cover") return 88;
-  if (variant === "embed") return 72;
+  if (variant === "embed") return 96;
   return 56;
 }
 
 function waveBarClass(variant: PodcastAudioPlayerVariant) {
-  const isDark = variant === "embed" || variant === "cover";
   return cn(
-    isDark && "waveform-bars--dark",
+    variant === "cover" && "waveform-bars--dark",
     variant === "cover" && "waveform-bars--cover",
     variant === "inline" && "waveform-bars--inline",
     variant === "embed" && "waveform-bars--embed",
@@ -76,10 +89,18 @@ interface WaveformPlayerShellProps {
   isPlaying: boolean;
   currentTime: number;
   durationSeconds: number;
+  durationKnown?: boolean;
+  playbackRate?: number;
+  muted?: boolean;
   playDisabled?: boolean;
   playPending?: boolean;
   onPlayClick: (event: MouseEvent<HTMLButtonElement>) => void;
   onSeek?: (ratio: number) => void;
+  onSeekEnd?: () => void;
+  onSkip?: (seconds: number) => void;
+  onCycleRate?: () => void;
+  onToggleMute?: () => void;
+  onPause?: () => void;
   hiddenBridge?: ReactNode;
   sourceUrl?: string | null;
 }
@@ -94,17 +115,34 @@ function WaveformPlayerShell({
   isPlaying,
   currentTime,
   durationSeconds,
+  durationKnown = false,
+  playbackRate = 1,
+  muted = false,
   playDisabled = false,
   playPending = false,
   onPlayClick,
   onSeek,
+  onSeekEnd,
+  onSkip,
+  onCycleRate,
+  onToggleMute,
+  onPause,
   hiddenBridge,
   sourceUrl,
 }: WaveformPlayerShellProps) {
+  const persist = useArticleListen();
   const { dir } = useLocale();
   const { articleMedia } = usePublicCopy();
   const waveRef = useRef<HTMLDivElement | null>(null);
+  const [dockOpen, setDockOpen] = useState(false);
   const isDark = variant === "embed";
+
+  const dockDismissedRef = useRef(false);
+
+  useEffect(() => {
+    if (variant !== "article" || !isPlaying || dockDismissedRef.current) return;
+    setDockOpen(true);
+  }, [variant, isPlaying]);
   const ExternalArrow = dir === "rtl" ? ArrowUpLeft : ArrowUpRight;
 
   const progress =
@@ -115,18 +153,133 @@ function WaveformPlayerShell({
       ? formatAudioTime(currentTime)
       : formatAudioTime(durationSeconds);
 
-  const handleSeek = (event: MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const seekFromClientX = (clientX: number) => {
     if (!onSeek || !waveRef.current || durationSeconds <= 0) return;
-
     const rect = waveRef.current.getBoundingClientRect();
-    const ratio = Math.max(
-      0,
-      Math.min(1, (event.clientX - rect.left) / rect.width),
-    );
+    if (rect.width <= 0) return;
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     onSeek(ratio);
   };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!onSeek) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    seekFromClientX(event.clientX);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!onSeek || !event.currentTarget.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+    event.preventDefault();
+    seekFromClientX(event.clientX);
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (!onSeek) return;
+    event.stopPropagation();
+    onSeekEnd?.();
+  };
+
+  if (variant === "dock") {
+    return (
+      <>
+        {hiddenBridge}
+        <ArticleListenDock
+          seed={seed}
+          title={title}
+          coverUrl={coverUrl}
+          isPlaying={isPlaying}
+          playPending={playPending}
+          currentTime={currentTime}
+          durationSeconds={durationSeconds}
+          durationKnown={durationKnown}
+          progress={progress}
+          playbackRate={playbackRate}
+          muted={muted}
+          onPlayClick={onPlayClick}
+          onPause={() => onPause?.()}
+          onSeek={onSeek}
+          onSeekEnd={onSeekEnd}
+          onSkip={onSkip}
+          onCycleRate={onCycleRate}
+          onToggleMute={onToggleMute}
+          onClose={() => {
+            onPause?.();
+            persist?.close();
+          }}
+        />
+      </>
+    );
+  }
+
+  if (variant === "article") {
+    return (
+      <div className={className}>
+        {hiddenBridge}
+        <ArticleListenRow
+          isPlaying={isPlaying}
+          playPending={playPending}
+          playDisabled={playDisabled}
+          durationSeconds={durationSeconds}
+          durationKnown={durationKnown}
+          onPlayClick={(event) => {
+            dockDismissedRef.current = false;
+            setDockOpen(true);
+            onPlayClick(event);
+          }}
+        />
+        {dockOpen ? (
+          <ArticleListenDock
+            seed={seed}
+            title={title}
+            coverUrl={coverUrl}
+            isPlaying={isPlaying}
+            playPending={playPending}
+            currentTime={currentTime}
+            durationSeconds={durationSeconds}
+            durationKnown={durationKnown}
+            progress={progress}
+            playbackRate={playbackRate}
+            muted={muted}
+            onPlayClick={onPlayClick}
+            onPause={() => onPause?.()}
+            onSeek={onSeek}
+            onSeekEnd={onSeekEnd}
+            onSkip={onSkip}
+            onCycleRate={onCycleRate}
+            onToggleMute={onToggleMute}
+            onClose={() => {
+              dockDismissedRef.current = true;
+              onPause?.();
+              setDockOpen(false);
+            }}
+          />
+        ) : null}
+        {sourceUrl ? (
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            dir={dir}
+            className="podcast-soundcloud-link"
+            aria-label={articleMedia.listenOnSoundCloud}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="podcast-soundcloud-link__icon">
+              <SoundCloudMark />
+            </span>
+            <span className="podcast-soundcloud-link__label">
+              {articleMedia.listenOnSoundCloud}
+            </span>
+            <ExternalArrow className="podcast-soundcloud-link__arrow" />
+          </a>
+        ) : null}
+      </div>
+    );
+  }
 
   if (variant === "cover") {
     return (
@@ -199,8 +352,10 @@ function WaveformPlayerShell({
             "podcast-player__wave",
             onSeek && "podcast-player__wave--seekable",
           )}
-          onClick={onSeek ? handleSeek : undefined}
-          aria-label={onSeek ? "موجّة الصوت — انقر للانتقال" : undefined}
+          onPointerDown={onSeek ? handlePointerDown : undefined}
+          onPointerMove={onSeek ? handlePointerMove : undefined}
+          onPointerUp={onSeek ? handlePointerUp : undefined}
+          aria-label={onSeek ? "موجّة الصوت — اسحب للرجوع والاستئناف" : undefined}
         >
           <WaveformBars
             seed={seed}
@@ -292,6 +447,8 @@ function PodcastAudioPlayerDecorative({
   );
 }
 
+const PLAYBACK_RATES = [1, 1.25, 1.5, 2] as const;
+
 function PodcastAudioPlayerFile({
   seed,
   url,
@@ -303,29 +460,68 @@ function PodcastAudioPlayerFile({
   coverUrl,
   onPlaybackProgress,
   autoPlay = false,
+  resumeId,
 }: PodcastAudioPlayerProps & { url: string }) {
+  const persist = useArticleListen();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const onProgressRef = useRef(onPlaybackProgress);
   onProgressRef.current = onPlaybackProgress;
+  const resumeIdRef = useRef(resumeId);
+  resumeIdRef.current = resumeId;
+  const lastWriteRef = useRef(0);
+  const resumeAtRef = useRef(resumeId != null ? readPlaybackPosition(resumeId) : 0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [starting, setStarting] = useState(autoPlay);
   const startingRef = useRef(autoPlay);
   startingRef.current = starting;
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(() => resumeAtRef.current);
   const [durationSeconds, setDurationSeconds] = useState(
     () => duration ?? estimateDurationFromSeed(seed),
   );
+  const [durationKnown, setDurationKnown] = useState(
+    () => duration != null && duration > 0,
+  );
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [muted, setMuted] = useState(false);
+
+  const remember = (seconds: number, force = false) => {
+    const id = resumeIdRef.current;
+    if (id == null) return;
+    const now = Date.now();
+    if (!force && now - lastWriteRef.current < 1000) return;
+    lastWriteRef.current = now;
+    writePlaybackPosition(id, seconds);
+  };
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    setCurrentTime(0);
+    const saved = resumeId != null ? readPlaybackPosition(resumeId) : 0;
+    resumeAtRef.current = saved;
+    setCurrentTime(saved);
+    setDurationKnown(duration != null && duration > 0);
     if (autoPlay) setStarting(true);
+
+    const applyResume = () => {
+      const at = resumeAtRef.current;
+      if (at < 1) return;
+      const max =
+        Number.isFinite(audio.duration) && audio.duration > 0
+          ? audio.duration
+          : at;
+      if (at >= max - 0.4) return;
+      if (Math.abs(audio.currentTime - at) < 0.35) return;
+      audio.currentTime = at;
+      setCurrentTime(at);
+    };
 
     const syncDuration = () => {
       if (Number.isFinite(audio.duration) && audio.duration > 0) {
         setDurationSeconds(audio.duration);
+        setDurationKnown(true);
       }
+      applyResume();
     };
 
     const emit = (
@@ -344,6 +540,7 @@ function PodcastAudioPlayerFile({
 
     const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+      remember(audio.currentTime);
       emit({ currentTime: audio.currentTime });
     };
 
@@ -356,11 +553,14 @@ function PodcastAudioPlayerFile({
     const onPause = () => {
       if (startingRef.current) return;
       setIsPlaying(false);
+      remember(audio.currentTime, true);
       emit({ currentTime: audio.currentTime, isPlaying: false });
     };
     const onEnded = () => {
       setStarting(false);
       setIsPlaying(false);
+      if (resumeIdRef.current != null) clearPlaybackPosition(resumeIdRef.current);
+      resumeAtRef.current = 0;
       emit({ currentTime: audio.duration || audio.currentTime, isPlaying: false, ended: true });
       setCurrentTime(0);
     };
@@ -374,8 +574,14 @@ function PodcastAudioPlayerFile({
     audio.addEventListener("ended", onEnded);
 
     syncDuration();
+    if (autoPlay) {
+      void audio.play().catch(() => {
+        setStarting(false);
+      });
+    }
 
     return () => {
+      remember(audio.currentTime, true);
       audio.removeEventListener("loadedmetadata", syncDuration);
       audio.removeEventListener("durationchange", syncDuration);
       audio.removeEventListener("canplay", syncDuration);
@@ -384,22 +590,36 @@ function PodcastAudioPlayerFile({
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [url, autoPlay]);
-
-  useEffect(() => {
-    if (!autoPlay) return;
-    const audio = audioRef.current;
-    if (!audio) return;
-    void audio.play().catch(() => {
-      setStarting(false);
-    });
-  }, [autoPlay, url]);
+  }, [url, autoPlay, resumeId, duration]);
 
   useEffect(() => {
     if (duration != null && duration > 0) {
       setDurationSeconds(duration);
+      setDurationKnown(true);
     }
   }, [duration]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.playbackRate = playbackRate;
+    audio.muted = muted;
+  }, [playbackRate, muted, url]);
+
+  const bindEngine = persist?.bindEngine;
+  useEffect(() => {
+    if (variant !== "dock" || !bindEngine) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    return bindEngine({
+      toggle: () => {
+        if (startingRef.current) return;
+        if (!audio.paused) audio.pause();
+        else void audio.play().catch(() => undefined);
+      },
+      pause: () => audio.pause(),
+    });
+  }, [variant, bindEngine, url]);
 
   const handlePlay = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -422,6 +642,43 @@ function PodcastAudioPlayerFile({
     if (!audio || durationSeconds <= 0) return;
     audio.currentTime = ratio * durationSeconds;
     setCurrentTime(audio.currentTime);
+    resumeAtRef.current = audio.currentTime;
+    remember(audio.currentTime, true);
+  };
+
+  const handleSeekEnd = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    void audio.play().catch(() => {
+      /* blocked or missing source */
+    });
+  };
+
+  const pausePlayback = () => {
+    audioRef.current?.pause();
+  };
+
+  const skipBy = (delta: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const max =
+      Number.isFinite(audio.duration) && audio.duration > 0
+        ? audio.duration
+        : durationSeconds;
+    const next = Math.min(Math.max(0, audio.currentTime + delta), Math.max(0, max));
+    audio.currentTime = next;
+    setCurrentTime(next);
+    resumeAtRef.current = next;
+    remember(next, true);
+  };
+
+  const cycleRate = () => {
+    setPlaybackRate((current) => {
+      const index = PLAYBACK_RATES.indexOf(
+        current as (typeof PLAYBACK_RATES)[number],
+      );
+      return PLAYBACK_RATES[(index + 1) % PLAYBACK_RATES.length];
+    });
   };
 
   return (
@@ -435,9 +692,17 @@ function PodcastAudioPlayerFile({
       isPlaying={isPlaying}
       currentTime={currentTime}
       durationSeconds={durationSeconds}
+      durationKnown={durationKnown}
+      playbackRate={playbackRate}
+      muted={muted}
       playPending={starting && !isPlaying}
       onPlayClick={handlePlay}
       onSeek={variant === "cover" ? undefined : handleSeek}
+      onSeekEnd={variant === "cover" ? undefined : handleSeekEnd}
+      onSkip={skipBy}
+      onCycleRate={cycleRate}
+      onToggleMute={() => setMuted((value) => !value)}
+      onPause={pausePlayback}
       hiddenBridge={
         <audio
           ref={audioRef}
@@ -463,6 +728,7 @@ function PodcastAudioPlayerSoundCloud({
   onPlaybackProgress,
   showSourceLink = false,
   autoPlay = false,
+  resumeId,
 }: PodcastAudioPlayerProps & { pageUrl: string }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const onProgressRef = useRef(onPlaybackProgress);
@@ -470,10 +736,17 @@ function PodcastAudioPlayerSoundCloud({
   const widgetRef = useRef<ReturnType<typeof createSoundCloudWidget> | null>(
     null,
   );
+  const resumeIdRef = useRef(resumeId);
+  resumeIdRef.current = resumeId;
+  const lastWriteRef = useRef(0);
+  const resumeAtRef = useRef(resumeId != null ? readPlaybackPosition(resumeId) : 0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(() => resumeAtRef.current);
   const [durationSeconds, setDurationSeconds] = useState(
     () => duration ?? estimateDurationFromSeed(seed),
+  );
+  const [durationKnown, setDurationKnown] = useState(
+    () => duration != null && duration > 0,
   );
   const isPlayingRef = useRef(false);
   const pendingPlayRef = useRef(autoPlay);
@@ -488,8 +761,10 @@ function PodcastAudioPlayerSoundCloud({
 
     let cancelled = false;
 
+    const saved = resumeId != null ? readPlaybackPosition(resumeId) : 0;
+    resumeAtRef.current = saved;
     setIsPlaying(false);
-    setCurrentTime(0);
+    setCurrentTime(saved);
     widgetRef.current = null;
 
     void loadSoundCloudWidgetApi()
@@ -505,8 +780,16 @@ function PodcastAudioPlayerSoundCloud({
         widget.bind(Events.READY, () => {
           if (cancelled) return;
           widget.getDuration((ms) => {
-            if (ms > 0) setDurationSeconds(ms / 1000);
+            if (ms > 0) {
+              setDurationSeconds(ms / 1000);
+              setDurationKnown(true);
+            }
           });
+          const savedMs = resumeAtRef.current * 1000;
+          if (savedMs >= 1000) {
+            widget.seekTo(savedMs);
+            setCurrentTime(resumeAtRef.current);
+          }
           if (pendingPlayRef.current) {
             widget.play();
           }
@@ -547,6 +830,14 @@ function PodcastAudioPlayerSoundCloud({
           if (cancelled || data?.currentPosition == null) return;
           const nextTime = data.currentPosition / 1000;
           setCurrentTime(nextTime);
+          const id = resumeIdRef.current;
+          if (id != null) {
+            const now = Date.now();
+            if (now - lastWriteRef.current >= 1000) {
+              lastWriteRef.current = now;
+              writePlaybackPosition(id, nextTime);
+            }
+          }
           widget.getDuration((durationMs) => {
             onProgressRef.current?.({
               currentTime: nextTime,
@@ -560,6 +851,8 @@ function PodcastAudioPlayerSoundCloud({
           if (cancelled) return;
           setStarting(false);
           setIsPlaying(false);
+          if (resumeIdRef.current != null) clearPlaybackPosition(resumeIdRef.current);
+          resumeAtRef.current = 0;
           widget.getDuration((durationMs) => {
             const durationSec = durationMs > 0 ? durationMs / 1000 : 0;
             onProgressRef.current?.({
@@ -580,11 +873,12 @@ function PodcastAudioPlayerSoundCloud({
       cancelled = true;
       widgetRef.current = null;
     };
-  }, [pageUrl, widgetSrc, widgetArmed]);
+  }, [pageUrl, widgetSrc, widgetArmed, resumeId]);
 
   useEffect(() => {
     if (duration != null && duration > 0) {
       setDurationSeconds(duration);
+      setDurationKnown(true);
     }
   }, [duration]);
 
@@ -612,8 +906,37 @@ function PodcastAudioPlayerSoundCloud({
   const handleSeek = (ratio: number) => {
     const widget = widgetRef.current;
     if (!widget || durationSeconds <= 0) return;
-    widget.seekTo(ratio * durationSeconds * 1000);
-    setCurrentTime(ratio * durationSeconds);
+    const nextTime = ratio * durationSeconds;
+    widget.seekTo(nextTime * 1000);
+    setCurrentTime(nextTime);
+    resumeAtRef.current = nextTime;
+    if (resumeIdRef.current != null) {
+      writePlaybackPosition(resumeIdRef.current, nextTime);
+    }
+  };
+
+  const handleSeekEnd = () => {
+    const widget = widgetRef.current;
+    if (!widget) return;
+    pendingPlayRef.current = true;
+    widget.play();
+  };
+
+  const pausePlayback = () => {
+    const widget = widgetRef.current;
+    if (!widget) return;
+    pendingPlayRef.current = false;
+    widget.pause();
+  };
+
+  const skipBy = (delta: number) => {
+    const widget = widgetRef.current;
+    if (!widget || durationSeconds <= 0) return;
+    const next = Math.min(Math.max(0, currentTime + delta), durationSeconds);
+    widget.seekTo(next * 1000);
+    setCurrentTime(next);
+    resumeAtRef.current = next;
+    if (resumeIdRef.current != null) writePlaybackPosition(resumeIdRef.current, next);
   };
 
   return (
@@ -627,9 +950,13 @@ function PodcastAudioPlayerSoundCloud({
       isPlaying={isPlaying}
       currentTime={currentTime}
       durationSeconds={durationSeconds}
+      durationKnown={durationKnown}
       playPending={starting && !isPlaying}
       onPlayClick={handlePlay}
       onSeek={variant === "cover" ? undefined : handleSeek}
+      onSeekEnd={variant === "cover" ? undefined : handleSeekEnd}
+      onSkip={skipBy}
+      onPause={pausePlayback}
       sourceUrl={showSourceLink ? pageUrl : null}
       hiddenBridge={
         widgetArmed ? (
@@ -695,6 +1022,7 @@ export function PodcastAudioPlayer({
   autoPlay = false,
   onNeedSource,
   sourcePending = false,
+  resumeId,
 }: PodcastAudioPlayerProps) {
   if (interactive && hostedPageUrl) {
     return (
@@ -710,6 +1038,7 @@ export function PodcastAudioPlayer({
         onPlaybackProgress={onPlaybackProgress}
         showSourceLink={showSourceLink}
         autoPlay={autoPlay}
+        resumeId={resumeId}
       />
     );
   }
@@ -727,6 +1056,7 @@ export function PodcastAudioPlayer({
         coverUrl={coverUrl}
         onPlaybackProgress={onPlaybackProgress}
         autoPlay={autoPlay}
+        resumeId={resumeId}
       />
     );
   }

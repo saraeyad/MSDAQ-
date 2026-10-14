@@ -1,8 +1,11 @@
 import { LocaleSwitcher } from "@/components/site/locale-switcher";
+import { ThemeSwitcher } from "@/components/site/theme-switcher";
 import { SiteBrandLink } from "@/features/public-site/components/site-brand-link";
 import { SiteHeaderSearch } from "@/components/site/site-header-search";
 import { DesktopSiteNav, MobileSiteNav } from "@/components/site/site-header-nav";
 import { SiteFooter } from "@/components/site/site-footer";
+import { PersistentArticleListenPlayer } from "@/components/podcast-audio-player/PersistentArticleListenPlayer";
+import { ArticleListenProvider } from "@/context/article-listen";
 import { PlatformFeedbackProvider } from "@/context/platform-feedback";
 import { PlatformFeedbackFab } from "@/features/public-site/platform-feedback/PlatformFeedbackFab";
 import { useAuth } from "@/context/auth";
@@ -14,7 +17,7 @@ import {
 } from "@/lib/site";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { cn } from "@/lib/utils";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 const HomeToolsSection = lazy(() =>
@@ -60,8 +63,6 @@ export default function PublicLayout() {
   const showHomeSections = shouldShowHomeSections(location.pathname);
   const { token, hasAnyPermission } = useAuth();
   const { nav } = usePublicCopy();
-  const [heroScrolled, setHeroScrolled] = useState(false);
-  const overlayHeader = isHome && !heroScrolled;
 
   const canOpenWorkspace = hasAnyPermission([
     PERMISSIONS.VIEW_ARTICLES,
@@ -79,6 +80,9 @@ export default function PublicLayout() {
       : undefined
     : nav.login;
 
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+
   useEffect(() => {
     resetArticleViewDedupe(location.pathname);
     if (isPublicArticlePath(location.pathname)) return;
@@ -87,21 +91,37 @@ export default function PublicLayout() {
 
   useEffect(() => {
     if (!isHome) {
-      setHeroScrolled(false);
+      setHeaderScrolled(false);
       return;
     }
-
-    const onScroll = () => {
-      setHeroScrolled(window.scrollY > 72);
-    };
-
+    const onScroll = () => setHeaderScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [isHome]);
 
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!isHome || !header) return;
+    const syncOffset = () => {
+      document.documentElement.style.setProperty(
+        "--home-header-offset",
+        `${header.offsetHeight}px`,
+      );
+    };
+    syncOffset();
+    const observer = new ResizeObserver(syncOffset);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--home-header-offset");
+    };
+  }, [isHome]);
+
+
   return (
     <PlatformFeedbackProvider>
+      <ArticleListenProvider>
       <div
         className={cn(
           "flex min-h-screen flex-col page-gradient",
@@ -109,20 +129,24 @@ export default function PublicLayout() {
         )}
       >
         <header
+          ref={headerRef}
           className={cn(
             "site-header",
-            overlayHeader ? "site-header--hero" : "site-header--paper",
-            isHome && heroScrolled && "site-header--scrolled",
+            isHome ? "site-header--overlay" : "site-header--paper",
+            isHome && headerScrolled && "site-header--scrolled",
           )}
         >
-          <div className="site-header__inner container-page flex min-h-16 items-center gap-3 py-1.5 md:gap-5">
+          <div className="site-header__inner container-page flex min-h-12 items-center gap-2 py-1 sm:min-h-16 sm:gap-3 md:gap-5">
             <div className="site-header__brand">
               <SiteBrandLink linkToHome />
             </div>
             <DesktopSiteNav />
-            <div className="ms-auto flex shrink-0 items-center gap-2">
-              <SiteHeaderSearch className="hidden w-40 lg:block lg:w-44 xl:w-52" />
-              <LocaleSwitcher className="hidden sm:inline-flex" />
+            <div className="ms-auto flex min-w-0 items-center gap-2">
+              <SiteHeaderSearch className="hidden w-40 min-w-0 shrink min-[900px]:block min-[900px]:w-44 xl:w-52" />
+              <div className="site-header__tools shrink-0">
+                <LocaleSwitcher />
+                <ThemeSwitcher />
+              </div>
               {/* {authHref && authLabel ? (
                 <Button
                   asChild
@@ -136,6 +160,20 @@ export default function PublicLayout() {
                 </Button>
               ) : null} */}
               <MobileSiteNav authHref={authHref} authLabel={authLabel} />
+              <a
+                href="https://cdmcgaza.ps/ar/"
+                className="site-header__cdmc"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img
+                  src="/brand/cdmc.webp?v=3"
+                  alt="CDMC"
+                  width={120}
+                  height={120}
+                  decoding="async"
+                />
+              </a>
             </div>
           </div>
         </header>
@@ -150,11 +188,15 @@ export default function PublicLayout() {
           </Suspense>
         ) : null}
         <SiteFooter className="mt-auto" />
-        <PlatformFeedbackFab />
+        {isPublicArticlePath(location.pathname) ? null : (
+          <PlatformFeedbackFab />
+        )}
         <Suspense fallback={null}>
           <PilotLaunchWelcome />
         </Suspense>
+        <PersistentArticleListenPlayer />
       </div>
+      </ArticleListenProvider>
     </PlatformFeedbackProvider>
   );
 }

@@ -3,15 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { TtsProcessingInline } from "@/features/tools/components/TtsProcessingInline";
+import { TtsVoicePicker } from "@/features/tools/components/TtsVoicePicker";
 import { VoiceDraftNotice } from "@/features/tools/components/VoiceDraftNotice";
 import { useAuth } from "@/context/auth";
 import { useIsSuperAdmin } from "@/hooks/auth";
@@ -26,7 +20,7 @@ import {
 import { TTS_INFLIGHT_STANDALONE_KEY, validateTtsText } from "@/lib/publishing";
 import { ROUTES } from "@/router/routes";
 import { ToolsVoice_APIs, Tts_APIs } from "@/services/api/tools";
-import type { GeneratedAudio, TtsVoice } from "@/types";
+import type { GeneratedAudio } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -38,7 +32,6 @@ export function TextToSpeechToolPage() {
   const { user } = useAuth();
   const isSuperAdmin = useIsSuperAdmin();
   const [text, setText] = useState("");
-  const [style, setStyle] = useState("");
   const [voice, setVoice] = useState("");
   const [name, setName] = useState("");
   const [draft, setDraft] = useState<GeneratedAudio | null>(null);
@@ -71,7 +64,7 @@ export function TextToSpeechToolPage() {
             status: "processing",
             audio_url: null,
             voice,
-            style: style.trim() || null,
+            style: null,
             chunks_total: null,
             chunks_done: 0,
             is_saved: false,
@@ -80,7 +73,7 @@ export function TextToSpeechToolPage() {
           },
     );
     setOwnedDraftId(audioId);
-  }, [voice, style]);
+  }, [voice]);
 
   const handlePollFailed = useCallback((errorMessage: string | null) => {
     setDraft((prev) =>
@@ -136,7 +129,6 @@ export function TextToSpeechToolPage() {
       const data = await ToolsVoice_APIs.textToSpeech({
         text: text.trim(),
         voice,
-        style: style.trim() || undefined,
       });
       setDraft(data);
       setOwnedDraftId(data.id);
@@ -207,18 +199,12 @@ export function TextToSpeechToolPage() {
         <CardContent className="space-y-4 p-6">
           <div className="space-y-2">
             <Label>الصوت</Label>
-            <Select value={voice} onValueChange={setVoice} disabled={isBusy}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر صوتاً" />
-              </SelectTrigger>
-              <SelectContent>
-                {voices.map((v: TtsVoice) => (
-                  <SelectItem key={v.name} value={v.name}>
-                    {v.description || v.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <TtsVoicePicker
+              voices={voices}
+              value={voice}
+              onValueChange={setVoice}
+              disabled={isBusy}
+            />
           </div>
 
           <div className="space-y-2">
@@ -231,13 +217,6 @@ export function TextToSpeechToolPage() {
               disabled={isBusy}
             />
           </div>
-
-          <Input
-            placeholder="أسلوب اختياري (style)"
-            value={style}
-            onChange={(e) => setStyle(e.target.value)}
-            disabled={isBusy}
-          />
 
           {(starting || showInlineStatus) && (
             <TtsProcessingInline

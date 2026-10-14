@@ -1,6 +1,6 @@
 import { categoryPath } from "@/router/routes";
 import type { CategorySeo, PublicCategory, PublicPagination } from "@/types";
-import { absoluteUrl } from "./site-url";
+import { absoluteUrl, siteLogoUrl } from "./site-url";
 import type { JsonLdGraph, SeoHeadPayload } from "./types";
 
 const SITE_NAME = "مِصداق";
@@ -97,6 +97,7 @@ export function buildCategorySeoHead(
     description,
     canonical,
     ogType: seo?.og_type ?? "website",
+    ogImage: siteLogoUrl(origin),
     ...paginationLinks,
   };
 }

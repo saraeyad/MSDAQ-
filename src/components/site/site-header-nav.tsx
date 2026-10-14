@@ -13,7 +13,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { LocaleSwitcher } from "@/components/site/locale-switcher";
 import { useLocale, usePublicCopy } from "@/context/locale";
 import {
   buildPublicNavItems,
@@ -196,7 +195,7 @@ export function DesktopSiteNav() {
   const navItems = useSiteNavItems();
 
   return (
-    <nav className="site-header-nav hidden flex-1 items-center justify-center lg:flex">
+    <nav className="site-header-nav hidden flex-1 items-center justify-center min-[900px]:flex">
       {navItems.map((item) =>
         item.type === "link" ? (
           <NavLinkItem key={item.to + item.label} item={item} />
@@ -320,7 +319,7 @@ export function MobileSiteNav({
         <Button
           variant="outline"
           size="icon"
-          className="site-mobile-nav-trigger shrink-0 lg:hidden"
+          className="site-mobile-nav-trigger shrink-0 min-[900px]:hidden"
           aria-label={nav.openMenu}
         >
           <Menu className="size-5" />
@@ -329,11 +328,14 @@ export function MobileSiteNav({
       <SheetContent
         side={sheetSide}
         className={cn(
-          "site-mobile-nav gap-0 p-0 w-[min(100%,20.5rem)]",
+          "site-mobile-nav gap-0 p-0 max-w-none sm:max-w-none",
           sheetSide === "right"
             ? "site-mobile-nav--right"
             : "site-mobile-nav--left",
         )}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+        }}
       >
         <SheetHeader className="site-mobile-nav__header ghazawiya-pattern">
           <SheetTitle className="site-mobile-nav__title">
@@ -342,7 +344,6 @@ export function MobileSiteNav({
         </SheetHeader>
         <div className="site-mobile-nav__tools">
           <SiteHeaderSearch className="site-mobile-nav__search flex-1" />
-          <LocaleSwitcher className="site-mobile-nav__locale" />
         </div>
         <nav className="site-mobile-nav__list">
           {navItems.map((item) =>
