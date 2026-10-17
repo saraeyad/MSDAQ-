@@ -7,6 +7,7 @@ import { ArticleEntityBody } from "@/features/public-site/article-page/ArticleEn
 import { PublicArticleAudioPlayer } from "@/features/public-site/components/PublicArticleAudioPlayer";
 import { PublicArticleVideoPlayer } from "@/features/public-site/components/PublicArticleVideoPlayer";
 import { ArticleTrustIndexSection } from "@/features/trust-index/components/ArticleTrustIndexSection";
+import { ArticleEditorialChecksSection } from "@/features/newsroom/articles/ArticleEditorialChecksSection";
 import { ArticleStatusActions } from "@/features/newsroom/articles/ArticleStatusActions";
 import { usePermission } from "@/hooks/auth";
 import { useStaffArticleMedia } from "@/hooks/useLazyArticleMedia";
@@ -522,6 +523,16 @@ export default function StaffArticleDetailPage() {
                   </li>
                 ))}
               </ul>
+            </SectionPanel>
+          ) : null}
+
+          {article.media_type === "text" ? (
+            <SectionPanel icon={FileText} title="فحوصات التحرير">
+              <ArticleEditorialChecksSection
+                articleId={article.id}
+                title={article.title}
+                contentFormal={article.content?.formal}
+              />
             </SectionPanel>
           ) : null}
 

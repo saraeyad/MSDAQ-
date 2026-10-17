@@ -1,18 +1,14 @@
 import { Button } from "@/components/ui/button";
+import { AiCheckProcessingDialog } from "@/features/publishing-flow/components/AiCheckProcessingDialog";
+import { AiCheckStatusBanner } from "@/features/publishing-flow/components/AiCheckStatusBanner";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
-import {
-  runWithToolProcessing,
-  ToolProcessingDialog,
-} from "@/features/tools/components/ToolProcessingDialog";
+import { runWithToolProcessing } from "@/features/tools/components/ToolProcessingDialog";
 import { StandardsHighlightedText } from "@/features/tools/components/StandardsHighlightedText";
 import { StandardsResultCard } from "@/features/tools/components/StandardsResultCard";
+import { useArticleAiCheck } from "@/hooks/publishing/useArticleAiCheck";
 import { getStandardsCheckErrorMessage } from "@/lib/publishing";
-import { STANDARDS_PROCESSING_STEPS } from "@/lib/publishing";
-import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
-import type { StandardsCheckResult } from "@/types";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface Step4StandardsProps {
@@ -30,19 +26,17 @@ export function Step4Standards({
   onComplete,
   onBack,
 }: Step4StandardsProps) {
-  const queryClient = useQueryClient();
+  const { check, result, startCheck } = useArticleAiCheck(
+    articleId,
+    "standards",
+  );
   const [processing, setProcessing] = useState(false);
-  const [result, setResult] = useState<StandardsCheckResult | null>(null);
   const body = contentFormal ?? "";
 
   const runCheck = async () => {
     try {
       await runWithToolProcessing(setProcessing, async () => {
-        const data = await ArticlesStaff_APIs.standardsCheck(articleId);
-        setResult(data);
-        await queryClient.invalidateQueries({
-          queryKey: ["staff-article", String(articleId)],
-        });
+        await startCheck();
       });
     } catch (err) {
       toast.error(getStandardsCheckErrorMessage(err));
@@ -51,12 +45,7 @@ export function Step4Standards({
 
   return (
     <div className="space-y-4">
-      <ToolProcessingDialog
-        open={processing}
-        title="جاري فحص المعايير"
-        steps={STANDARDS_PROCESSING_STEPS}
-        className="publish-flow-processing"
-      />
+      <AiCheckProcessingDialog open={processing} type="standards" />
 
       <p className="text-muted-foreground">
         فحص المعايير إرشادي — يمكنك المتابعة والنشر حتى إن لم يُجتز الفحص.
@@ -64,6 +53,11 @@ export function Step4Standards({
       <Button onClick={() => void runCheck()} disabled={processing}>
         تشغيل فحص المعايير
       </Button>
+
+      <AiCheckStatusBanner
+        check={check}
+        inProgressLabel="جاري فحص المعايير…"
+      />
 
       {result ? (
         <>

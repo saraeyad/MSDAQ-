@@ -1,22 +1,22 @@
 import { getApiData, parseStaffArticlesListResponse } from "@/lib/api";
-import { normalizeCredibilityResult } from "@/lib/publishing";
-import { normalizeStandardsResult } from "@/lib/publishing";
-import { appendSttAudioField, normalizeArticleMedia } from "@/lib/media";
 import {
-  CREDIBILITY_REQUEST_TIMEOUT_MS,
-  STANDARDS_REQUEST_TIMEOUT_MS,
+  normalizeAiCheck,
+  normalizeAiCheckList,
+  normalizeStandardsResult,
 } from "@/lib/publishing";
+import { appendSttAudioField, normalizeArticleMedia } from "@/lib/media";
+import { STANDARDS_REQUEST_TIMEOUT_MS } from "@/lib/publishing";
 import type {
+  AiCheck,
+  AiCheckType,
   ApiResponse,
   ArticleMedia,
-  CredibilityCheckResult,
   LocalizationResult,
   PaginatedResponse,
   StaffArticle,
   StaffArticlesListParams,
   StaffArticlesListResult,
   StaffMediaType,
-  StandardsCheckResult,
   Transcript,
   GeneratedAudio,
   VideoUploadResult,
@@ -228,22 +228,68 @@ export const ArticlesStaff_APIs = {
     return getApiData(response);
   },
 
-  standardsCheck: async (id: number | string): Promise<StandardsCheckResult> => {
-    const response = await API.post<ApiResponse<StandardsCheckResult>>(
+  listAiChecks: async (
+    id: number | string,
+    type: AiCheckType,
+  ): Promise<AiCheck[]> => {
+    const response = await API.get<ApiResponse<unknown>>(
+      articleUrl(id, "/ai-checks"),
+      { params: { type } },
+    );
+    return normalizeAiCheckList(getApiData(response));
+  },
+
+  getAiCheck: async (
+    articleId: number | string,
+    checkId: number | string,
+  ): Promise<AiCheck> => {
+    const response = await API.get<ApiResponse<unknown>>(
+      articleUrl(articleId, `/ai-checks/${checkId}`),
+    );
+    const row = normalizeAiCheck(getApiData(response));
+    if (!row) {
+      throw new Error("Invalid AI check response");
+    }
+    return row;
+  },
+
+  /** Synchronous — saves a `done` row and updates article gate fields. */
+  runStandardsCheck: async (id: number | string): Promise<AiCheck> => {
+    const response = await API.post<ApiResponse<unknown>>(
       articleUrl(id, "/standards-check"),
       {},
       { timeout: STANDARDS_REQUEST_TIMEOUT_MS },
     );
-    return normalizeStandardsResult(getApiData(response));
+    const payload = getApiData(response);
+    const row = normalizeAiCheck(payload);
+    if (row) return row;
+    const articleIdNum = Number(articleIdParam(id));
+    const legacy = normalizeStandardsResult(
+      payload as Parameters<typeof normalizeStandardsResult>[0],
+    );
+    return {
+      id: 0,
+      article_id: Number.isFinite(articleIdNum) ? articleIdNum : 0,
+      type: "standards",
+      status: "done",
+      score: legacy.total_score,
+      result: legacy,
+      error_message: null,
+      reason: null,
+      created_at: new Date().toISOString(),
+      finished_at: new Date().toISOString(),
+    };
   },
 
-  credibilityCheck: async (id: number | string): Promise<CredibilityCheckResult> => {
-    const response = await API.post<ApiResponse<CredibilityCheckResult>>(
+  /** Async — returns queued row; poll with `getAiCheck`. */
+  enqueueCredibilityCheck: async (id: number | string): Promise<AiCheck> => {
+    const response = await API.post<ApiResponse<unknown>>(
       articleUrl(id, "/credibility-check"),
       {},
-      { timeout: CREDIBILITY_REQUEST_TIMEOUT_MS },
     );
-    return normalizeCredibilityResult(getApiData(response));
+    const row = normalizeAiCheck(getApiData(response));
+    if (row) return row;
+    throw new Error("Invalid credibility check response");
   },
 
   generateLocalization: async (id: number | string) => {
