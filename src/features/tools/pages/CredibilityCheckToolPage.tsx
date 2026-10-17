@@ -22,8 +22,12 @@ export function CredibilityCheckToolPage() {
 
   const run = async () => {
     const text = content.trim();
-    if (text.length < 40) {
-      toast.error("أدخل 40 حرفاً على الأقل");
+    if (text.length < 50) {
+      toast.error("أدخل 50 حرفاً على الأقل");
+      return;
+    }
+    if (text.length > 20_000) {
+      toast.error("الحد الأقصى 20000 حرف");
       return;
     }
     setResult(null);

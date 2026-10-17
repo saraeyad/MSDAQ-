@@ -5,6 +5,7 @@ export * from "./standards-errors";
 export * from "./standards-normalize";
 export * from "./standards-highlight";
 export * from "./credibility-normalize";
+export * from "./ai-check-normalize";
 export * from "./localization-normalize";
 export * from "./tool-processing-steps";
 export * from "./transcript-status-poll";

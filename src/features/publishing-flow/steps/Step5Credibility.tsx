@@ -1,17 +1,13 @@
 import { Button } from "@/components/ui/button";
+import { AiCheckProcessingDialog } from "@/features/publishing-flow/components/AiCheckProcessingDialog";
+import { AiCheckStatusBanner } from "@/features/publishing-flow/components/AiCheckStatusBanner";
 import { SourceConsentBanner } from "@/features/publishing-flow/components/SourceConsentBanner";
 import { NextStepButton } from "@/features/publishing-flow/components/NextStepButton";
 import { StepActionsRow } from "@/features/publishing-flow/components/StepActionsRow";
 import { CredibilityResultPanel } from "@/features/tools/components/CredibilityResultPanel";
-import {
-  runWithToolProcessing,
-  ToolProcessingDialog,
-} from "@/features/tools/components/ToolProcessingDialog";
+import { useArticleAiCheck } from "@/hooks/publishing/useArticleAiCheck";
 import { getApiErrorMessage } from "@/lib/api";
-import { CREDIBILITY_PROCESSING_STEPS } from "@/lib/publishing";
-import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
-import type { ArticleSource, CredibilityCheckResult } from "@/types";
-import { useQueryClient } from "@tanstack/react-query";
+import type { ArticleSource } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -28,40 +24,44 @@ export function Step5Credibility({
   onComplete,
   onBack,
 }: Step5CredibilityProps) {
-  const queryClient = useQueryClient();
-  const [result, setResult] = useState<CredibilityCheckResult | null>(null);
-  const [processing, setProcessing] = useState(false);
+  const {
+    check,
+    result,
+    starting,
+    isPolling,
+    startCheck,
+  } = useArticleAiCheck(articleId, "credibility");
+  const [submitting, setSubmitting] = useState(false);
+
+  const busy = starting || isPolling || submitting;
 
   const runCheck = async () => {
-    if (!articleId) return;
+    if (!articleId || busy) return;
+    setSubmitting(true);
     try {
-      await runWithToolProcessing(setProcessing, async () => {
-        const check = await ArticlesStaff_APIs.credibilityCheck(articleId);
-        setResult(check);
-        await queryClient.invalidateQueries({
-          queryKey: ["staff-article", String(articleId)],
-        });
-      });
+      await startCheck();
     } catch (err) {
       toast.error(getApiErrorMessage(err));
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const showProcessingModal = starting || isPolling;
+
   return (
     <div className="space-y-4">
-      <ToolProcessingDialog
-        open={processing}
-        title="جاري فحص المصداقية"
-        steps={CREDIBILITY_PROCESSING_STEPS}
-        className="publish-flow-processing"
-      />
+      <AiCheckProcessingDialog open={showProcessingModal} type="credibility" />
       <SourceConsentBanner sources={sources} />
       <p className="text-muted-foreground">
         فحص المصداقية إرشادي — يمكنك المتابعة والنشر حتى إن لم يُجتز الفحص.
       </p>
-      <Button onClick={() => void runCheck()} disabled={processing}>
+      <Button onClick={() => void runCheck()} disabled={busy}>
         تشغيل فحص المصداقية
       </Button>
+      {check?.status === "failed" ? (
+        <AiCheckStatusBanner check={check} />
+      ) : null}
       {result ? <CredibilityResultPanel result={result} /> : null}
       <StepActionsRow onBack={onBack}>
         <NextStepButton onClick={onComplete} />

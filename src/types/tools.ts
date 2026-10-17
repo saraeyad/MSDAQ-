@@ -38,6 +38,22 @@ export interface CredibilityCheckResult {
   claims: CredibilityClaim[];
 }
 
+export type AiCheckStatus = "queued" | "running" | "done" | "failed";
+export type AiCheckType = "credibility" | "standards";
+
+export interface AiCheck {
+  id: number;
+  article_id: number;
+  type: AiCheckType;
+  status: AiCheckStatus;
+  score: number | null;
+  result: CredibilityCheckResult | StandardsCheckResult | null;
+  error_message: string | null;
+  reason: string | null;
+  created_at: string;
+  finished_at: string | null;
+}
+
 export interface LocalizationResult {
   simplified: string;
   dialect: string;
