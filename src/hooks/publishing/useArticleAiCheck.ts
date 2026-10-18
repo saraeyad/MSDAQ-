@@ -9,8 +9,8 @@ import type {
   CredibilityCheckResult,
   StandardsCheckResult,
 } from "@/types";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 
 interface UseArticleAiCheckBase {
   check: AiCheck | null;
@@ -19,6 +19,13 @@ interface UseArticleAiCheckBase {
   isPolling: boolean;
   startCheck: () => Promise<void>;
   refreshLatest: () => Promise<AiCheck | null>;
+}
+
+function aiCheckQueryKey(
+  articleId: number | string,
+  type: "credibility" | "standards",
+) {
+  return ["article-ai-check", String(articleId), type] as const;
 }
 
 export function useArticleAiCheck(
@@ -38,93 +45,64 @@ export function useArticleAiCheck(
   result: CredibilityCheckResult | StandardsCheckResult | null;
 } {
   const queryClient = useQueryClient();
-  const [check, setCheck] = useState<AiCheck | null>(null);
-  const [loadingInitial, setLoadingInitial] = useState(true);
   const [starting, setStarting] = useState(false);
-  const pollGenerationRef = useRef(0);
+  const queryKey =
+    articleId == null ? null : aiCheckQueryKey(articleId, type);
 
-  const invalidateArticle = useCallback(async () => {
-    if (articleId == null) return;
-    await queryClient.invalidateQueries({
-      queryKey: ["staff-article", String(articleId)],
-    });
-  }, [articleId, queryClient]);
+  const loadLatest = useCallback(async () => {
+    if (articleId == null || queryKey == null) return null;
+    const cached = queryClient.getQueryData<AiCheck | null>(queryKey);
+
+    if (cached && isAiCheckInProgress(cached)) {
+      try {
+        return await ArticlesStaff_APIs.getAiCheck(articleId, cached.id);
+      } catch {
+        /* fall through to the history list */
+      }
+    }
+
+    const items = await ArticlesStaff_APIs.listAiChecks(articleId, type);
+    return pickLatestAiCheck(items, type) ?? cached ?? null;
+  }, [articleId, queryClient, queryKey]);
+
+  const query = useQuery({
+    queryKey: queryKey ?? ["article-ai-check", "none", type],
+    enabled: articleId != null,
+    queryFn: loadLatest,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchInterval: (current) =>
+      current.state.data && isAiCheckInProgress(current.state.data)
+        ? AI_CHECK_POLL_MS
+        : false,
+  });
+
+  const check = query.data ?? null;
 
   const refreshLatest = useCallback(async () => {
-    if (articleId == null) return null;
-    const items = await ArticlesStaff_APIs.listAiChecks(articleId, type);
-    const latest = pickLatestAiCheck(items, type);
-    setCheck(latest);
-    return latest;
-  }, [articleId, type]);
-
-  useEffect(() => {
-    if (articleId == null) {
-      setCheck(null);
-      setLoadingInitial(false);
-      return;
-    }
-    let cancelled = false;
-    setLoadingInitial(true);
-    void refreshLatest()
-      .catch(() => {
-        if (!cancelled) setCheck(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingInitial(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [articleId, refreshLatest]);
-
-  useEffect(() => {
-    if (articleId == null || !check || !isAiCheckInProgress(check)) {
-      return;
-    }
-
-    const generation = ++pollGenerationRef.current;
-    const checkId = check.id;
-    let cancelled = false;
-
-    const pollOnce = async () => {
-      try {
-        const row = await ArticlesStaff_APIs.getAiCheck(articleId, checkId);
-        if (cancelled || generation !== pollGenerationRef.current) return;
-        setCheck(row);
-        if (row.status === "done" || row.status === "failed") {
-          await invalidateArticle();
-        }
-      } catch {
-        /* transient network errors — next tick retries */
-      }
-    };
-
-    void pollOnce();
-    const intervalId = window.setInterval(() => void pollOnce(), AI_CHECK_POLL_MS);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-    };
-  }, [articleId, check?.id, check?.status, invalidateArticle]);
+    if (queryKey == null) return null;
+    await queryClient.invalidateQueries({ queryKey });
+    return queryClient.getQueryData<AiCheck | null>(queryKey) ?? null;
+  }, [queryClient, queryKey]);
 
   const startCheck = useCallback(async () => {
-    if (articleId == null) return;
+    if (articleId == null || queryKey == null) return;
     setStarting(true);
     try {
       const row =
         type === "credibility"
           ? await ArticlesStaff_APIs.enqueueCredibilityCheck(articleId)
           : await ArticlesStaff_APIs.runStandardsCheck(articleId);
-      setCheck(row);
+      queryClient.setQueryData(queryKey, row);
       if (type === "standards" && row.status === "done") {
-        await invalidateArticle();
+        await queryClient.invalidateQueries({
+          queryKey: ["staff-article", String(articleId)],
+        });
       }
     } finally {
       setStarting(false);
     }
-  }, [articleId, invalidateArticle, type]);
+  }, [articleId, queryClient, queryKey, type]);
 
   let result: CredibilityCheckResult | StandardsCheckResult | null = null;
   if (
@@ -139,7 +117,7 @@ export function useArticleAiCheck(
   return {
     check,
     result,
-    loadingInitial,
+    loadingInitial: query.isPending,
     starting,
     isPolling: check ? isAiCheckInProgress(check) : false,
     startCheck,
