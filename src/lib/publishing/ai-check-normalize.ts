@@ -31,23 +31,44 @@ function parseType(value: unknown): AiCheckType {
   return "credibility";
 }
 
+function coerceResultPayload(raw: unknown): unknown {
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  return raw;
+}
+
 function parseResult(
   type: AiCheckType,
   raw: unknown,
 ): CredibilityCheckResult | StandardsCheckResult | null {
-  if (!raw || typeof raw !== "object") return null;
+  const payload = coerceResultPayload(raw);
+  if (!payload || typeof payload !== "object") return null;
   if (type === "credibility") {
-    return normalizeCredibilityResult(raw as Record<string, unknown>);
+    return normalizeCredibilityResult(payload as Record<string, unknown>);
   }
-  return normalizeStandardsResult(raw as Record<string, unknown>);
+  return normalizeStandardsResult(payload as Record<string, unknown>);
 }
 
 /** Parse API `AiCheckResource` rows (single object or list item). */
-export function normalizeAiCheck(raw: unknown): AiCheck | null {
+export function normalizeAiCheck(
+  raw: unknown,
+  fallbackArticleId?: number | null,
+): AiCheck | null {
   if (!raw || typeof raw !== "object") return null;
   const row = raw as Record<string, unknown>;
   const id = toNumber(row.id);
-  const article_id = toNumber(row.article_id);
+  const article_id =
+    toNumber(row.article_id) ??
+    (fallbackArticleId != null && Number.isFinite(fallbackArticleId)
+      ? fallbackArticleId
+      : null);
   if (id == null || article_id == null) return null;
 
   const type = parseType(row.type);
@@ -77,9 +98,12 @@ export function normalizeAiCheck(raw: unknown): AiCheck | null {
 }
 
 /** Accept a bare array or a Laravel paginator `{ data: [...] }` payload. */
-export function normalizeAiCheckList(raw: unknown): AiCheck[] {
+export function normalizeAiCheckList(
+  raw: unknown,
+  fallbackArticleId?: number | null,
+): AiCheck[] {
   return unwrapList(raw)
-    .map(normalizeAiCheck)
+    .map((item) => normalizeAiCheck(item, fallbackArticleId))
     .filter((row): row is AiCheck => row !== null);
 }
 
@@ -90,16 +114,21 @@ export function isAiCheckInProgress(check: AiCheck): boolean {
 /**
  * Prefer an in-progress run (so a reload does not flash a stale `done` result),
  * otherwise the newest row by id / created_at.
+ * When `type` is set, ignore rows of the other check type.
  */
-export function pickLatestAiCheck(checks: AiCheck[]): AiCheck | null {
-  if (!checks.length) return null;
+export function pickLatestAiCheck(
+  checks: AiCheck[],
+  type?: AiCheckType,
+): AiCheck | null {
+  const scoped = type ? checks.filter((row) => row.type === type) : checks;
+  if (!scoped.length) return null;
   const newestFirst = (a: AiCheck, b: AiCheck) => {
     if (b.id !== a.id) return b.id - a.id;
     return b.created_at.localeCompare(a.created_at);
   };
-  const inProgress = checks.filter(isAiCheckInProgress).sort(newestFirst);
+  const inProgress = scoped.filter(isAiCheckInProgress).sort(newestFirst);
   if (inProgress[0]) return inProgress[0];
-  return [...checks].sort(newestFirst)[0]!;
+  return [...scoped].sort(newestFirst)[0]!;
 }
 
 export const AI_CHECK_POLL_MS = 5_000;
