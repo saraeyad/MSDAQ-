@@ -72,8 +72,9 @@ export function normalizeAiCheck(
   if (id == null || article_id == null) return null;
 
   const type = parseType(row.type);
-  const status = parseStatus(row.status);
   const resultRaw = row.result;
+  const status =
+    row.status == null && resultRaw ? "done" : parseStatus(row.status);
 
   let result: CredibilityCheckResult | StandardsCheckResult | null = null;
   if (status === "done" && resultRaw) {
@@ -97,12 +98,25 @@ export function normalizeAiCheck(
   };
 }
 
-/** Accept a bare array or a Laravel paginator `{ data: [...] }` payload. */
+function rawCheckRows(raw: unknown): unknown[] {
+  const list = unwrapList(raw);
+  if (list.length) return list;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+  const record = raw as Record<string, unknown>;
+  for (const key of ["ai_checks", "checks", "items"]) {
+    if (Array.isArray(record[key])) return record[key];
+  }
+  // History GET may return the latest saved row as one object, not an array.
+  if ("id" in record || "result" in record || "status" in record) return [raw];
+  return [];
+}
+
+/** Accept a list, a Laravel paginator, or one saved check object. */
 export function normalizeAiCheckList(
   raw: unknown,
   fallbackArticleId?: number | null,
 ): AiCheck[] {
-  return unwrapList(raw)
+  return rawCheckRows(raw)
     .map((item) => normalizeAiCheck(item, fallbackArticleId))
     .filter((row): row is AiCheck => row !== null);
 }
