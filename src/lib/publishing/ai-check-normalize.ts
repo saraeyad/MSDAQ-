@@ -1,3 +1,4 @@
+import { unwrapList } from "@/lib/api";
 import { normalizeCredibilityResult } from "./credibility-normalize";
 import { normalizeStandardsResult } from "./standards-normalize";
 import type {
@@ -75,24 +76,30 @@ export function normalizeAiCheck(raw: unknown): AiCheck | null {
   };
 }
 
+/** Accept a bare array or a Laravel paginator `{ data: [...] }` payload. */
 export function normalizeAiCheckList(raw: unknown): AiCheck[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
+  return unwrapList(raw)
     .map(normalizeAiCheck)
     .filter((row): row is AiCheck => row !== null);
 }
 
-/** Newest check by id, then created_at. */
-export function pickLatestAiCheck(checks: AiCheck[]): AiCheck | null {
-  if (!checks.length) return null;
-  return [...checks].sort((a, b) => {
-    if (b.id !== a.id) return b.id - a.id;
-    return b.created_at.localeCompare(a.created_at);
-  })[0]!;
-}
-
 export function isAiCheckInProgress(check: AiCheck): boolean {
   return check.status === "queued" || check.status === "running";
+}
+
+/**
+ * Prefer an in-progress run (so a reload does not flash a stale `done` result),
+ * otherwise the newest row by id / created_at.
+ */
+export function pickLatestAiCheck(checks: AiCheck[]): AiCheck | null {
+  if (!checks.length) return null;
+  const newestFirst = (a: AiCheck, b: AiCheck) => {
+    if (b.id !== a.id) return b.id - a.id;
+    return b.created_at.localeCompare(a.created_at);
+  };
+  const inProgress = checks.filter(isAiCheckInProgress).sort(newestFirst);
+  if (inProgress[0]) return inProgress[0];
+  return [...checks].sort(newestFirst)[0]!;
 }
 
 export const AI_CHECK_POLL_MS = 5_000;

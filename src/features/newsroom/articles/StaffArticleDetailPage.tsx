@@ -526,15 +526,13 @@ export default function StaffArticleDetailPage() {
             </SectionPanel>
           ) : null}
 
-          {article.media_type === "text" ? (
-            <SectionPanel icon={FileText} title="فحوصات التحرير">
-              <ArticleEditorialChecksSection
-                articleId={article.id}
-                title={article.title}
-                contentFormal={article.content?.formal}
-              />
-            </SectionPanel>
-          ) : null}
+          <SectionPanel icon={FileText} title="فحوصات التحرير">
+            <ArticleEditorialChecksSection
+              articleId={article.id}
+              title={article.title}
+              contentFormal={article.content?.formal}
+            />
+          </SectionPanel>
 
           {canViewTrustIndex ? (
             <SectionPanel

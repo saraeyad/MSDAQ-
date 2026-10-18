@@ -52,6 +52,7 @@ export function useArticleAiCheck(
 
   const refreshLatest = useCallback(async () => {
     if (articleId == null) return null;
+    // Hydrate from GET /articles/{id}/ai-checks?type=… so revisit shows the saved run.
     const items = await ArticlesStaff_APIs.listAiChecks(articleId, type);
     const latest = pickLatestAiCheck(items);
     setCheck(latest);
@@ -66,8 +67,10 @@ export function useArticleAiCheck(
     }
     let cancelled = false;
     setLoadingInitial(true);
+    setCheck(null);
     void refreshLatest()
       .catch(() => {
+        // History may 403/404 for older articles — treat as "no saved check".
         if (!cancelled) setCheck(null);
       })
       .finally(() => {
