@@ -228,11 +228,7 @@ export const ArticlesStaff_APIs = {
     return getApiData(response);
   },
 
-  /**
-   * Saved standards / credibility history for an article.
-   * `GET /articles/{id}/ai-checks?type=credibility|standards`
-   * Used on publishing steps and staff article detail to show prior results.
-   */
+  /** GET /articles/{id}/ai-checks?type=credibility|standards */
   listAiChecks: async (
     id: number | string,
     type: AiCheckType,
@@ -250,7 +246,6 @@ export const ArticlesStaff_APIs = {
     );
   },
 
-  /** Single check row — polling target for async credibility. */
   getAiCheck: async (
     articleId: number | string,
     checkId: number | string,
