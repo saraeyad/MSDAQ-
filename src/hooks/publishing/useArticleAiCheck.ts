@@ -3,6 +3,7 @@ import {
   isAiCheckInProgress,
   pickLatestAiCheck,
 } from "@/lib/publishing";
+import { getApiErrorMessage } from "@/lib/api";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import type {
   AiCheck,
@@ -15,8 +16,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface UseArticleAiCheckBase {
   check: AiCheck | null;
   loadingInitial: boolean;
+  loadingHistory: boolean;
   starting: boolean;
   isPolling: boolean;
+  loadError: string | null;
   startCheck: () => Promise<void>;
   refreshLatest: () => Promise<AiCheck | null>;
 }
@@ -40,7 +43,9 @@ export function useArticleAiCheck(
   const queryClient = useQueryClient();
   const [check, setCheck] = useState<AiCheck | null>(null);
   const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const pollGenerationRef = useRef(0);
 
   const invalidateArticle = useCallback(async () => {
@@ -52,25 +57,35 @@ export function useArticleAiCheck(
 
   const refreshLatest = useCallback(async () => {
     if (articleId == null) return null;
-    // Hydrate from GET /articles/{id}/ai-checks?type=… so revisit shows the saved run.
-    const items = await ArticlesStaff_APIs.listAiChecks(articleId, type);
-    const latest = pickLatestAiCheck(items);
-    setCheck(latest);
-    return latest;
+    setLoadingHistory(true);
+    setLoadError(null);
+    try {
+      // Hydrate from GET /articles/{id}/ai-checks?type=… so revisit shows the saved run.
+      const items = await ArticlesStaff_APIs.listAiChecks(articleId, type);
+      const latest = pickLatestAiCheck(items, type);
+      setCheck(latest);
+      return latest;
+    } catch (err) {
+      setLoadError(getApiErrorMessage(err));
+      throw err;
+    } finally {
+      setLoadingHistory(false);
+    }
   }, [articleId, type]);
 
   useEffect(() => {
     if (articleId == null) {
       setCheck(null);
+      setLoadError(null);
       setLoadingInitial(false);
       return;
     }
     let cancelled = false;
     setLoadingInitial(true);
     setCheck(null);
+    setLoadError(null);
     void refreshLatest()
       .catch(() => {
-        // History may 403/404 for older articles — treat as "no saved check".
         if (!cancelled) setCheck(null);
       })
       .finally(() => {
@@ -115,6 +130,7 @@ export function useArticleAiCheck(
   const startCheck = useCallback(async () => {
     if (articleId == null) return;
     setStarting(true);
+    setLoadError(null);
     try {
       const row =
         type === "credibility"
@@ -143,8 +159,10 @@ export function useArticleAiCheck(
     check,
     result,
     loadingInitial,
+    loadingHistory,
     starting,
     isPolling: check ? isAiCheckInProgress(check) : false,
+    loadError,
     startCheck,
     refreshLatest,
   };
