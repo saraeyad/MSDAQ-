@@ -1,3 +1,4 @@
+import { unwrapList } from "@/lib/api";
 import { normalizeCredibilityResult } from "./credibility-normalize";
 import { normalizeStandardsResult } from "./standards-normalize";
 import type {
@@ -30,28 +31,50 @@ function parseType(value: unknown): AiCheckType {
   return "credibility";
 }
 
+function coerceResultPayload(raw: unknown): unknown {
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  return raw;
+}
+
 function parseResult(
   type: AiCheckType,
   raw: unknown,
 ): CredibilityCheckResult | StandardsCheckResult | null {
-  if (!raw || typeof raw !== "object") return null;
+  const payload = coerceResultPayload(raw);
+  if (!payload || typeof payload !== "object") return null;
   if (type === "credibility") {
-    return normalizeCredibilityResult(raw as Record<string, unknown>);
+    return normalizeCredibilityResult(payload as Record<string, unknown>);
   }
-  return normalizeStandardsResult(raw as Record<string, unknown>);
+  return normalizeStandardsResult(payload as Record<string, unknown>);
 }
 
 /** Parse API `AiCheckResource` rows (single object or list item). */
-export function normalizeAiCheck(raw: unknown): AiCheck | null {
+export function normalizeAiCheck(
+  raw: unknown,
+  fallbackArticleId?: number | null,
+): AiCheck | null {
   if (!raw || typeof raw !== "object") return null;
   const row = raw as Record<string, unknown>;
   const id = toNumber(row.id);
-  const article_id = toNumber(row.article_id);
+  const article_id =
+    toNumber(row.article_id) ??
+    (fallbackArticleId != null && Number.isFinite(fallbackArticleId)
+      ? fallbackArticleId
+      : null);
   if (id == null || article_id == null) return null;
 
   const type = parseType(row.type);
-  const status = parseStatus(row.status);
   const resultRaw = row.result;
+  const status =
+    row.status == null && resultRaw ? "done" : parseStatus(row.status);
 
   let result: CredibilityCheckResult | StandardsCheckResult | null = null;
   if (status === "done" && resultRaw) {
@@ -75,24 +98,51 @@ export function normalizeAiCheck(raw: unknown): AiCheck | null {
   };
 }
 
-export function normalizeAiCheckList(raw: unknown): AiCheck[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map(normalizeAiCheck)
-    .filter((row): row is AiCheck => row !== null);
+function rawCheckRows(raw: unknown): unknown[] {
+  const list = unwrapList(raw);
+  if (list.length) return list;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+  const record = raw as Record<string, unknown>;
+  for (const key of ["ai_checks", "checks", "items"]) {
+    if (Array.isArray(record[key])) return record[key];
+  }
+  // History GET may return the latest saved row as one object, not an array.
+  if ("id" in record || "result" in record || "status" in record) return [raw];
+  return [];
 }
 
-/** Newest check by id, then created_at. */
-export function pickLatestAiCheck(checks: AiCheck[]): AiCheck | null {
-  if (!checks.length) return null;
-  return [...checks].sort((a, b) => {
-    if (b.id !== a.id) return b.id - a.id;
-    return b.created_at.localeCompare(a.created_at);
-  })[0]!;
+/** Accept a list, a Laravel paginator, or one saved check object. */
+export function normalizeAiCheckList(
+  raw: unknown,
+  fallbackArticleId?: number | null,
+): AiCheck[] {
+  return rawCheckRows(raw)
+    .map((item) => normalizeAiCheck(item, fallbackArticleId))
+    .filter((row): row is AiCheck => row !== null);
 }
 
 export function isAiCheckInProgress(check: AiCheck): boolean {
   return check.status === "queued" || check.status === "running";
+}
+
+/**
+ * Prefer an in-progress run (so a reload does not flash a stale `done` result),
+ * otherwise the newest row by id / created_at.
+ * When `type` is set, ignore rows of the other check type.
+ */
+export function pickLatestAiCheck(
+  checks: AiCheck[],
+  type?: AiCheckType,
+): AiCheck | null {
+  const scoped = type ? checks.filter((row) => row.type === type) : checks;
+  if (!scoped.length) return null;
+  const newestFirst = (a: AiCheck, b: AiCheck) => {
+    if (b.id !== a.id) return b.id - a.id;
+    return b.created_at.localeCompare(a.created_at);
+  };
+  const inProgress = scoped.filter(isAiCheckInProgress).sort(newestFirst);
+  if (inProgress[0]) return inProgress[0];
+  return [...scoped].sort(newestFirst)[0]!;
 }
 
 export const AI_CHECK_POLL_MS = 5_000;

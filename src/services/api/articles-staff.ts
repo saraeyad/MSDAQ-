@@ -228,25 +228,36 @@ export const ArticlesStaff_APIs = {
     return getApiData(response);
   },
 
+  /** GET /articles/{id}/ai-checks?type=credibility|standards */
   listAiChecks: async (
     id: number | string,
     type: AiCheckType,
   ): Promise<AiCheck[]> => {
+    const articleIdNum = Number(articleIdParam(id));
+    const fallbackArticleId = Number.isFinite(articleIdNum)
+      ? articleIdNum
+      : null;
     const response = await API.get<ApiResponse<unknown>>(
       articleUrl(id, "/ai-checks"),
       { params: { type } },
     );
-    return normalizeAiCheckList(getApiData(response));
+    return normalizeAiCheckList(getApiData(response), fallbackArticleId).filter(
+      (row) => row.type === type,
+    );
   },
 
   getAiCheck: async (
     articleId: number | string,
     checkId: number | string,
   ): Promise<AiCheck> => {
+    const articleIdNum = Number(articleIdParam(articleId));
+    const fallbackArticleId = Number.isFinite(articleIdNum)
+      ? articleIdNum
+      : null;
     const response = await API.get<ApiResponse<unknown>>(
       articleUrl(articleId, `/ai-checks/${checkId}`),
     );
-    const row = normalizeAiCheck(getApiData(response));
+    const row = normalizeAiCheck(getApiData(response), fallbackArticleId);
     if (!row) {
       throw new Error("Invalid AI check response");
     }

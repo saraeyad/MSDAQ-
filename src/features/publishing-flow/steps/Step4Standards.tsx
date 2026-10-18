@@ -8,6 +8,7 @@ import { StandardsHighlightedText } from "@/features/tools/components/StandardsH
 import { StandardsResultCard } from "@/features/tools/components/StandardsResultCard";
 import { useArticleAiCheck } from "@/hooks/publishing/useArticleAiCheck";
 import { getStandardsCheckErrorMessage } from "@/lib/publishing";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,7 +27,7 @@ export function Step4Standards({
   onComplete,
   onBack,
 }: Step4StandardsProps) {
-  const { check, result, startCheck } = useArticleAiCheck(
+  const { check, result, loadingInitial, startCheck } = useArticleAiCheck(
     articleId,
     "standards",
   );
@@ -43,29 +44,31 @@ export function Step4Standards({
     }
   };
 
+  if (loadingInitial) {
+    return (
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" aria-hidden />
+        جاري تحميل نتيجة الفحص…
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <AiCheckProcessingDialog open={processing} type="standards" />
-
       <p className="text-muted-foreground">
         فحص المعايير إرشادي — يمكنك المتابعة والنشر حتى إن لم يُجتز الفحص.
       </p>
       <Button onClick={() => void runCheck()} disabled={processing}>
-        تشغيل فحص المعايير
+        {result ? "إعادة تشغيل فحص المعايير" : "تشغيل فحص المعايير"}
       </Button>
-
       <AiCheckStatusBanner
         check={check}
         inProgressLabel="جاري فحص المعايير…"
       />
-
       {result ? (
         <>
-          <StandardsResultCard
-            result={result}
-            title={title}
-            content={body}
-          />
+          <StandardsResultCard result={result} title={title} content={body} />
           <StandardsHighlightedText
             title={title}
             content={body}
@@ -73,7 +76,6 @@ export function Step4Standards({
           />
         </>
       ) : null}
-
       <StepActionsRow onBack={onBack}>
         <NextStepButton onClick={onComplete} />
       </StepActionsRow>
