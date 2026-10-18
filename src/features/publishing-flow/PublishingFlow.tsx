@@ -168,9 +168,6 @@ export default function PublishingFlow() {
             articleId={articleView.id}
             title={articleView.title}
             contentFormal={articleView.content?.formal}
-            previouslyChecked={Boolean(
-              articleView.gate?.standards_checked_at,
-            )}
             onComplete={advanceStep}
             onBack={goBackStep}
           />
@@ -180,9 +177,6 @@ export default function PublishingFlow() {
           <Step5Credibility
             articleId={articleView.id}
             sources={articleView.sources ?? []}
-            previouslyChecked={Boolean(
-              articleView.gate?.credibility_checked_at,
-            )}
             onComplete={advanceStep}
             onBack={goBackStep}
           />
