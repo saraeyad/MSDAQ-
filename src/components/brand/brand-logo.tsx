@@ -14,14 +14,14 @@ const FULL_HEIGHT: Record<BrandLogoSize, string> = {
   sm: "h-14",
   md: "h-16",
   lg: "h-[5.5rem]",
-  xl: "h-[7.25rem]",
+  xl: "h-[7.5rem]",
 };
 
 const FULL_WIDTH: Record<BrandLogoSize, string> = {
   sm: "w-auto max-w-[8.75rem]",
   md: "w-auto max-w-[10.5rem]",
   lg: "w-auto max-w-[13rem]",
-  xl: "w-auto max-w-[14.5rem]",
+  xl: "w-auto max-w-[15rem]",
 };
 
 const ICON_HEIGHT: Record<BrandLogoSize, string> = {
