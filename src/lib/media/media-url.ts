@@ -156,12 +156,27 @@ export function extractPublicMediaUrl(payload: unknown, depth = 0): string | nul
 }
 
 /** Best cover image for a public article (cover field, then first gallery image). */
+export function youtubeThumbnailUrl(
+  url: string | null | undefined,
+): string | null {
+  const id = youtubeVideoId(url ?? "");
+  if (!id) return null;
+  return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+}
+
 export function publicArticleCoverUrl(article: {
   cover_image?: string | null;
+  video_poster?: string | null;
+  media_url?: string | null;
   images?: { thumb?: string; full?: string }[];
 }): string | null {
   const cover = preferFullSizeMediaUrl(article.cover_image);
   if (cover) return cover;
+
+  const poster =
+    preferFullSizeMediaUrl(article.video_poster) ??
+    youtubeThumbnailUrl(article.media_url);
+  if (poster) return poster;
 
   const first = article.images?.[0];
   return (
@@ -169,14 +184,17 @@ export function publicArticleCoverUrl(article: {
   );
 }
 
-/** Poster/preview still: video_poster first, then cover. */
+/** Poster/preview still: video_poster first, then YouTube thumbnail, then cover. */
 export function publicArticlePosterUrl(article: {
   video_poster?: string | null;
   cover_image?: string | null;
+  media_url?: string | null;
   images?: { thumb?: string; full?: string }[];
 }): string | null {
   return (
-    preferFullSizeMediaUrl(article.video_poster) ?? publicArticleCoverUrl(article)
+    preferFullSizeMediaUrl(article.video_poster) ??
+    youtubeThumbnailUrl(article.media_url) ??
+    publicArticleCoverUrl(article)
   );
 }
 

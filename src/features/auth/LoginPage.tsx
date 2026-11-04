@@ -87,6 +87,70 @@ export default function LoginPage() {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="login-page">
+        <div className="login-page__backdrop" aria-hidden>
+          <img
+            src={photoSrc}
+            alt=""
+            className="login-page__backdrop-photo"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            onError={onPhotoError}
+          />
+        </div>
+        <div className="login-page__veil" aria-hidden />
+
+        <div className="login-shell">
+          <section className="login-panel" aria-hidden>
+            <img
+              src={photoSrc}
+              alt=""
+              className="login-panel__photo"
+              loading="lazy"
+              decoding="async"
+              onError={onPhotoError}
+            />
+            <div className="login-panel__scrim" />
+            <div className="login-panel__copy">
+              <p className="login-panel__kicker">{hero.rec}</p>
+              <p className="login-panel__title">
+                {hero.headline}
+                <span> {hero.headlineAccent}</span>
+              </p>
+              <p className="login-panel__brand">{hero.brandLine}</p>
+              <p className="login-panel__lead">{hero.lead}</p>
+            </div>
+          </section>
+
+          <div className="login-card">
+            <div className="login-card__top flex items-start justify-between gap-3">
+              <Link
+                to={ROUTES.HOME}
+                className="login-card__home"
+                aria-label={brand.homeAria}
+              >
+                <BrandLogo size="xl" linkToHome={false} />
+              </Link>
+              <ThemeSwitcher className="shrink-0" />
+            </div>
+
+            <div className="flex min-h-[20rem] flex-col items-center justify-center gap-4 text-center">
+              <Loader2 className="size-8 animate-spin text-primary" />
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-foreground">
+                  جارٍ تسجيل الدخول إلى لوحة التحكم…
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="login-page">
       <div className="login-page__backdrop" aria-hidden>
@@ -189,7 +253,7 @@ export default function LoginPage() {
               disabled={loading}
             >
               {loading && <Loader2 className="size-4 animate-spin" />}
-              دخول
+              {loading ? "نحن نسجل دخولك…" : "دخول"}
             </Button>
           </form>
         </div>

@@ -470,7 +470,7 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
       },
       "credibility-check": {
         label: "فحص المصداقية",
-        description: "هذه الخدمة غير متاحة حاليا",
+        description: "فحص ادعاءات النص ودرجة المصداقية",
       },
       localization: {
         label: "التبسيط واللهجة",
@@ -798,7 +798,7 @@ export const PUBLIC_STATIC_COPY: Record<Locale, PublicStaticCopy> = {
       },
       "credibility-check": {
         label: "Credibility check",
-        description: "This service is not available yet",
+        description: "Check claims in the text and assess the credibility score",
       },
       localization: {
         label: "Simplify & localize",

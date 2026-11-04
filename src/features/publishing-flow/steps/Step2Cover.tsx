@@ -20,6 +20,7 @@ import {
   absoluteMediaUrlForApi,
   resolveMediaUrl,
   resolvePlayableVideoUrl,
+  youtubeThumbnailUrl,
 } from "@/lib/media";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
 import { ImageVerification_APIs } from "@/services/api/tools";
@@ -399,6 +400,8 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     videoStatus === "processing";
   const videoReadyButBroken =
     videoStatus === "ready" && !!article.video?.trim() && !playableVideoUrl;
+  const youtubePoster =
+    mediaType === "video" ? youtubeThumbnailUrl(mediaUrl) : null;
 
   const savedCaption = article.cover_description?.trim() ?? "";
   const captionDirty = coverDescription.trim() !== savedCaption;
@@ -638,7 +641,18 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
                 controls
                 className="max-h-80 w-full rounded-xl"
                 src={playableVideoUrl}
-                poster={resolveMediaUrl(article.video_poster) ?? undefined}
+                poster={
+                  resolveMediaUrl(article.video_poster) ??
+                  youtubePoster ??
+                  undefined
+                }
+              />
+            )}
+            {!playableVideoUrl && youtubePoster && (
+              <img
+                src={youtubePoster}
+                alt="معاينة الفيديو"
+                className="max-h-80 w-full rounded-xl object-cover"
               />
             )}
             {videoUpload.file && videoUpload.progress ? (
@@ -684,11 +698,6 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
                 </Button>
               </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium">صورة الغلاف</p>
-            {coverSection}
-            {coverCaptionField}
           </div>
         </>
       )}
