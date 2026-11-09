@@ -23,6 +23,10 @@ const TEXT_ONLY_STEPS = new Set<number>([3, 4, 5, 6]);
 export function stepsForMediaType(mediaType: StaffMediaType) {
   return PUBLISHING_STEPS.filter(
     (step) => !TEXT_ONLY_STEPS.has(step.num) || mediaType === "text",
+  ).map((step) =>
+    mediaType === "video" && step.num === 2
+      ? { num: step.num, label: "الفيديو" }
+      : step,
   );
 }
 
@@ -51,7 +55,9 @@ export function formatStepProgress(
   internalStep: number,
   mediaType: StaffMediaType,
 ): string {
-  const label = stepLabel(internalStep);
+  const label =
+    stepsForMediaType(mediaType).find((step) => step.num === internalStep)
+      ?.label ?? stepLabel(internalStep);
   const display = displayStepNumber(internalStep, mediaType);
   const total = stepCountForMediaType(mediaType);
   return `${label} (${display}/${total})`;
@@ -176,7 +182,7 @@ export function mediaStepComplete(
     case "audio":
       return hasCover && hasAudioAsset(article);
     case "video":
-      return hasCover && hasVideoReady(article);
+      return hasVideoReady(article);
     default:
       return hasCover;
   }
@@ -384,11 +390,6 @@ export function derivePublishGate(
     checks.push({
       label: "فيديو جاهز أو رابط YouTube",
       passed: hasVideoReady(article),
-      blocking: true,
-    });
-    checks.push({
-      label: "صورة الغلاف",
-      passed: !!article.cover_image?.trim(),
       blocking: true,
     });
   }
