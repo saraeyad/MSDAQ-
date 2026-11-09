@@ -1,3 +1,4 @@
+import { readSessionToken } from "@/lib/auth/session-token";
 import { ROUTES } from "@/router/routes";
 import type { ApiResponse } from "@/types";
 import type { AxiosError, AxiosInstance, AxiosResponse } from "axios";
@@ -7,6 +8,19 @@ const UNAUTHORIZED_STATUS = 401;
 const FORBIDDEN_STATUS = 403;
 const AUTH_ATTEMPT_PATHS = ["/api/auth/login"];
 const STAFF_PATH = /^\/(newsroom|admin)(\/|$)/;
+
+function requestBearer(error: AxiosError<ApiResponse<unknown>>): string | null {
+  const headers = error.config?.headers;
+  if (!headers) return null;
+  const raw =
+    typeof headers.get === "function"
+      ? headers.get("Authorization")
+      : (headers.Authorization ?? headers.authorization);
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof value !== "string") return null;
+  const token = value.replace(/^Bearer\s+/i, "").trim();
+  return token || null;
+}
 
 const endSession = () => {
   localStorage.removeItem("token");
@@ -35,7 +49,11 @@ export const setupResponseInterceptor = (axiosInstance: AxiosInstance) => {
       );
 
       if (error.response?.status === UNAUTHORIZED_STATUS && !isAuthAttempt) {
-        endSession();
+        const current = readSessionToken();
+        const used = requestBearer(error);
+        if (current && used === current) {
+          endSession();
+        }
       }
 
       if (error.response?.status === FORBIDDEN_STATUS) {

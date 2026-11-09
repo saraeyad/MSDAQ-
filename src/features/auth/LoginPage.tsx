@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { normalizeAuthUser, useAuth, type AuthUser } from "@/context/auth";
 import { usePublicCopy } from "@/context/locale";
 import { getApiData, getApiErrorMessage } from "@/lib/api";
+import { readSessionToken } from "@/lib/auth/session-token";
 import { Auth_APIs } from "@/services/api/auth";
 import { PERMISSIONS, ROUTES } from "@/router/routes";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const LOGIN_PHOTO = "/images/hero-people-hd.png";
@@ -39,7 +40,9 @@ function safeInternalPath(value: string | null): string | null {
     if (
       !path.startsWith("/") ||
       path.startsWith("//") ||
-      path.startsWith("/\\")
+      path.startsWith("/\\") ||
+      path === ROUTES.LOGIN ||
+      path.startsWith(`${ROUTES.LOGIN}?`)
     ) {
       return null;
     }
@@ -50,7 +53,7 @@ function safeInternalPath(value: string | null): string | null {
 }
 
 export default function LoginPage() {
-  const { saveAuth } = useAuth();
+  const { saveAuth, token, user } = useAuth();
   const { hero, brand } = usePublicCopy();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -76,10 +79,20 @@ export default function LoginPage() {
       toast.success(response.data.message || "مرحباً بك");
     } catch (err) {
       toast.error(getApiErrorMessage(err));
-    } finally {
       setLoading(false);
     }
   };
+
+  const sessionToken = token ?? readSessionToken();
+  if (sessionToken && !loading) {
+    const redirect = safeInternalPath(searchParams.get("redirect"));
+    return (
+      <Navigate
+        to={redirect ?? (user ? defaultAfterLoginPath(user) : ROUTES.NEWSROOM)}
+        replace
+      />
+    );
+  }
 
   const onPhotoError = () => {
     setPhotoSrc((current) =>
