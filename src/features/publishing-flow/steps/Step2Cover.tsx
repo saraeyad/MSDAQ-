@@ -18,8 +18,10 @@ import {
 } from "@/lib/publishing";
 import {
   absoluteMediaUrlForApi,
+  mergeArticleMedia,
   resolveMediaUrl,
   resolvePlayableVideoUrl,
+  youtubeEmbedUrl,
   youtubeThumbnailUrl,
 } from "@/lib/media";
 import { ArticlesStaff_APIs } from "@/services/api/articles-staff";
@@ -32,7 +34,7 @@ import type {
 import { useStaffArticleMedia } from "@/hooks/useLazyArticleMedia";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface Step2CoverProps {
@@ -85,6 +87,8 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
 
   const articleId = article.id;
   const mediaType = article.media_type;
+  const editingMediaUrl = useRef(false);
+  const confirmedMediaUrl = useRef(article.media_url?.trim() ?? "");
   const needsPlayableMedia = mediaType === "audio" || mediaType === "video";
   const { data: staffMedia } = useStaffArticleMedia(
     articleId,
@@ -102,7 +106,9 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     if (audioUrl) setAudioPreview(audioUrl);
     const playable = resolvePlayableVideoUrl(staffMedia.video, videoRejectOptions);
     if (playable) setVideoPreview(playable);
-    if (staffMedia.media_url) setMediaUrl(staffMedia.media_url);
+    if (staffMedia.media_url && !editingMediaUrl.current) {
+      setMediaUrl(staffMedia.media_url);
+    }
   }, [staffMedia, article.cover_image, article.video_poster]);
 
   const applyVideoFromArticle = (updated: StaffArticle) => {
@@ -147,7 +153,10 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
   }, [article.cover_description]);
 
   useEffect(() => {
-    setMediaUrl(article.media_url ?? "");
+    if (!editingMediaUrl.current) {
+      setMediaUrl(article.media_url ?? "");
+      confirmedMediaUrl.current = article.media_url?.trim() ?? "";
+    }
     applyVideoFromArticle(article);
   }, [
     article.video,
@@ -175,7 +184,7 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
       try {
         const updated = await ArticlesStaff_APIs.getArticle(articleId);
         const media = await ArticlesStaff_APIs.getMedia(articleId);
-        const merged = { ...updated, ...media };
+        const merged = mergeArticleMedia(updated, media);
         applyVideoFromArticle(merged);
         if (merged.video_status === "ready" || merged.video_status === "failed") {
           window.clearInterval(interval);
@@ -335,20 +344,81 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
     }
   };
 
-  const saveMediaUrl = async () => {
-    setSavingMediaUrl(true);
-    try {
-      await ArticlesStaff_APIs.updateArticle(articleId, {
-        media_url: mediaUrl.trim() || null,
-      });
-      toast.success("تم حفظ رابط الوسائط");
-      await refreshArticle();
-    } catch (err) {
-      toast.error(getApiErrorMessage(err));
-    } finally {
-      setSavingMediaUrl(false);
+  const rememberMediaUrl = useCallback(
+    (url: string | null) => {
+      queryClient.setQueriesData<StaffArticle>(
+        { queryKey: ["staff-article"] },
+        (current) => {
+          if (!current || String(current.id) !== String(articleId)) return current;
+          return { ...current, media_url: url };
+        },
+      );
+    },
+    [articleId, queryClient],
+  );
+
+  const persistMediaUrl = useCallback(
+    async (raw: string, announce: boolean) => {
+      const next = raw.trim();
+      if (next === confirmedMediaUrl.current) {
+        rememberMediaUrl(next || null);
+        editingMediaUrl.current = false;
+        return;
+      }
+
+      setSavingMediaUrl(true);
+      rememberMediaUrl(next || null);
+      try {
+        const updated = await ArticlesStaff_APIs.updateArticle(articleId, {
+          media_url: next || null,
+        });
+        const stored = updated.media_url?.trim() ? updated.media_url.trim() : next;
+        confirmedMediaUrl.current = stored;
+        editingMediaUrl.current = false;
+        rememberMediaUrl(stored || null);
+        queryClient.setQueriesData<StaffArticle>(
+          { queryKey: ["staff-article"] },
+          (current) => {
+            if (!current || String(current.id) !== String(articleId)) return current;
+            return { ...current, ...updated, media_url: stored || null };
+          },
+        );
+        if (announce) toast.success("تم حفظ رابط الوسائط");
+        await queryClient.invalidateQueries({
+          queryKey: ["staff", "article-media", String(articleId)],
+        });
+      } catch (err) {
+        rememberMediaUrl(confirmedMediaUrl.current || null);
+        toast.error(getApiErrorMessage(err));
+      } finally {
+        setSavingMediaUrl(false);
+      }
+    },
+    [articleId, queryClient, rememberMediaUrl],
+  );
+
+  useEffect(() => {
+    if (mediaType !== "video") return;
+    const next = mediaUrl.trim();
+    if (next === confirmedMediaUrl.current) return;
+
+    if (!youtubeEmbedUrl(next)) {
+      rememberMediaUrl(confirmedMediaUrl.current || null);
+      if (next) return;
+      const timer = window.setTimeout(() => {
+        void persistMediaUrl("", false);
+      }, 400);
+      return () => window.clearTimeout(timer);
     }
-  };
+
+    rememberMediaUrl(next);
+    const timer = window.setTimeout(() => {
+      void persistMediaUrl(next, false);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [mediaType, mediaUrl, persistMediaUrl, rememberMediaUrl]);
+
+  const saveMediaUrl = () => persistMediaUrl(mediaUrl, true);
 
   const runReverseSearch = async (urlOverride?: string) => {
     const targetUrl = urlOverride ?? publicCoverUrl;
@@ -582,7 +652,10 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
               <div className="flex flex-wrap gap-2">
                 <Input
                   value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
+                  onChange={(e) => {
+                    editingMediaUrl.current = true;
+                    setMediaUrl(e.target.value);
+                  }}
                   placeholder="https://soundcloud.com/..."
                   dir="ltr"
                   className="flex-1"
@@ -683,7 +756,10 @@ export function Step2Cover({ article, onComplete, onBack }: Step2CoverProps) {
               <div className="flex flex-wrap gap-2">
                 <Input
                   value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
+                  onChange={(e) => {
+                    editingMediaUrl.current = true;
+                    setMediaUrl(e.target.value);
+                  }}
                   placeholder="https://youtube.com/..."
                   dir="ltr"
                   className="flex-1"
