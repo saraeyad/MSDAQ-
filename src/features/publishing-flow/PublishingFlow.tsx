@@ -8,7 +8,7 @@ import { Step5Credibility } from "@/features/publishing-flow/steps/Step5Credibil
 import { Step6Localize } from "@/features/publishing-flow/steps/Step6Localize";
 import { Step7Publish } from "@/features/publishing-flow/steps/Step7Publish";
 import { useStaffArticleMedia } from "@/hooks/useLazyArticleMedia";
-import { mergeArticleMedia, retainOmittedMediaUrl } from "@/lib/media";
+import { mergeArticleMedia } from "@/lib/media";
 import {
   clampArticleStep,
   getNextStep,
@@ -34,14 +34,7 @@ export default function PublishingFlow() {
 
   const { data: article, isLoading } = useQuery({
     queryKey: ["staff-article", id],
-    queryFn: async () => {
-      const fresh = await ArticlesStaff_APIs.getArticle(id!);
-      const previous = queryClient.getQueryData<typeof fresh>([
-        "staff-article",
-        id,
-      ]);
-      return retainOmittedMediaUrl(fresh, previous);
-    },
+    queryFn: () => ArticlesStaff_APIs.getArticle(id!),
     enabled: !isNew,
   });
   const mediaQuery = useStaffArticleMedia(id, !isNew && !!id);

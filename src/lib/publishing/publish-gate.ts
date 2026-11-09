@@ -1,4 +1,4 @@
-import { resolvePlayableVideoUrl, youtubeEmbedUrl } from "../media/media-url";
+import { resolvePlayableVideoUrl } from "../media/media-url";
 import type {
   ArticleSource,
   ArticleStatus,
@@ -127,7 +127,6 @@ function hasVideoReady(
   >,
 ): boolean {
   if (article.media_url?.trim()) return true;
-  if (youtubeEmbedUrl(article.video)) return true;
   if (article.video_status !== "ready") return false;
   if (!article.video?.trim()) return true;
   return !!resolvePlayableVideoUrl(article.video, {
